@@ -1,0 +1,171 @@
+/* =========================================================================
+   СТИЛІ ДЛЯ СТОРІНОК ВХОДУ ТА РЕЄСТРАЦІЇ (NovaFlow Style)
+   ========================================================================= */
+
+/* Загальний фон сторінки авторизації */
+.auth-body {
+  margin: 0;
+  padding: 20px;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #0f172a; /* Глибокий темно-синій фон під стиль сайту */
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Контейнер форми (Картка) */
+.auth-card {
+  background: rgba(30, 41, 59, 0.7); /* Напівпрозорий slate-800 */
+  backdrop-filter: blur(12px); /* Ефект розмиття заднього фону (Glassmorphic) */
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px; /* М'які закруглені кути */
+  padding: 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  box-sizing: border-box;
+  animation: fadeInAuth 0.5s ease-out;
+}
+
+@keyframes fadeInAuth {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Заголовки */
+.auth-card h2 {
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 700;
+  margin-top: 0;
+  margin-bottom: 8px;
+  text-align: center;
+  letter-spacing: -0.5px;
+}
+
+/* Субтитри під заголовком */
+.auth-subtitle {
+  color: #94a3b8;
+  font-size: 15px;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+/* Групування інпутів */
+.auth-input-group {
+  margin-bottom: 20px;
+}
+
+.auth-input-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Самі поля вводу */
+.auth-input-group input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0f172a; /* Темніший колір всередині інпута */
+  color: #ffffff;
+  font-size: 16px;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+/* Стан фокусу інпута */
+.auth-input-group input:focus {
+  outline: none;
+  border-color: #a855f7; /* Фіолетовий бордюр при кліку */
+  box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.2);
+}
+
+/* Потужна кнопка з твоїм фірмовим пурпуровим градієнтом */
+.auth-btn-submit {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); /* Пурпуровий градієнт як на лендінгу */
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.3);
+}
+
+.auth-btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
+  filter: brightness(1.1);
+}
+
+.auth-btn-submit:active {
+  transform: translateY(0);
+}
+
+/* Перемикач тексту (Немає акаунту? Увійти) */
+.auth-switch-text {
+  text-align: center;
+  margin-top: 25px;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.auth-switch-text a {
+  color: #a855f7;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.2s ease;
+  margin-left: 5px;
+}
+
+.auth-switch-text a:hover {
+  color: #6366f1;
+  text-decoration: underline;
+}
+
+/* Повідомлення про статус (Помилка або Успіх) */
+.auth-status-msg {
+  text-align: center;
+  margin-top: 15px;
+  font-size: 14px;
+  font-weight: 500;
+  min-height: 20px;
+}
+
+@media (max-width: 640px) {
+  .auth-body {
+    padding: 16px;
+  }
+
+  .auth-card {
+    padding: 28px;
+    margin: 0 auto;
+    border-radius: 20px;
+    max-width: 100%;
+  }
+
+  .auth-card h2 {
+    font-size: 24px;
+  }
+
+  .auth-input-group input {
+    font-size: 15px;
+  }
+
+  .auth-btn-submit {
+    padding: 14px;
+  }
+}

@@ -1,0 +1,1407 @@
+/* =========================================================================
+   ГЛОБАЛЬНІ НАЛАШТУВАННЯ ТА ШРИФТИ
+   ========================================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+}
+
+body.dashboard-body {
+  background-color: #f9fafb;
+  color: #1f2937;
+  min-height: 100vh;
+}
+
+/* ГОЛОВНА СІТКА ПАНЕЛІ (Макет) */
+.dashboard-wrapper {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* =========================================================================
+   БОКОВА ПАНЕЛЬ (SIDEBAR)
+   ========================================================================= */
+.sidebar {
+  width: 280px;
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  position: fixed;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  z-index: 10;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.sidebar-logo img {
+  width: 40px;
+  height: 40px;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.logo-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.logo-sub {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #a855f7;
+  letter-spacing: 0.05em;
+}
+
+/* Навігація сайдбару */
+.sidebar-nav {
+  flex: 1;
+}
+
+.sidebar-nav ul {
+  list-style: none;
+}
+
+.sidebar-nav li {
+  margin-bottom: 8px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: #4b5563;
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.sidebar-link i {
+  font-size: 1.1rem;
+  width: 20px;
+  text-align: center;
+}
+
+.sidebar-link:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.sidebar-link.active {
+  background-color: #f3e8ff;
+  color: #a855f7;
+}
+
+/* Кнопка виходу внизу */
+.sidebar-footer {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+}
+
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: #ef4444;
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: #fef2f2;
+}
+
+/* =========================================================================
+   ГОЛОВНИЙ КОНТЕНТ (MAIN CONTENT)
+   ========================================================================= */
+.main-content {
+  flex: 1;
+  margin-left: 280px; /* Дорівнює ширині сайдбару, щоб контент не перекривався */
+  padding: 40px;
+  background-color: #f9fafb;
+}
+
+.dash-header {
+  margin-bottom: 32px;
+}
+
+.welcome-text h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 6px;
+}
+
+.welcome-text p {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+/* КАРТКИ-КОНТЕЙНЕРИ (Dash Cards) */
+.dash-card {
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+
+.dash-card h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+/* =========================================================================
+   НОВІ СТИЛІ ДЛЯ CRM ТА РОБОЧОЇ ЗОНИ СТУДЕНТА
+   ========================================================================= */
+
+/* Інтерактивна таблиця */
+#students-table-body tr {
+  border-bottom: 1px solid #f3f4f6;
+  background-color: #ffffff;
+  transition: all 0.2s ease-in-out;
+}
+
+#students-table-body tr:hover {
+  background-color: #faf5ff;
+}
+
+/* Кнопка "Керувати" */
+.manage-btn {
+  background: #a855f7;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.manage-btn:hover {
+  background: #9333ea;
+}
+
+.manage-btn:active {
+  transform: scale(0.97);
+}
+
+/* Верхня плашка стану обраного учня */
+.workspace-status-card {
+  border-left: 5px solid #a855f7;
+  margin-bottom: 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.balance-badge {
+  background: #f3e8ff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid #e9d5ff;
+}
+
+.balance-badge .badge-label {
+  font-weight: bold;
+  color: #6b21a8;
+}
+
+.balance-badge .badge-value {
+  font-weight: bold;
+  color: #a855f7;
+  font-size: 1.25rem;
+}
+
+/* Гнучка сітка робочої зони (Календар + ДЗ) */
+.workspace-grid {
+  display: flex;
+  gap: 25px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.workspace-left {
+  flex: 2;
+  min-width: 450px;
+}
+
+.workspace-right {
+  flex: 1;
+  min-width: 320px;
+}
+
+/* Заголовок календаря та кнопка додавання уроку */
+.calendar-header-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+#add-lesson-btn {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+#add-lesson-btn:hover {
+  background: #059669;
+}
+
+/* Контейнер для FullCalendar */
+#calendar-element {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Форма створення домашнього завдання */
+#teacher-hw-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #4b5563; /* М'який темно-сірий */
+  font-size: 0.92rem;
+  letter-spacing: -0.01em;
+}
+
+.form-group input[type="text"],
+.form-group input[type="datetime-local"],
+.form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #1f2937;
+  font-family: inherit;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.form-group input[type="text"]:hover,
+.form-group input[type="datetime-local"]:hover,
+.form-group textarea:hover {
+  border-color: #d1d5db;
+  background: #ffffff;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="datetime-local"]:focus,
+.form-group textarea:focus {
+  outline: none;
+  background: #ffffff;
+  border-color: #a855f7;
+  box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.12), 0 4px 10px rgba(0, 0, 0, 0.03);
+}
+
+/* Прикріплення файлу (Супер-сучасний преміум вигляд) */
+.form-group input[type="file"] {
+  padding: 14px;
+  background: rgba(168, 85, 247, 0.03);
+  border: 2px dashed rgba(168, 85, 247, 0.2);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.form-group input[type="file"]:hover {
+  background: rgba(168, 85, 247, 0.06);
+  border-color: rgba(168, 85, 247, 0.4);
+}
+
+.form-group input[type="file"]::file-selector-button {
+  background: #a855f7;
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  margin-right: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 6px -1px rgba(168, 85, 247, 0.2);
+  transition: all 0.2s ease;
+}
+
+.form-group input[type="file"]::file-selector-button:hover {
+  background: #9333ea;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px -1px rgba(168, 85, 247, 0.3);
+}
+
+.form-help-text {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin-top: 2px;
+}
+
+/* Кнопка відправки ДЗ */
+.submit-hw-btn {
+  background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%) !important;
+  border: none !important;
+  color: white !important;
+  padding: 14px 24px !important;
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  border-radius: 12px !important;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 10px 15px -3px rgba(124, 58, 237, 0.25) !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  margin-top: 10px;
+}
+
+.submit-hw-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 15px 25px -3px rgba(124, 58, 237, 0.35) !important;
+  background: linear-gradient(135deg, #b55fe6 0%, #8b44ff 100%) !important;
+}
+
+.submit-hw-btn:active {
+  transform: translateY(0) !important;
+}
+
+/* Стилі для вкладок */
+/* =========================================================================
+   СТИЛІ ДЛЯ СТРУКТУРНИХ КЛАСІВ (БЕЗ ІНЛАЙН-СТИЛІВ)
+   ========================================================================= */
+
+/* Описи розділів у вкладках */
+.tab-description,
+.calendar-description,
+.hw-description {
+  color: #6b7280;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+}
+
+/* Стандартизація таблиці учнів */
+.students-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin-top: 10px;
+}
+
+.students-table th {
+  padding: 12px;
+  color: #6b7280;
+  font-weight: 600;
+  border-bottom: 2px solid #e5e7eb;
+  font-size: 0.9rem;
+}
+
+.students-table td {
+  padding: 16px 12px;
+  color: #1f2937;
+  vertical-align: middle;
+}
+
+/* Вирівнювання залишку уроків по центру, а кнопки — по правому краю */
+.students-table th:nth-child(2),
+.students-table td:nth-child(2) {
+  text-align: center;
+}
+
+.students-table th:nth-child(3),
+.students-table td:nth-child(3) {
+  text-align: right;
+}
+
+/* Блок інформації про учня у верхній плашці стану */
+.status-info h2 {
+  margin: 0;
+}
+
+.status-subtitle {
+  margin: 5px 0 0 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Текст-підказка для URL-інпуту з файлом */
+.form-help-text {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  display: block;
+  line-height: 1.4;
+}
+
+/* Головна кнопка відправки ДЗ в кабінет */
+.submit-hw-btn {
+  background: #a855f7;
+  color: #ffffff;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  width: 100%;
+  cursor: pointer;
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.submit-hw-btn:hover {
+  background: #9333ea;
+}
+
+.submit-hw-btn:active {
+  transform: scale(0.98);
+}
+
+/* Приховування контенту вкладок за замовчуванням (керовано через JS) */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* =========================================================================
+   🎨 ПРОФЕСІЙНА СТУДІЯ РЕДАКУВАННЯ (FIGMA / MIRO STYLE)
+   ========================================================================= */
+
+/* Головний контейнер редактора */
+.hw-editor-zone {
+  background: #1E293B; /* Шляхетний темно-грифельний фон */
+  border-radius: 24px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  position: relative;
+}
+
+/* Інтерактивна статична панель інструментів (поза зоною малюнка) */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: rgba(15, 23, 42, 0.85); /* Ефект темного скла */
+  backdrop-filter: blur(16px);
+  padding: 12px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  margin-bottom: 20px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+/* Групування кнопок (наприклад, вибір кольору або інструментів) */
+.tool-group {
+  display: flex;
+  gap: 8px; /* Збільшено з 4px, щоб запобігти злипанню кнопок */
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Кнопки вибору інструментів (Олівець, Текст) */
+.editor-btn {
+  background: transparent;
+  border: none;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #94A3B8;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.editor-btn:hover {
+  color: #FFFFFF;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Активний інструмент (наприклад, зараз вибрано Текст) */
+.editor-btn.tool-active {
+  background: #8B5CF6; /* Яскравий фіолетовий */
+  color: #FFFFFF;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+}
+
+/* Кнопки дій (Очистити, Зберегти, Стерти) */
+.editor-btn-action {
+  background: transparent;
+  border: none;
+  color: #94A3B8;
+  min-width: 36px; /* Дозволяє кнопкам із текстом розширюватися природно */
+  height: 36px;
+  padding: 0 10px; /* Внутрішні відступи для красивого обтікання тексту */
+  gap: 8px; /* Простір між іконкою та текстом */
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.editor-btn-action:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+}
+
+/* Кнопка видалення/очищення (червона при наведенні) */
+.editor-btn-action.clear-tool:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #F87171;
+}
+
+/* Область перегляду та скролу Canvas */
+.canvas-container {
+  background: #0F172A; /* Дуже темний фон підкладки */
+  border-radius: 16px;
+  padding: 20px; /* Комфортний відступ без зайвих перекриттів */
+  display: flex;
+  overflow: auto; /* Дозволяє скролити вміст */
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  min-height: 60vh;
+  max-height: 75vh;
+}
+
+/* Оболонка Canvas, яка тримає абсолютні координати тексту! */
+.canvas-wrapper {
+  position: relative; /* КРИТИЧНО: щоб текст позиціонувався відносно цього блоку, а не кута екрану */
+  background: #FFFFFF;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  line-height: 0; /* Прибирає зайві мікро-відступи знизу картинки */
+  margin: auto; /* ✅ ЦЕНТРУВАННЯ БЕЗ БАГІВ ОБРІЗАННЯ: відмінно центрує коли влазить, і дозволяє прокрутку коли ні! */
+}
+
+#teacher-canvas {
+  display: block;
+  cursor: crosshair;
+  border-radius: 8px;
+}
+
+/* =========================================================================
+   🔥 ВИПРАВЛЕНЕ ТА СУПЕР-СУЧАСНЕ ПОЛЕ ВВЕДЕННЯ ТЕКСТУ СЛОВ ПРЯМО НА CANVAS (FIGMA/MIRO STYLE)
+   ========================================================================= */
+.canvas-live-textarea {
+  position: absolute; /* Позиціонується чітко відносно .canvas-wrapper */
+  background: rgba(15, 23, 42, 0.2) !important; /* Напівпрозоре приглушене тло */
+  backdrop-filter: blur(4px);
+  border: 1px dashed #a855f7 !important; /* Фіолетова штрихова рамка */
+  color: inherit;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  padding: 4px 8px;
+  margin: 0;
+  min-width: 150px;
+  max-width: 500px;
+  outline: none;
+  z-index: 99999;
+  line-height: 1.2;
+  resize: none;
+  overflow: hidden;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.canvas-live-textarea:focus {
+  border-color: #10b981 !important; /* Зелена рамка при активному фокусі */
+  background: rgba(15, 23, 42, 0.45) !important;
+}
+
+/* =========================================================================
+   👑 ДОДАТКОВІ ПРЕМІУМ-СТИЛІ ДЛЯ РЕДАКТОРА ТА ПОВНОГО ЕКРАНА
+   ========================================================================= */
+
+/* Шапка редактора */
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 15px;
+}
+
+.editor-header h3 {
+  color: #c084fc !important; /* Ніжний бузковий */
+  font-weight: 700;
+  font-size: 1.2rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Другорядна кнопка (наприклад, повноекранний режим) */
+.editor-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.editor-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Налаштування в тулбарі (Колір, Товщина) */
+.settings-group {
+  display: flex;
+  gap: 20px;
+  margin-left: auto;
+  align-items: center;
+}
+
+.toolbar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-item label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Кастомізація вибору кольору */
+#t-editor-color {
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border-radius: 50%;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+#t-editor-color::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+#t-editor-color::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+#t-editor-color:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+/* Кастомізація повзунка товщини */
+#t-editor-size {
+  cursor: pointer;
+  width: 100px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  outline: none;
+}
+
+#t-editor-size::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #a855f7;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+#t-editor-size::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+  background: #c084fc;
+}
+
+/* Дії внизу */
+.editor-actions {
+  margin-top: 24px;
+  text-align: right;
+}
+
+#btn-teacher-save-review {
+  background: #10b981;
+  border: 1px solid #10b981;
+  color: #ffffff;
+  padding: 12px 24px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#btn-teacher-save-review:hover {
+  background: #059669;
+  border-color: #059669;
+  transform: translateY(-2px);
+  box-shadow: 0 15px 20px -3px rgba(16, 185, 129, 0.4);
+}
+
+#btn-teacher-save-review:active {
+  transform: translateY(0);
+}
+
+#btn-teacher-save-review:disabled {
+  background: #4b5563;
+  border-color: #4b5563;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* ✅ ЗАЛІЗОБЕТОННИЙ ПОВНОЕКРАННИЙ РЕЖИМ (FIGMA / MIRO HIGH-FIDELITY) */
+.hw-editor-zone.fullscreen-mode {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  z-index: 99999 !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #0f172a !important; /* Глибокий темний Figma фон */
+  padding: 0 !important;
+  overflow: hidden !important; /* Запобігає прокручуванню всієї сторінки, лочить скрол всередині */
+}
+
+.hw-editor-zone.fullscreen-mode .editor-header {
+  padding: 20px 40px !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(16px) !important;
+  margin-bottom: 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.hw-editor-zone.fullscreen-mode .editor-toolbar {
+  position: static !important;
+  transform: none !important;
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background: rgba(30, 41, 59, 0.95) !important; /* елегантне темне скло */
+  margin-bottom: 0 !important;
+  padding: 12px 40px !important;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+.hw-editor-zone.fullscreen-mode .canvas-container {
+  flex: 1 !important;
+  min-height: 0 !important;
+  height: auto !important; /* Автоматичний гнучкий розподіл висоти */
+  max-height: none !important;
+  background: #090d16 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 20px !important; /* Нормальний комфортний відступ */
+}
+
+.hw-editor-zone.fullscreen-mode .editor-actions {
+  padding: 20px 40px !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(16px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+  margin-top: 0 !important;
+}
+
+
+/* ==========================================================================
+   ВКЛАДКА КЕРУВАННЯ ВІДГУКАМИ (COMMENTS TAB)
+   ========================================================================== */
+
+/* Шапка вкладки коментарів */
+.comments-tab-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.comments-tab-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: #0f172a;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.comments-tab-header h2 i {
+  color: #5e077e; /* Твій фірмовий колір */
+}
+
+/* Лічильник загальної кількості відгуків */
+#total-comments-count {
+  background: rgba(94, 7, 126, 0.08);
+  color: #5e077e;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Сітка для карток коментарів */
+.admin-comments-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+/* Картка відгуку в адмінці */
+.admin-comment-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.admin-comment-card:hover {
+  border-color: rgba(94, 7, 126, 0.25);
+  box-shadow: 0 10px 20px rgba(94, 7, 126, 0.04);
+}
+
+/* Кнопка видалення відгуку */
+.admin-actions-wrapper .btn-delete {
+  background: #fee2e2;
+  color: #ef4444;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.admin-actions-wrapper .btn-delete:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+/* Секція відповіді викладача всередині картки */
+.admin-reply-section {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+/* Блок з поточною збереженою відповіддю */
+.current-reply-box {
+  background: rgba(94, 7, 126, 0.03);
+  border-left: 3px solid #5e077e;
+  padding: 12px 16px;
+  border-radius: 4px 10px 10px 4px;
+  font-size: 13.5px;
+  color: #475569;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.current-reply-box strong {
+  color: #5e077e;
+  font-weight: 700;
+}
+
+/* Форма для введення відповіді */
+.admin-reply-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Поле введення тексту відповіді */
+.admin-reply-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #f8fafc;
+  color: #334155;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-reply-input:focus {
+  outline: none;
+  border-color: #5e077e;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(94, 7, 126, 0.1);
+}
+
+/* Кнопка відправки/оновлення відповіді */
+.btn-submit-reply {
+  background: linear-gradient(135deg, #5e077e 0%, #9333ea 100%);
+  color: #ffffff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-submit-reply:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.15);
+}
+
+.btn-submit-reply:active {
+  transform: translateY(0);
+}
+
+/* =========================================================================
+   СТИЛІ ДЛЯ НОВОГО ЗАГАЛЬНОГО ДАШБОРДУ (ГОЛОВНОЇ)
+   ========================================================================= */
+
+/* Сітка для верхньої панелі (Наступний урок + Міні-віджети) */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 24px;
+  margin-bottom: 30px;
+}
+
+@media (max-width: 991px) {
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  .dashboard-wrapper {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(75, 31, 96, 0.08);
+    padding: 24px 20px;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 32px 22px 24px;
+  }
+
+  .sidebar-logo {
+    justify-content: center;
+  }
+
+  .sidebar-nav ul {
+    display: grid;
+    gap: 10px;
+  }
+
+  .workspace-grid {
+    gap: 18px;
+  }
+}
+
+@media (max-width: 840px) {
+  .workspace-left,
+  .workspace-right {
+    flex: 1 1 100%;
+    min-width: auto;
+    width: 100%;
+  }
+
+  .calendar-header-block,
+  .editor-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .students-table {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .students-table th,
+  .students-table td {
+    padding: 12px 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .sidebar {
+    padding: 20px 16px;
+  }
+
+  .main-content {
+    padding: 24px 16px 20px;
+  }
+
+  .dash-card,
+  .hw-editor-zone {
+    padding: 20px;
+  }
+
+  .sidebar-logo {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .sidebar-logo img {
+    height: 32px;
+  }
+
+  .logo-name {
+    font-size: 18px;
+  }
+}
+
+/* --- КАРТКА "НАСТУПНИЙ УРОК" (PREMIUM GLOW EFFECT) --- */
+.next-lesson-card {
+  background: linear-gradient(135deg, #1E1B4B 0%, #311042 100%);
+  color: #FFFFFF;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  box-shadow: 0 20px 40px rgba(94, 7, 126, 0.15);
+  padding: 30px !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Декоративне фонове свічення у кутку картки */
+.next-lesson-card::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 150px;
+  height: 150px;
+  background: var(--primary-light, #7E22CE);
+  filter: blur(70px);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Плашка статусу з пульсуючою точкою */
+.next-lesson-card .card-badge {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* Пульсуючий зелений індикатор */
+.next-lesson-card .pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #22C55E;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  animation: pulseGreen 1.8s infinite;
+}
+
+@keyframes pulseGreen {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+.next-lesson-card h2 {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0 0 8px 0;
+  color: #FFFFFF;
+}
+
+.next-lesson-time {
+  font-size: 16px;
+  color: #E2E8F0;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.next-lesson-time i {
+  color: #A855F7;
+}
+
+.next-lesson-meta {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 14px;
+  font-size: 14px;
+  color: #94A3B8;
+  font-weight: 500;
+}
+
+/* --- МІНІ-ВІДЖЕТИ СТАТИСТИКИ --- */
+.stats-widgets {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: space-between;
+}
+
+.stat-mini-card {
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stat-mini-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(94, 7, 126, 0.04);
+}
+
+.stat-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.stat-icon.purple {
+  background: rgba(124, 58, 237, 0.08);
+  color: #7C3AED;
+}
+
+.stat-icon.green {
+  background: rgba(34, 197, 94, 0.08);
+  color: #22C55E;
+}
+
+.stat-info .stat-label {
+  font-size: 13px;
+  color: #64748B;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.stat-info h3 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+}
+
+/* =========================================================================
+   КАСТОМІЗАЦІЯ ВЕЛИКОГО КАЛЕНДАРЯ (FullCalendar Customization)
+   ========================================================================= */
+.general-calendar-card {
+  background: #FFFFFF;
+  border-radius: 20px !important;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+/* Стилізація кнопок навігації календаря */
+.fc .fc-button-primary {
+  background-color: #FFFFFF !important;
+  border: 1px solid rgba(94, 7, 126, 0.15) !important;
+  color: #7C3AED !important;
+  font-weight: 600 !important;
+  transition: all 0.25s ease !important;
+  text-transform: capitalize !important;
+}
+
+.fc .fc-button-primary:hover {
+  background: linear-gradient(135deg, #A855F7 0%, #7C3AED 100%) !important;
+  color: #FFFFFF !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+}
+
+.fc .fc-button-primary:disabled {
+  background-color: #F1F5F9 !important;
+  color: #94A3B8 !important;
+  border-color: #E2E8F0 !important;
+}
+
+/* Активна кнопка перемикання видів (наприклад, week/day) */
+.fc .fc-button-active {
+  background: linear-gradient(135deg, #A855F7 0%, #7C3AED 100%) !important;
+  color: #FFFFFF !important;
+  border-color: transparent !important;
+}
+
+/* Заголовок календаря (Місяць/Рік) */
+.fc .fc-toolbar-title {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #0F172A;
+}
+
+/* Текст назви днів тижня */
+.fc th {
+  font-weight: 700 !important;
+  color: #334155;
+  padding: 10px 0 !important;
+  background-color: #F8FAFC;
+  font-size: 14px;
+}
+
+/* Картки уроків (Event Cards) на головному календарі */
+.fc-v-event {
+  border-radius: 8px !important;
+  padding: 4px 8px !important;
+  border: none !important;
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.12) !important;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.fc-v-event:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 15px rgba(124, 58, 237, 0.25) !important;
+  filter: brightness(1.05);
+}
+
+/* Внутрішній текст подій */
+.fc-event-main {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.3 !important;
+}
+
+/* Поточна лінія часу (червона лінія поточного моменту) */
+.fc .fc-timegrid-now-indicator-line {
+  border-color: #EF4444 !important;
+  border-width: 2px !important;
+}
+
+.fc .fc-timegrid-now-indicator-arrow {
+  border-color: #EF4444 !important;
+  border-left-color: #EF4444 !important;
+}

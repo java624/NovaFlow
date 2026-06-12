@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NovaFlow Language School - Build Your Language Flow</title>
+  <meta name="description" content="Master English, German, and Ukrainian with NovaFlow. Personalized learning paths, flexible schedules, and real-world speaking practice for rapid visible progress.">
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="nav-overlay" id="nav-overlay"></div>
+  <header id="header">
+    <div class="container header-container">
+      <a href="index.html" class="logo-link" id="logo">
+        <img src="img/logo.svg" alt="NovaFlow Logo" class="logo-img">
+        <div class="logo-text">
+          <span class="logo-name">NovaFlow</span>
+          <span class="logo-sub">LANGUAGE SCHOOL</span>
+        </div>
+      </a>
+
+      <!-- Mobile Menu Toggle Button -->
+      <button class="menu-toggle" id="menu-toggle" aria-label="Toggle Navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <!-- Navigation -->
+      <nav class="nav-menu-wrapper">
+        <ul class="nav-menu" id="nav-menu">
+          <li><a href="#hero" class="nav-link active" data-i18n="nav_home">Home</a></li>
+          <li><a href="#about" class="nav-link" data-i18n="nav_about">About us</a></li>
+          <li><a href="#languages" class="nav-link" data-i18n="nav_languages">Languages</a></li>
+          <li><a href="#reviews" class="nav-link" data-i18n="nav_reviews">Reviews</a></li>
+          <li><a href="#contact" class="nav-link" data-i18n="nav_contact">Contact</a></li>
+          <!-- Mobile Menu Actions -->
+          <li class="mobile-actions-item">
+            <div class="mobile-lang-select-wrapper">
+              <span class="mobile-action-label">Language:</span>
+              <div class="lang-selector-wrapper">
+                <select class="lang-select" aria-label="Select Language">
+                  <option value="en">EN</option>
+                  <option value="uk">UA</option>
+                  <option value="de">DE</option>
+                </select>
+              </div>
+            </div>
+            <div class="mobile-buttons">
+              <a href="login.html" class="mobile-login-btn">Sign In</a>
+              <a href="register.html" class="mobile-cta-btn" data-i18n="nav_cta">Get started</a>
+            </div>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Header Actions (Desktop) -->
+      <div class="header-actions">
+        <div class="lang-selector-wrapper">
+          <select class="lang-select" aria-label="Select Language">
+            <option value="en">EN</option>
+            <option value="uk">UA</option>
+            <option value="de">DE</option>
+          </select>
+        </div>
+        <a href="login.html" class="nav-login-btn">Sign In</a>
+        <a href="register.html" class="nav-cta" data-i18n="nav_cta">Get started</a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" id="hero">
+    <div class="container hero-grid">
+      <div class="hero-content">
+        <h1 class="hero-title" data-i18n="hero_title">
+          Build Your <span class="purple-gradient-text">Language</span> <span class="purple-gradient-text">Flow</span>. Change Your Life
+        </h1>
+        
+        <ul class="hero-bullets">
+          <li class="hero-bullet-item">
+            <span class="bullet-icon">
+              <svg viewBox="0 0 24 24"><path d="M20 6L9 17L4 12"/></svg>
+            </span>
+            <span data-i18n="hero_bullet_1">Personalized learning paths</span>
+          </li>
+          <li class="hero-bullet-item">
+            <span class="bullet-icon">
+              <svg viewBox="0 0 24 24"><path d="M20 6L9 17L4 12"/></svg>
+            </span>
+            <span data-i18n="hero_bullet_2">Flexible schedules for busy lives</span>
+          </li>
+          <li class="hero-bullet-item">
+            <span class="bullet-icon">
+              <svg viewBox="0 0 24 24"><path d="M20 6L9 17L4 12"/></svg>
+            </span>
+            <span data-i18n="hero_bullet_3">Real-world speaking practice</span>
+          </li>
+          <li class="hero-bullet-item">
+            <span class="bullet-icon">
+              <svg viewBox="0 0 24 24"><path d="M20 6L9 17L4 12"/></svg>
+            </span>
+            <span data-i18n="hero_bullet_4">Fast visible progress in 30 days</span>
+          </li>
+        </ul>
+
+        <button class="hero-cta-btn quiz-trigger" id="hero-cta">
+          <span data-i18n="hero_cta">Start your Journey</span> 
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+        </button>
+      </div>
+
+      <!-- Hero Visuals (Floating Cards linking to separate course pages) -->
+      <div class="hero-illustration">
+        <!-- SVG Orbit Paths / Swirls -->
+        <div class="illustration-bg-arcs">
+          <svg viewBox="0 0 500 500" class="arc-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M80 320 C 120 400, 280 430, 380 380" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="8 8" />
+            <path d="M420 180 C 440 280, 360 410, 240 440" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            <path d="M120 100 C 60 180, 50 300, 110 360" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </div>
+
+        <!-- Floating Sparkle -->
+        <div class="floating-star">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L14.8 9.2L22 12L14.8 14.8L12 22L9.2 14.8L2 12L9.2 9.2L12 2Z"/>
+          </svg>
+        </div>
+
+        <div class="floating-cards-container">
+          <!-- UK English Card -->
+          <a href="english.html" class="lang-card uk-card">
+            <div class="card-header">
+              <span class="mock-line short"></span>
+              <div class="mini-flag-badge">
+                <svg viewBox="0 0 60 60">
+                  <mask id="circle-mask-uk-mini"><circle cx="30" cy="30" r="30" fill="white" /></mask>
+                  <g mask="url(#circle-mask-uk-mini)">
+                    <rect width="60" height="60" fill="#00247D" />
+                    <path d="M0,0 L60,60 M60,0 L0,60" stroke="#FFFFFF" stroke-width="8" />
+                    <path d="M0,0 L60,60 M60,0 L0,60" stroke="#CC0000" stroke-width="4" />
+                    <path d="M30,0 L30,60 M0,30 L60,30" stroke="#FFFFFF" stroke-width="12" />
+                    <path d="M30,0 L30,60 M0,30 L60,30" stroke="#CC0000" stroke-width="8" />
+                  </g>
+                </svg>
+              </div>
+            </div>
+            
+            <div class="card-flag-circle">
+              <svg viewBox="0 0 60 60" width="100%" height="100%">
+                <mask id="circle-mask-uk"><circle cx="30" cy="30" r="30" fill="white" /></mask>
+                <g mask="url(#circle-mask-uk)">
+                  <rect width="60" height="60" fill="#00247D" />
+                  <path d="M0,0 L60,60 M60,0 L0,60" stroke="#FFFFFF" stroke-width="8" />
+                  <path d="M0,0 L60,60 M60,0 L0,60" stroke="#CC0000" stroke-width="4" />
+                  <path d="M30,0 L30,60 M0,30 L60,30" stroke="#FFFFFF" stroke-width="12" />
+                  <path d="M30,0 L30,60 M0,30 L60,30" stroke="#CC0000" stroke-width="8" />
+                </g>
+              </svg>
+            </div>
+
+            <div class="card-mock-lines">
+              <span class="mock-line"></span>
+              <span class="mock-line medium"></span>
+              <span class="mock-line short"></span>
+            </div>
+          </a>
+
+          <!-- German Card -->
+          <a href="german.html" class="lang-card de-card">
+            <div class="card-header">
+              <span class="mock-line short"></span>
+              <div class="mini-flag-badge">
+                <svg viewBox="0 0 60 60">
+                  <mask id="circle-mask-de-mini"><circle cx="30" cy="30" r="30" fill="white" /></mask>
+                  <g mask="url(#circle-mask-de-mini)">
+                    <rect x="0" y="0" width="60" height="20" fill="#000000" />
+                    <rect x="0" y="20" width="60" height="20" fill="#DD0000" />
+                    <rect x="0" y="40" width="60" height="20" fill="#FFCC00" />
+                  </g>
+                </svg>
+              </div>
+            </div>
+            
+            <div class="card-flag-circle">
+              <svg viewBox="0 0 60 60" width="100%" height="100%">
+                <mask id="circle-mask-de"><circle cx="30" cy="30" r="30" fill="white" /></mask>
+                <g mask="url(#circle-mask-de)">
+                  <rect x="0" y="0" width="60" height="20" fill="#000000" />
+                  <rect x="0" y="20" width="60" height="20" fill="#DD0000" />
+                  <rect x="0" y="40" width="60" height="20" fill="#FFCC00" />
+                </g>
+              </svg>
+            </div>
+
+            <div class="card-mock-lines">
+              <span class="mock-line"></span>
+              <span class="mock-line medium"></span>
+              <span class="mock-line short"></span>
+            </div>
+          </a>
+
+          <!-- Ukrainian Card -->
+          <a href="ukrainian.html" class="lang-card ua-card">
+            <div class="card-header">
+              <span class="mock-line short"></span>
+              <div class="mini-flag-badge">
+                <svg viewBox="0 0 60 60">
+                  <mask id="circle-mask-ua-mini"><circle cx="30" cy="30" r="30" fill="white" /></mask>
+                  <g mask="url(#circle-mask-ua-mini)">
+                    <rect x="0" y="0" width="60" height="30" fill="#0057B7" />
+                    <rect x="0" y="30" width="60" height="30" fill="#FFD700" />
+                  </g>
+                </svg>
+              </div>
+            </div>
+            
+            <div class="card-flag-circle">
+              <svg viewBox="0 0 60 60" width="100%" height="100%">
+                <mask id="circle-mask-ua"><circle cx="30" cy="30" r="30" fill="white" /></mask>
+                <g mask="url(#circle-mask-ua)">
+                  <rect x="0" y="0" width="60" height="30" fill="#0057B7" />
+                  <rect x="0" y="30" width="60" height="30" fill="#FFD700" />
+                </g>
+              </svg>
+            </div>
+
+            <div class="card-mock-lines">
+              <span class="mock-line"></span>
+              <span class="mock-line medium"></span>
+              <span class="mock-line short"></span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Elegant wave bottom divider -->
+    <div class="shape-divider">
+      <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+        <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill"></path>
+      </svg>
+    </div>
+  </section>
+
+  <!-- About Us Section -->
+  <section class="premium-features" id="about">
+  <div class="premium-container">
+
+    <div class="premium-header">
+      <h2>Accelerate Your Path to Language Mastery</h2>
+      <p>Our proven methodology combines modern technology with human-centric teaching to deliver results faster.</p>
+    </div>
+
+    <div class="premium-grid">
+
+      <div class="premium-card">
+        <div class="icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M19 16v6" /><path d="M16 19h6" />
+          </svg>
+        </div>
+        <h3>Personalized Learning</h3>
+        <p>A custom curriculum built entirely around your personal goals, interests, and current language level.</p>
+      </div>
+
+      <div class="premium-card">
+        <div class="icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+            <line x1="16" x2="16" y1="2" y2="6" />
+            <line x1="8" x2="8" y1="2" y2="6" />
+            <line x1="3" x2="21" y1="10" y2="10" />
+            <path d="m9 16 2 2 4-4" />
+          </svg>
+        </div>
+        <h3>Flexible Schedule</h3>
+        <p>Book, move, or reschedule your interactive lessons easily to perfectly fit your daily life and routine.</p>
+      </div>
+
+      <div class="premium-card">
+        <div class="icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        </div>
+        <h3>Real Speaking</h3>
+        <p>Skip the boring grammar drills. Start speaking from day one through realistic everyday life scenarios.</p>
+      </div>
+
+      <div class="premium-card">
+        <div class="icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3v18h18" />
+            <path d="m19 9-5 5-4-4-3 3" />
+          </svg>
+        </div>
+        <h3>Fast Progress</h3>
+        <p>Track your results and see a massive boost in your fluency and speaking confidence within the first 30 days.</p>
+      </div>
+
+    </div>
+  </div>
+  </section>
+
+  <!-- Опис вчителя -->
+  <section class="teacher-premium-section">
+  <div class="teacher-container">
+    
+    <div class="teacher-main-row">
+      
+      <div class="teacher-photo-column">
+        <div class="premium-photo-card">
+          <div class="photo-inner-mask">
+            
+            <div class="placeholder-content">
+              <svg xmlns="http://www.w3.org/2000/svg" class="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+              </svg>
+              <p class="placeholder-title">Teacher's Photo</p>
+              <p class="placeholder-subtitle">Light background, smiling portrait</p>
+            </div>
+
+          </div>
+          <span class="bg-glow-effect"></span>
+        </div>
+      </div>
+
+      <div class="teacher-text-column">
+        <h2 class="teacher-main-title">
+          Meet Your Guide to <span class="gradient-accent">Fluency</span>
+        </h2>
+
+        <div class="teacher-story-paragraphs">
+          <p>
+            English changed opportunities into reality for thousands of people — better careers, international connections, travel, confidence, and freedom. My mission is to help you achieve the same.
+          </p>
+          <p>
+            My name is Kyrylo, I'm the founder of NovaFlow Language School, and I created this platform for one reason: most people spend years "studying" English without ever feeling confident enough to actually speak it.
+          </p>
+          <p class="highlight-paragraph">
+            At NovaFlow, we do things differently.<br>
+            <span class="sub-highlight">No boring school-style lessons. No memorizing endless rules without practice. No feeling stuck.</span>
+          </p>
+          <p>
+            Our students learn through real conversations, modern interactive methods, and a system designed to help you speak naturally and confidently from the very beginning. Every lesson is built to create visible progress, keep motivation high, and make language learning feel exciting instead of stressful.
+          </p>
+          <p>
+            Whether your goal is to travel, study abroad, build an international career, pass exams, or finally speak English without hesitation — NovaFlow is designed to get you there faster and more effectively.
+          </p>
+          <p class="premium-quote">
+            This is more than a language course. <br>
+            It's a new level of confidence, new opportunities, and a new version of yourself.
+          </p>
+          <p class="final-cta-line">
+            Your language flow starts here.
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <hr class="premium-divider" />
+
+    <div class="teacher-stats-row">
+      
+      <div class="stat-box">
+        <p class="stat-number">5+ Years</p>
+        <p class="stat-label">Professional Teaching</p>
+      </div>
+
+      <div class="stat-box">
+        <p class="stat-number">200+</p>
+        <p class="stat-label">Successful Students</p>
+      </div>
+
+      <div class="stat-box">
+        <p class="stat-number">95%</p>
+        <p class="stat-label">Immersive Lessons</p>
+      </div>
+
+    </div>
+
+  </div>
+  </section>
+
+  <!-- Дипломи -->
+   <section class="certs-section">
+  <div class="certs-container">
+    
+    <div class="certs-header">
+      <span class="certs-subtitle">Academic Excellence</span>
+      <h2 class="certs-title">Certifications & Qualifications</h2>
+      <p class="certs-description">
+        A comprehensive portfolio of approved international credentials, verifying advanced pedagogical expertise and professional linguistic mastery.
+      </p>
+    </div>
+
+    <div class="certs-grid">
+      
+
+      <!--
+      <div class="cert-card" onclick="openCertModal('path-to-your-actual-diploma1.jpg')">
+        <div class="cert-icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/>
+            <path d="M6 12.5v5a6 6 0 0 0 12 0v-5"/>
+          </svg>
+        </div>
+        <span class="cert-badge primary-badge">Primary Credential</span>
+        <h3 class="cert-name">Master of Arts in Applied Linguistics</h3>
+        <p class="cert-institution">University of London — School of Education</p>
+        
+        <div class="cert-footer">
+          <span class="cert-date">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            Graduated 2018
+          </span>
+          <span class="view-original-btn">Дивитись оригінал →</span>
+        </div>
+      </div>
+      -->
+
+      <div class="cert-card" onclick="openCertModal('img/TEFL_Certification.png')">
+        <div class="cert-icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+        </div>
+        <span class="cert-badge pedagogy-badge">Pedagogy</span>
+        <h3 class="cert-name">TEFL / TESOL Certification</h3>
+        <p class="cert-institution">International TEFL Academy</p>
+        
+        <div class="cert-footer">
+          <span class="cert-date">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            Certified 2015
+          </span>
+          <span class="view-original-btn">Дивитись оригінал →</span>
+        </div>
+      </div>
+
+      <div class="cert-card" onclick="openCertModal('img/Cambridge_CELTA_Certificate.jpg')">
+        <div class="cert-icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/>
+          </svg>
+        </div>
+        <span class="cert-badge instruction-badge">English Instruction</span>
+        <h3 class="cert-name"></h3>
+        <p class="cert-institution">University of Cambridge ESOL</p>
+        
+        <div class="cert-footer">
+          <span class="cert-date">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            Certified 2016
+          </span>
+          <span class="view-original-btn">Дивитись оригінал →</span>
+        </div>
+      </div>
+
+      <div class="cert-card" onclick="openCertModal(['img/cert_safe.webp', 'img/cert_behavior.webp', 'img/cert_trauma.webp'])">
+        <div class="cert-icon-box">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <span class="cert-badge instruction-badge" style="background-color: #eff6ff; color: #1e40af;">Psychology & Safety</span>
+        <h3 class="cert-name">Advanced Classroom Psychology & Student Care</h3>
+        <p class="cert-institution">British Council — Future English Programme</p>
+
+        <div class="cert-footer">
+          <span class="cert-date">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            Certified 2024
+          </span>
+          <span class="view-original-btn">Дивитись сертифікати (3) →</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="authenticity-bar">
+      <div class="auth-left">
+        <div class="auth-icon-shield">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div class="auth-text-block">
+          <h4>Verified Authenticity</h4>
+          <p>All credentials are verified through direct institutional portals.</p>
+        </div>
+      </div>
+      
+      <div class="auth-brands">
+        <span class="brand-logo font-serif">UNIVERSITY <span class="font-sans font-light">OF</span> LONDON</span>
+        <span class="brand-logo font-sans tracking-wider font-bold">CAMBRIDGE</span>
+        <span class="brand-logo italic font-serif">British Council</span>
+      </div>
+    </div>
+
+   </div>
+
+   </section>
+
+ 
+
+   <div id="certLightbox" class="cert-lightbox" onclick="closeCertModal()">
+   <div class="lightbox-content-wrapper" onclick="event.stopPropagation()">
+    <span class="close-lightbox" onclick="closeCertModal()">&times;</span>
+    
+    <button class="lightbox-arrow arrow-left" id="prevCertBtn" onclick="changeCert(-1)">&#10094;</button>
+    
+    <img id="lightboxImg" src="" alt="Official Certificate Document" />
+    
+    <button class="lightbox-arrow arrow-right" id="nextCertBtn" onclick="changeCert(1)">&#10095;</button>
+   </div>
+   </div>
+  
+  
+   <!-- Languages Section -->
+   <section class="section languages" id="languages">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag" data-i18n="lang_tag">Languages</span>
+        <h2 class="section-title" data-i18n="lang_title">Courses We Teach</h2>
+        <p class="section-desc" data-i18n="lang_desc">Unlock massive professional and personal opportunities by mastering one of our high-demand core languages.</p>
+      </div>
+
+      <div class="languages-grid">
+        <!-- English Course -->
+        <div class="course-card uk-course">
+          <div class="course-img-wrapper">
+            <div class="course-flag-overlay">
+              <svg viewBox="0 0 60 60" width="100%" height="100%">
+                <mask id="circle-mask-uk-course"><circle cx="30" cy="30" r="30" fill="white" /></mask>
+                <g mask="url(#circle-mask-uk-course)">
+                  <rect width="60" height="60" fill="#00247D" />
+                  <path d="M0,0 L60,60 M60,0 L0,60" stroke="#FFFFFF" stroke-width="8" />
+                  <path d="M0,0 L60,60 M60,0 L0,60" stroke="#CC0000" stroke-width="4" />
+                  <path d="M30,0 L30,60 M0,30 L60,30" stroke="#FFFFFF" stroke-width="12" />
+                  <path d="M30,0 L30,60 M0,30 L60,30" stroke="#CC0000" stroke-width="8" />
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div class="course-content">
+            <span class="course-badge" data-i18n="course_en_title">English</span>
+            <h3 class="course-title" data-i18n="course_en_title">English for Global Success</h3>
+            <p class="course-desc" data-i18n="course_en_desc">From corporate negotiations to international travel, gain full command of global conversation, grammar nuances, and dynamic speaking skills.</p>
+            <div class="course-meta">
+              <div class="course-meta-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                <span data-i18n="course_levels_all">All Levels (A1-C2)</span>
+              </div>
+              <div class="course-meta-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span data-i18n="course_lessons_30">30 Lessons</span>
+              </div>
+            </div>
+            <a href="english.html" class="course-btn" data-i18n="explore_course">Explore Course</a>
+          </div>
+        </div>
+
+        <!-- German Course -->
+        <div class="course-card de-course">
+          <div class="course-img-wrapper">
+            <div class="course-flag-overlay">
+              <svg viewBox="0 0 60 60" width="100%" height="100%">
+                <mask id="circle-mask-de-course"><circle cx="30" cy="30" r="30" fill="white" /></mask>
+                <g mask="url(#circle-mask-de-course)">
+                  <rect x="0" y="0" width="60" height="20" fill="#000000" />
+                  <rect x="0" y="20" width="60" height="20" fill="#DD0000" />
+                  <rect x="0" y="40" width="60" height="20" fill="#FFCC00" />
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div class="course-content">
+            <span class="course-badge" data-i18n="course_de_title">German</span>
+            <h3 class="course-title" data-i18n="course_de_title">German for Careers</h3>
+            <p class="course-desc" data-i18n="course_de_desc">Unlock career progress in Germany, Austria, and Switzerland. Focus heavily on precise grammar structure, sentence models, and workplace vocabulary.</p>
+            <div class="course-meta">
+              <div class="course-meta-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                <span data-i18n="course_levels_de">All Levels (A1-C1)</span>
+              </div>
+              <div class="course-meta-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span data-i18n="course_lessons_35">35 Lessons</span>
+              </div>
+            </div>
+            <a href="german.html" class="course-btn" data-i18n="explore_course">Explore Course</a>
+          </div>
+        </div>
+
+        <!-- Ukrainian Course -->
+        <div class="course-card ua-course">
+          <div class="course-img-wrapper">
+            <div class="course-flag-overlay">
+              <svg viewBox="0 0 60 60" width="100%" height="100%">
+                <mask id="circle-mask-ua-course"><circle cx="30" cy="30" r="30" fill="white" /></mask>
+                <g mask="url(#circle-mask-ua-course)">
+                  <rect x="0" y="0" width="60" height="30" fill="#0057B7" />
+                  <rect x="0" y="30" width="60" height="30" fill="#FFD700" />
+                </g>
+              </svg>
+            </div>
+          </div>
+          <div class="course-content">
+            <span class="course-badge" data-i18n="course_ua_title">Ukrainian</span>
+            <h3 class="course-title" data-i18n="course_ua_title">Ukrainian Connection</h3>
+            <p class="course-desc" data-i18n="course_ua_desc">Connect with rich culture, local heritage, and speaking communities. Perfect for absolute beginners and heritage speakers looking to build core conversational confidence.</p>
+            <div class="course-meta">
+              <div class="course-meta-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                <span data-i18n="course_levels_ua">A1 - B2 Levels</span>
+              </div>
+              <div class="course-meta-item">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span data-i18n="course_lessons_30">30 Lessons</span>
+              </div>
+            </div>
+            <a href="ukrainian.html" class="course-btn" data-i18n="explore_course">Explore Course</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Practice Interactive Widget (Speech & Translate) -->
+      <div class="practice-widget">
+        <h3 class="widget-title" data-i18n="lab_title">Interactive Language Lab</h3>
+        
+        <div class="widget-tabs">
+          <button class="widget-tab-btn active" data-lang="en">
+            <svg viewBox="0 0 60 60" width="16" height="16"><mask id="circle-mask-uk-lab"><circle cx="30" cy="30" r="30" fill="white" /></mask><g mask="url(#circle-mask-uk-lab)"><rect width="60" height="60" fill="#00247D" /><path d="M0,0 L60,60 M60,0 L0,60" stroke="#FFFFFF" stroke-width="8" /><path d="M0,0 L60,60 M60,0 L0,60" stroke="#CC0000" stroke-width="4" /><path d="M30,0 L30,60 M0,30 L60,30" stroke="#FFFFFF" stroke-width="12" /><path d="M30,0 L30,60 M0,30 L60,30" stroke="#CC0000" stroke-width="8" /></g></svg>
+            English
+          </button>
+          <button class="widget-tab-btn" data-lang="de">
+            <svg viewBox="0 0 60 60" width="16" height="16"><mask id="circle-mask-de-lab"><circle cx="30" cy="30" r="30" fill="white" /></mask><g mask="url(#circle-mask-de-lab)"><rect x="0" y="0" width="60" height="20" fill="#000000" /><rect x="0" y="20" width="60" height="20" fill="#DD0000" /><rect x="0" y="40" width="60" height="20" fill="#FFCC00" /></g></svg>
+            German
+          </button>
+          <button class="widget-tab-btn" data-lang="uk">
+            <svg viewBox="0 0 60 60" width="16" height="16"><mask id="circle-mask-ua-lab"><circle cx="30" cy="30" r="30" fill="white" /></mask><g mask="url(#circle-mask-ua-lab)"><rect x="0" y="0" width="60" height="30" fill="#0057B7" /><rect x="0" y="30" width="60" height="30" fill="#FFD700" /></g></svg>
+            Ukrainian
+          </button>
+        </div>
+
+        <div class="widget-content-box">
+          <div class="phrase-original" id="phrase-orig">Hello, how are you?</div>
+          <div class="phrase-translation" id="phrase-trans">Привіт, як справи?</div>
+          <div class="phrase-pronounce" id="phrase-pron">[həˈloʊ, haʊ ɑːr juː]</div>
+          
+          <div class="widget-actions">
+            <button class="widget-action-btn play-btn" id="play-phrase-btn">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              <span data-i18n="lab_listen">Listen Speak</span>
+            </button>
+            <button class="widget-action-btn next-btn" id="next-phrase-btn">
+              <span data-i18n="lab_next">Next Phrase</span>
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="section reviews" id="reviews">
+  <div class="container">
+  <div class="section-header">
+    <span class="section-tag" data-i18n="reviews_tag">Reviews</span>
+    <h2 class="section-title" data-i18n="reviews_title">What Our Students Say</h2>
+    <p class="section-desc" data-i18n="reviews_desc">Thousands of students have accelerated their fluency path using our personalized speaking roadmap.</p>
+  </div>
+
+  <div class="reviews-carousel-container">
+    <div class="reviews-slider swiper-wrapper" id="real-comments-container">
+    </div>
+
+    <div class="reviews-nav">
+      <button class="carousel-btn" id="carousel-prev" aria-label="Previous Review">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+      </button>
+      <div class="carousel-dots" id="carousel-dots">
+      </div>
+      <button class="carousel-btn" id="carousel-next" aria-label="Next Review">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="comment-form-wrapper" style="background: #FFFFFF; padding: 30px; border-radius: 24px; box-shadow: 0 10px 30px rgba(94, 7, 126, 0.04); border: 1px solid rgba(94, 7, 126, 0.06); max-width: 640px; margin: 60px auto 0 auto;">
+    <h3 style="margin-bottom: 6px; color: #0F172A; font-size: 20px; font-weight: 700; font-family: 'Outfit', sans-serif;" data-i18n="form_review_title">Поділіться своїм досвідом</h3>
+    <p style="font-size: 14px; color: #64748B; margin-bottom: 24px; font-family: 'Outfit', sans-serif;" data-i18n="form_review_desc">Ваш відгук допоможе іншим зробити правильний вибір.</p>
+    
+    <form id="comment-form" class="comment-form" style="display: flex; flex-direction: column; gap: 16px;">
+      
+      <div class="rating-select-wrapper" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; font-family: 'Outfit', sans-serif;">
+        <span style="font-size: 14px; color: #64748B;" data-i18n="form_rating_label">Ваша оцінка:</span>
+        <div class="stars-rating-input" id="stars-selector" style="display: flex; gap: 6px; color: #E2E8F0; cursor: pointer;">
+          <svg width="26" height="26" fill="currentColor" data-value="1" viewBox="0 0 20 20" style="color: #FFB020; transition: color 0.2s;"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          <svg width="26" height="26" fill="currentColor" data-value="2" viewBox="0 0 20 20" style="color: #FFB020; transition: color 0.2s;"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          <svg width="26" height="26" fill="currentColor" data-value="3" viewBox="0 0 20 20" style="color: #FFB020; transition: color 0.2s;"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          <svg width="26" height="26" fill="currentColor" data-value="4" viewBox="0 0 20 20" style="color: #FFB020; transition: color 0.2s;"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          <svg width="26" height="26" fill="currentColor" data-value="5" viewBox="0 0 20 20" style="color: #FFB020; transition: color 0.2s;"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <input type="text" id="comment-name" data-i18n="form_name_placeholder" placeholder="Ваше ім'я та прізвище" required class="comment-input" style="width: 100%; padding: 14px 18px; border-radius: 14px; border: 1px solid #E2E8F0; font-family: 'Outfit', sans-serif; font-size: 15px; background: #FDFBFF;">
+      </div>
+      <div class="input-group">
+        <textarea id="comment-text" data-i18n="form_text_placeholder" placeholder="Напишіть свій відгук..." required class="comment-input" style="width: 100%; padding: 14px 18px; border-radius: 14px; border: 1px solid #E2E8F0; font-family: 'Outfit', sans-serif; font-size: 15px; background: #FDFBFF; height: 120px; resize: none;"></textarea>
+      </div>
+      <button type="submit" class="comment-submit-btn" data-i18n="form_submit_btn" style="background: linear-gradient(135deg, #5E077E 0%, #9333EA 100%); color: #FFFFFF; border: none; padding: 14px 28px; border-radius: 14px; font-weight: 600; cursor: pointer; font-family: 'Outfit', sans-serif; font-size: 15px; align-self: flex-start;">
+        Надіслати відгук
+      </button>
+    </form>
+  </div>
+  </div>
+  </section>
+  <!-- Contact Section -->
+  <section class="section contact" id="contact">
+    <div class="container contact-grid">
+      <div class="contact-info-panel">
+        <h2 class="contact-title" data-i18n="contact_title">Start Your Flow Today</h2>
+        <p class="section-desc" style="text-align: left;" data-i18n="contact_desc">Ready to transform your communication skills? Book your free 1-on-1 placement lesson with one of our certified trainers. We'll assess your speaking level and design your custom roadmap.</p>
+        
+        <div class="contact-info-list">
+          <div class="contact-info-item">
+            <div class="contact-icon-box">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+            <div class="contact-details">
+              <h4>Email Us Directly</h4>
+              <p>hello@novaflow-school.com</p>
+            </div>
+          </div>
+
+          <div class="contact-info-item">
+            <div class="contact-icon-box">
+              <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            </div>
+            <div class="contact-details">
+              <h4>Call Our Support</h4>
+              <p>+380 (50) 123-45-67</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Form -->
+      <div class="contact-form-card">
+        <form id="contact-form">
+          <div class="form-group-row">
+            <div class="form-group">
+              <label class="form-label" for="form-name" data-i18n="form_label_name">Full Name</label>
+              <input type="text" id="form-name" class="form-control" data-i18n="placeholder_name" placeholder="John Doe" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="form-email" data-i18n="form_label_email">Email Address</label>
+              <input type="email" id="form-email" class="form-control" data-i18n="placeholder_email" placeholder="john@example.com" required>
+            </div>
+          </div>
+
+          <div class="form-group-row">
+            <div class="form-group">
+              <label class="form-label" for="form-lang" data-i18n="form_label_lang">Target Language</label>
+              <select id="form-lang" class="form-control" required>
+                <option value="" disabled selected data-i18n="select_lang_placeholder">Select Language</option>
+                <option value="English">English</option>
+                <option value="German">German</option>
+                <option value="Ukrainian">Ukrainian</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="form-level" data-i18n="form_label_level">Current Level</label>
+              <select id="form-level" class="form-control" required>
+                <option value="" disabled selected data-i18n="select_level_placeholder">Select Level</option>
+                <option value="Absolute Beginner" data-i18n="option_level_0">Absolute Beginner (A0)</option>
+                <option value="Elementary" data-i18n="option_level_1">Elementary (A1-A2)</option>
+                <option value="Intermediate" data-i18n="option_level_2">Intermediate (B1-B2)</option>
+                <option value="Advanced" data-i18n="option_level_3">Advanced (C1-C2)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="form-message" data-i18n="form_label_msg">Special Requirements / Goals</label>
+            <textarea id="form-message" class="form-control" data-i18n="placeholder_msg" placeholder="Tell us about your learning goals..." required></textarea>
+          </div>
+
+          <button type="submit" class="form-btn">
+            <span data-i18n="form_btn">Book Free Placement Lesson</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </form>
+
+        <div class="form-success-message" id="form-success" data-i18n="form_success">
+          🎉 Congratulations! Your request has been sent. We'll email you within 2 hours to confirm your consultation time.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Placement Quiz Modal -->
+  <div class="modal" id="quiz-modal">
+    <div class="modal-card">
+      <button class="modal-close" id="modal-close" aria-label="Close Modal">
+        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+
+      <!-- Step 1: Language selection -->
+      <div class="quiz-step active" data-step="1">
+        <div class="quiz-title" data-i18n="quiz_title_1">What language do you want to master?</div>
+        <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width: 25%;"></div></div>
+        <div class="quiz-options">
+          <button class="quiz-opt-btn" data-val="English">
+            <span data-i18n="quiz_opt_1a">English Course</span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+          <button class="quiz-opt-btn" data-val="German">
+            <span data-i18n="quiz_opt_1b">German Course</span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+          <button class="quiz-opt-btn" data-val="Ukrainian">
+            <span data-i18n="quiz_opt_1c">Ukrainian Course</span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 2: Main Goal -->
+      <div class="quiz-step" data-step="2">
+        <div class="quiz-title" data-i18n="quiz_title_2">What is your primary learning goal?</div>
+        <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width: 50%;"></div></div>
+        <div class="quiz-options">
+          <button class="quiz-opt-btn" data-val="Career Development">
+            <span data-i18n="quiz_opt_2a">Career progress / Job interviews</span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+          <button class="quiz-opt-btn" data-val="Travel and Relocation">
+            <span data-i18n="quiz_opt_2b">Travel or international relocation</span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+          <button class="quiz-opt-btn" data-val="Personal Interest">
+            <span data-i18n="quiz_opt_2c">Conversing with relatives / Interest</span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 3: Schedule dedication -->
+      <div class="quiz-step" data-step="3">
+        <div class="quiz-title" data-i18n="quiz_title_3">How much time can you dedicate daily?</div>
+        <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width: 75%;"></div></div>
+        <div class="quiz-options">
+          <button class="quiz-opt-btn" data-val="15 minutes">
+            <span data-i18n="quiz_opt_3a">15 minutes - Light Flow path</span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+          <button class="quiz-opt-btn" data-val="30 minutes">
+            <span data-i18n="quiz_opt_3b">30 minutes - Recommended Regular path</span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+          <button class="quiz-opt-btn" data-val="1 hour+">
+            <span data-i18n="quiz_opt_3c">1 hour+ - Intensive Immersion path</span>
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Step 4: Results -->
+      <div class="quiz-step" data-step="4">
+        <div class="quiz-result-box">
+          <h3 class="quiz-title" style="font-size: 26px;" data-i18n="quiz_result_title">Your Custom Roadmap is Ready!</h3>
+          <p class="quiz-progress-bar"><span class="quiz-progress-fill" style="width: 100%;"></span></p>
+          <div class="quiz-result-badge" id="quiz-result-badge">English Oncoming Flow</div>
+          <p class="feature-desc" style="margin-top: 10px;" data-i18n="quiz_result_desc">Based on your inputs, we have selected an optimized path: <strong id="quiz-summary-bold">English</strong> for <strong id="quiz-goal-bold">Career</strong> dedicating <strong id="quiz-time-bold">30 mins</strong> daily. You can lock in your first speaking session immediately.</p>
+          <button class="hero-cta-btn" style="align-self: center;" id="quiz-confirm-btn" data-i18n="quiz_btn_book">Book Free Roadmap Session</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-info">
+          <a href="index.html" class="footer-logo">
+            <img src="img/logo.svg" alt="NovaFlow Logo" style="height: 40px;">
+            <div style="display: flex; flex-direction: column;">
+              <span class="footer-logo-name">NovaFlow</span>
+              <span class="footer-logo-sub">LANGUAGE SCHOOL</span>
+            </div>
+          </a>
+          <p class="footer-desc" data-i18n="footer_desc">Empowering speaking flow globally with cutting-edge immersive tutoring methodologies and flexible mobile frameworks.</p>
+          <div class="footer-socials">
+            <a href="#" class="social-link" aria-label="Facebook"><svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c4.56-.93 8-4.96 8-9.75z"/></svg></a>
+            <a href="#" class="social-link" aria-label="Instagram"><svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg></a>
+            <a href="#" class="social-link" aria-label="LinkedIn"><svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg></a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-col-title" data-i18n="footer_col_school">School</h4>
+          <ul class="footer-links">
+            <li class="footer-link"><a href="#about">About Us</a></li>
+            <li class="footer-link"><a href="#languages">Languages</a></li>
+            <li class="footer-link"><a href="#reviews">Student Reviews</a></li>
+            <li class="footer-link"><a href="#contact">Contact Support</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-col-title" data-i18n="footer_col_legal">Legal</h4>
+          <ul class="footer-links">
+            <li class="footer-link"><a href="#">Terms of Use</a></li>
+            <li class="footer-link"><a href="#">Privacy Policy</a></li>
+            <li class="footer-link"><a href="#">Cookies Setting</a></li>
+            <li class="footer-link"><a href="#">Sitemap</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="footer-col-title" data-i18n="footer_col_newsletter">Newsletter</h4>
+          <div class="footer-newsletter">
+            <p class="footer-desc" style="font-size: 14px;" data-i18n="footer_newsletter_desc">Subscribe to get weekly vocabulary updates, resources, and special trial offer notifications.</p>
+            <form class="newsletter-form" id="newsletter-form">
+              <input type="email" class="newsletter-input" data-i18n="newsletter_placeholder" placeholder="Your email address" aria-label="Newsletter Email" required>
+              <button type="submit" class="newsletter-btn" data-i18n="newsletter_btn">Join</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copy" data-i18n="footer_copy">&copy; 2026 NovaFlow Language School. All rights reserved.</p>
+        <ul class="footer-bottom-links">
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Terms</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="translations.js"></script>
+  <script src="index.js"></script>
+</body>
+</html>

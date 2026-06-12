@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NovaFlow - Панель Викладача</title>
+  
+  <link rel="stylesheet" href="teacher.css"> 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+</head>
+<body class="dashboard-body">
+
+  <div class="dashboard-wrapper">
+    
+    <aside class="sidebar">
+      <div class="sidebar-logo" onclick="window.location.href='index.html';" style="cursor: pointer;">
+        <img src="img/logo.svg" alt="NovaFlow Logo">
+        <div class="logo-text">
+          <span class="logo-name">NovaFlow</span>
+          <span class="logo-sub">TEACHER HUB</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <ul>
+          <li>
+            <a href="#" class="sidebar-link active" data-tab="dashboard">
+              <i class="fa-solid fa-chart-pie"></i> Головна
+            </a>
+          </li>
+          <li>
+            <a href="#" class="sidebar-link" data-tab="students">
+              <i class="fa-solid fa-users"></i> Мої Учні
+            </a>
+          </li>
+          <li id="workspace-menu-item">
+            <a href="#" class="sidebar-link" data-tab="workspace">
+              <i class="fa-solid fa-graduation-cap"></i> Робоча зона: <span id="sidebar-student-name">...</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="sidebar-link" data-tab="comments">
+              <i class="fa-solid fa-comments"></i> Відгуки сайту
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="#" class="logout-btn">
+          <i class="fa-solid fa-right-from-bracket"></i> Вийти
+        </a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      
+      <header class="dash-header">
+        <div class="welcome-text">
+          <h1 id="teacher-welcome">Вітаємо, викладачу 👋</h1>
+          <p>Керування розкладом, балансом учнів та домашніми завданнями.</p>
+        </div>
+      </header>
+
+      <div id="tab-dashboard" class="tab-content active">
+        
+        <div class="overview-grid">
+          
+          <div class="dash-card next-lesson-card">
+            <div class="card-badge"><span class="pulse-dot"></span> Наступний урок</div>
+            <h2 id="next-lesson-student">Завантаження...</h2>
+            <p class="next-lesson-time"><i class="fa-regular fa-clock"></i> <span id="next-lesson-countdown">Немає запланованих занять</span></p>
+            <div class="next-lesson-meta">
+              <span id="next-lesson-topic">Тема: Очікування уроку</span>
+            </div>
+          </div>
+
+          <div class="stats-widgets">
+            <div class="stat-mini-card">
+              <div class="stat-icon purple"><i class="fa-solid fa-graduation-cap"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">Активні учні</span>
+                <h3 id="stat-active-students">0</h3>
+              </div>
+            </div>
+
+            <div class="stat-mini-card">
+              <div class="stat-icon green"><i class="fa-solid fa-calendar-check"></i></div>
+              <div class="stat-info">
+                <span class="stat-label">Занять цього тижня</span>
+                <h3 id="stat-weekly-lessons">0</h3>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="dash-card general-calendar-card" style="margin-top: 30px;">
+          <div class="calendar-header-block">
+            <div>
+              <h2>📅 Загальний розклад викладача</h2>
+              <p class="calendar-description">Тут відображаються заняття усіх ваших учнів. Для редагування розкладу перейдіть у профіль конкретного учня.</p>
+            </div>
+          </div>
+          
+          <div id="general-calendar-element"></div>
+        </div>
+
+      </div>
+
+
+      <div id="tab-students" class="tab-content">
+        <div class="dash-card">
+          <h2>Список активних учнів</h2>
+          <p class="tab-description">Оберіть учня зі списку, щоб перейти до керування його розкладом та видачі ДЗ.</p>
+          
+          <table class="students-table">
+            <thead>
+              <tr>
+                <th>Учень</th>
+                <th>Залишок уроків</th>
+                <th>Дія</th>
+              </tr>
+            </thead>
+            <tbody id="students-table-body">
+              </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <div id="tab-workspace" class="tab-content">
+        
+        <div class="dash-card workspace-status-card">
+          <div class="status-info">
+            <h2 id="workspace-student-title">Учень: Не обрано</h2>
+            <p class="status-subtitle">Поточний сеанс керування навчальним процесом (Тут дозволено редагування)</p>
+          </div>
+          <div class="balance-badge">
+            <span class="badge-label">Баланс занять: </span>
+            <span id="workspace-student-lessons" class="badge-value">0</span>
+          </div>
+        </div>
+
+        <div class="workspace-grid">
+          
+          <div class="dash-card workspace-left">
+            <div class="calendar-header-block">
+              <h2>📅 Розклад занять учня</h2>
+              <button id="add-lesson-btn" class="dash-btn btn-add">
+                <i class="fa-solid fa-plus"></i> Додати урок
+              </button>
+            </div>
+            <p class="calendar-description">Календар занять, закріплених за цим студентом (Тижнева сітка).</p>
+            
+            <div id="calendar-element"></div>
+          </div>
+
+          <div class="dash-card workspace-right">
+            <h2>📝 Видати домашнє завдання</h2>
+            <p class="hw-description">Завдання з'явиться в особистому кабінеті учня в реальному часі.</p>
+            
+            <form id="teacher-hw-form">
+              <div class="form-group">
+                <label for="hw-input-title">Тема завдання:</label>
+                <input type="text" id="hw-input-title" placeholder="Наприклад: Past Simple vs Present Perfect" required>
+              </div>
+              
+              <div class="form-group">
+                <label for="hw-input-desc">Детальний опис:</label>
+                <textarea id="hw-input-desc" placeholder="Що саме потрібно зробити учню..." rows="5" required></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="hw-input-file">Прикріпити скриншот завдання / сторінку книги:</label>
+                <input type="file" id="hw-input-file" accept="image/*">
+                <small class="form-help-text">Виберіть зображення з комп'ютера (PNG, JPG). Учень зможе малювати на ньому.</small>
+              </div>
+              
+              <div class="form-group">
+                <label for="hw-input-deadline">Дедлайн виконання:</label>
+                <input type="datetime-local" id="hw-input-deadline" required>
+              </div>
+              
+              <button type="submit" class="dash-btn btn-primary submit-hw-btn">
+                <i class="fa-solid fa-paper-plane"></i> Надіслати в кабінет
+              </button>
+            </form>
+          </div>
+
+        </div>
+
+        <div class="dash-card" style="margin-top: 30px;">
+          <h2><i class="fa-solid fa-list-check"></i> Журнал заданих завдань для цього учня</h2>
+          <p class="tab-description">Тут ви можете побачити статус кожного завдання та перейти до перевірки виконаних робіт за допомогою інтерактивної дошки.</p>
+          
+          <div style="overflow-x: auto; margin-top: 15px;">
+            <table class="students-table" style="width: 100%;">
+              <thead>
+                <tr style="background: #f3f4f6;">
+                  <th>Тема завдання</th>
+                  <th>Дедлайн</th>
+                  <th>Статус</th>
+                  <th>Дія</th>
+                </tr>
+              </thead>
+              <tbody id="teacher-homework-list-tbody">
+                <tr>
+                  <td colspan="4" style="text-align: center; color: #9ca3af; padding: 20px;">
+                    Оберіть учня, щоб завантажити його історію завдань.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div id="teacher-editor-zone" class="hw-editor-zone" style="display: none;">
+          <div class="editor-header">
+            <h3><i class="fa-solid fa-chalkboard-user"></i> Перевірка та рецензування роботи учня</h3>
+            <button type="button" id="t-btn-fullscreen" class="editor-btn-secondary" onclick="window.toggleTeacherFullscreen()">
+              <i class="fa-solid fa-expand"></i> Повний екран
+            </button>
+          </div>
+          
+          <div class="editor-toolbar">
+            <div class="tool-group">
+              <button type="button" id="t-tool-brush" class="editor-btn tool-active"><i class="fa-solid fa-paint-brush"></i> Червона ручка</button>
+              <button type="button" id="t-tool-text" class="editor-btn"><i class="fa-solid fa-font"></i> Текст коментаря</button>
+              <button type="button" id="t-tool-eraser" class="editor-btn"><i class="fa-solid fa-eraser"></i> Гумка</button>
+            </div>
+            <div class="tool-group">
+              <button type="button" id="t-tool-undo" class="editor-btn-action" title="Крок назад"><i class="fa-solid fa-arrow-rotate-left"></i></button>
+              <button type="button" id="t-tool-clear" class="editor-btn-action clear-tool" title="Очистити виправлення"><i class="fa-solid fa-trash-can"></i> Очистити</button>
+            </div>
+            <div class="tool-group settings-group">
+              <div class="toolbar-item">
+                <label>Колір:</label>
+                <input type="color" id="t-editor-color" value="#dc2626">
+              </div>
+              <div class="toolbar-item">
+                <label>Товщина:</label>
+                <input type="range" id="t-editor-size" min="2" max="20" value="4">
+              </div>
+            </div>
+          </div>
+
+          <div id="t-canvas-container" class="canvas-container">
+            <div id="t-canvas-wrapper" class="canvas-wrapper">
+              <canvas id="teacher-canvas"></canvas>
+            </div>
+          </div>
+
+          <div class="editor-actions">
+            <button type="button" class="dash-btn btn-primary" id="btn-teacher-save-review">
+              <i class="fa-solid fa-check-double"></i> Надіслати перевірене завдання з коментарями
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+
+      <div id="tab-comments" class="tab-content" style="display: none;">
+        <div class="dash-card">
+          <div class="comments-tab-header">
+            <h2><i class="fa-solid fa-comments"></i> Керування відгуками</h2>
+            <p class="tab-description">Усього відгуків: <span id="total-comments-count">0</span></p>
+          </div>
+          <div id="admin-comments-list" class="admin-comments-grid">
+            </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="teacher.js"></script>
+</body>
+</html>
