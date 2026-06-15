@@ -24,6 +24,7 @@ let tBgImage = new Image();
 let currentReviewHomeworkId = null; // ID домашнього завдання, яке зараз перевіряється
 let tUndoStack = []; // Історія змін для кроків назад
 let tActiveTextarea = null; // Активне текстове поле на Canvas
+let isFullscreenActive = false; // Стан повноекранного режиму дошки перевірки
 
 // Головна подія старту програми
 document.addEventListener("DOMContentLoaded", function() {
@@ -175,7 +176,7 @@ function openStudentWorkspace(student) {
 
   // Ховаємо зону перевірки ДЗ, якщо вона була відкрита з минулим учнем
   const teacherEditorZone = document.getElementById('teacher-editor-zone');
-  if (teacherEditorZone) teacherEditorZone.style.display = 'none';
+  if (teacherEditorZone) teacherEditorZone.classList.add('hidden');
 
   switchTab('workspace');
 
@@ -321,7 +322,7 @@ if (addLessonBtn) {
 }
 
 // =========================================================================
-// 6. СТВОРЕННЯ ТА НАДСИЛАННЯ НОВОГО ДЗ
+// 6. СТВОРЕННЯ ТА НАДСИЛАННЯ НОВОГО ДЗ (ВИПРАВЛЕНО + ДЕБАГ)
 // =========================================================================
 function handleHomeworkPosting() {
   const form = document.getElementById('teacher-hw-form');
@@ -338,23 +339,42 @@ function handleHomeworkPosting() {
     const title = document.getElementById('hw-input-title').value;
     const desc = document.getElementById('hw-input-desc').value;
     const deadline = document.getElementById('hw-input-deadline').value;
-    
+
     const fileInput = document.getElementById('hw-input-file');
     const file = fileInput ? fileInput.files[0] : null;
     let uploadedImageUrl = null;
 
+    console.log("=== Старт відправки ДЗ ===");
+    console.log("Учень ID:", selectedStudentId);
+    console.log("Файл з інпуту:", file);
+
+    // Кнопка відправки з індикатором завантаження
+    const submitBtn = form.querySelector('.submit-hw-btn');
+    const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Надсилаю...`;
+    }
+
     if (file) {
       try {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
-        const filePath = `${selectedStudentId}/${fileName}`;
+        // Фікс: Робимо плаский шлях без підпапок, щоб Supabase не блокував запис
+        const filePath = `hw_${selectedStudentId}_${Date.now()}.${fileExt}`;
+        
+        console.log("Спроба завантаження файлу в сховище під ім'ям:", filePath);
 
         const { data: uploadData, error: uploadError } = await teacherSupabase
           .storage
           .from('homework-attachments')
           .upload(filePath, file);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error("Помилка від самого Supabase Storage при завантаженні:", uploadError);
+          throw uploadError;
+        }
+
+        console.log("Файл успішно завантажено. Отримуємо публічне посилання...");
 
         const { data: { publicUrl } } = teacherSupabase
           .storage
@@ -362,121 +382,86 @@ function handleHomeworkPosting() {
           .getPublicUrl(filePath);
 
         uploadedImageUrl = publicUrl;
+        console.log("Згенерований Public URL файлу:", uploadedImageUrl);
 
       } catch (storageErr) {
-        console.error("Помилка сховища Storage:", storageErr.message);
-        alert(`Не вдалося завантажити файл на сервер: ${storageErr.message}`);
-        return;
+        console.error("Перехоплена помилка блоку Storage:", storageErr);
+        
+        const proceed = confirm(
+          `⚠️ Не вдалося завантажити файл:\n"${storageErr.message || storageErr}"\n\n` +
+          `Відправити завдання БЕЗ файлу? (Учень побачить лише текст опису)`
+        );
+        if (!proceed) {
+          if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnText;
+          }
+          return;
+        }
+        uploadedImageUrl = null; // Продовжуємо без файлу
       }
     }
 
-    const { error: dbError } = await teacherSupabase.from('homeworks').insert([
-      { 
-        student_id: selectedStudentId, 
-        title: title, 
-        description: desc, 
-        deadline: deadline,
-        attachment_url: uploadedImageUrl,
-        status: 'pending' // Базовий статус
-      }
-    ]);
+    try {
+      console.log("Запис ДЗ в таблицю 'homeworks'...");
+      const { error: dbError } = await teacherSupabase.from('homeworks').insert([
+        {
+          student_id: selectedStudentId,
+          title: title,
+          description: desc,
+          deadline: deadline,
+          attachment_url: uploadedImageUrl,
+          status: 'pending'
+        }
+      ]);
 
-    if (!dbError) {
-      alert(`Домашнє завдання успішно опубліковано для учня ${selectedStudentName}!`);
-      form.reset();
-      loadTeacherHomeworkJournal(selectedStudentId); // Одразу оновлюємо журнал під формою!
-    } else {
-      alert(`Помилка запису в базу даних: ${dbError.message}`);
+      if (!dbError) {
+        const fileNote = uploadedImageUrl ? '' : ' (без прикріпленого файлу)';
+        alert(`✅ Домашнє завдання успішно опубліковано для учня ${selectedStudentName}!${fileNote}`);
+        form.reset();
+        loadTeacherHomeworkJournal(selectedStudentId);
+      } else {
+        console.error("Помилка запису в БД таблицю homeworks:", dbError);
+        alert(`Помилка запису в базу даних: ${dbError.message}`);
+      }
+    } catch (dbCatchErr) {
+      console.error("Загальний збій при роботі з БД:", dbCatchErr);
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
+      }
+      console.log("=== Кінець процесу відправки ===");
     }
   });
 }
 
-// =========================================================================
-// 7. ЖУРНАЛ ЗАДАНИХ ДЗ ЦЬОГО УЧНЯ (НОВЕ)
-// =========================================================================
-async function loadTeacherHomeworkJournal(studentId) {
-  try {
-    console.log("Завантажую журнал ДЗ для студента:", studentId);
-    
-    const { data: homeworks, error } = await teacherSupabase
-      .from('homeworks')
-      .select('*')
-      .eq('student_id', studentId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-
-    const tbody = document.getElementById('teacher-homework-list-tbody');
-    if (!tbody) return;
-
-    if (!homeworks || homeworks.length === 0) {
-      tbody.innerHTML = `
-        <tr>
-          <td colspan="4" style="text-align: center; color: #6b7280; padding: 20px;">
-            Ви ще не задавали домашніх завдань цьому учню.
-          </td>
-        </tr>`;
-      return;
-    }
-
-    tbody.innerHTML = "";
-
-    homeworks.forEach(hw => {
-      const deadlineDate = new Date(hw.deadline).toLocaleString('uk-UA', {
-        day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-      });
-
-      let statusBadge = "";
-      let actionButton = "";
-
-      // Логіка статусів та кнопок перевірки
-      if (hw.status === 'completed') {
-        statusBadge = `<span style="background: #def7ec; color: #03543f; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;"><i class="fa-solid fa-circle-check"></i> Здано учнем</span>`;
-        actionButton = `
-          <button type="button" class="manage-btn" style="background: #10b981;" 
-                  onclick="openTeacherReviewEditor('${hw.student_response_url}', '${hw.id}')">
-            <i class="fa-solid fa-file-signature"></i> Перевірити
-          </button>`;
-      } else if (hw.status === 'reviewed') {
-        statusBadge = `<span style="background: #e1effe; color: #1e429f; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;"><i class="fa-solid fa-check-double"></i> Перевірено</span>`;
-        // Якщо вже перевірено, даємо можливість завантажити фінальну картинку
-        actionButton = `
-          <button type="button" class="manage-btn" style="background: #4b5563;"
-                  onclick="openTeacherReviewEditor('${hw.student_response_url}', '${hw.id}')">
-            <i class="fa-solid fa-eye"></i> Переглянути
-          </button>`;
-      } else {
-        statusBadge = `<span style="background: #fde8e8; color: #9b1c1c; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;"><i class="fa-solid fa-clock"></i> Очікує відповіді</span>`;
-        actionButton = `<button class="manage-btn" style="background: #9ca3af;" disabled><i class="fa-solid fa-ban"></i> Немає відповіді</button>`;
-      }
-
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="font-weight: 600;">${hw.title}</td>
-        <td>${deadlineDate}</td>
-        <td>${statusBadge}</td>
-        <td>${actionButton}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-  } catch (err) {
-    console.error("Помилка генерації журналу ДЗ:", err);
-  }
-}
 
 // =========================================================================
 // 8. ІНТЕРАКТИВНА ДОШКА ПЕРЕВІРКИ ДЛЯ ВЧИТЕЛЯ (ПОВНА ПРЕМІУМ-ВЕРСІЯ)
 // =========================================================================
-let isFullscreenActive = false; // Стежимо за станом вікна глобально
 
-window.openTeacherReviewEditor = function(imageUrl, homeworkId) {
+window.openTeacherReviewEditor = function(imageUrl, homeworkId, currentComment = "") {
+  console.log("=== ВІДКРИТТЯ ДОШКИ ВЧИТЕЛЯ ===");
+  console.log("Отримано imageUrl:", imageUrl);
+  console.log("Отримано homeworkId:", homeworkId);
+
   currentReviewHomeworkId = homeworkId;
   const editorZone = document.getElementById('teacher-editor-zone');
   
   if (editorZone) {
-    editorZone.style.display = 'block';
-    initTeacherCanvas(imageUrl);
+    editorZone.classList.remove('hidden');
+    
+    // Автоматично заповнюємо текстове поле коментаря, якщо вчитель раніше вже щось писав
+    const feedbackField = document.getElementById('t-teacher-feedback');
+    if (feedbackField) {
+      feedbackField.value = currentComment || "";
+    }
+
+    // Перевіряємо, чи посилання валідне. Якщо це null, undefined або пустий рядок — передаємо пустий рядок
+    const validUrl = (imageUrl && imageUrl !== "null" && imageUrl !== "undefined" && imageUrl.trim() !== "") ? imageUrl : "";
+
+    initTeacherCanvas(validUrl);
     editorZone.scrollIntoView({ behavior: 'smooth' });
   }
 };
@@ -486,22 +471,49 @@ function initTeacherCanvas(imageUrl) {
   if (!tCanvas) return;
   tCtx = tCanvas.getContext('2d');
 
-  tBgImage.src = imageUrl;
-  tBgImage.crossOrigin = "anonymous"; 
-  
-  tBgImage.onload = function() {
-    const maxWidth = 850;
-    tCanvas.width = tBgImage.width > maxWidth ? maxWidth : tBgImage.width;
-    const scale = tCanvas.width / tBgImage.width;
-    tCanvas.height = tBgImage.height * scale;
-
-    tCtx.drawImage(tBgImage, 0, 0, tCanvas.width, tCanvas.height);
+  // ФІКС ДЛЯ ЗАВДАНЬ БЕЗ КАРТИНКИ: Якщо посилання порожнє, створюємо чистий білий аркуш
+  if (!imageUrl) {
+    console.log("Зображення відсутнє. Створюю чистий білий аркуш для малювання.");
+    tCanvas.width = 850;
+    tCanvas.height = 600;
+    
+    tCtx.fillStyle = "#ffffff";
+    tCtx.fillRect(0, 0, tCanvas.width, tCanvas.height);
     tCtx.lineCap = 'round';
     tCtx.lineJoin = 'round';
 
     tUndoStack = [];
-    tUndoStack.push(tCanvas.toDataURL()); // Перший чистий знімок екрана
-  };
+    tUndoStack.push(tCanvas.toDataURL()); // Знімок чистого білого екрана
+    tBgImage = new Image(); // Очищуємо старе тло
+  } else {
+    // Звичайний режим: завантажуємо малюнок із бази даних
+    tBgImage = new Image();
+    tBgImage.crossOrigin = "anonymous"; 
+    tBgImage.src = imageUrl;
+    
+    tBgImage.onload = function() {
+      const maxWidth = 850;
+      tCanvas.width = tBgImage.width > maxWidth ? maxWidth : tBgImage.width;
+      const scale = tCanvas.width / tBgImage.width;
+      tCanvas.height = tBgImage.height * scale;
+
+      tCtx.drawImage(tBgImage, 0, 0, tCanvas.width, tCanvas.height);
+      tCtx.lineCap = 'round';
+      tCtx.lineJoin = 'round';
+
+      tUndoStack = [];
+      tUndoStack.push(tCanvas.toDataURL()); // Перший чистий знімок екрана
+    };
+
+    tBgImage.onerror = function(err) {
+      console.error("Помилка завантаження фото в Canvas викладача. Спроба створити білий аркуш.", err);
+      tCanvas.width = 850;
+      tCanvas.height = 600;
+      tCtx.fillStyle = "#ffffff";
+      tCtx.fillRect(0, 0, tCanvas.width, tCanvas.height);
+      tUndoStack = [tCanvas.toDataURL()];
+    };
+  }
 
   tCanvas.onmousedown = handleTeacherMouseDown;
   tCanvas.onmousemove = handleTeacherMouseMove;
@@ -509,6 +521,9 @@ function initTeacherCanvas(imageUrl) {
   tCanvas.onmouseout = handleTeacherMouseUp;
 
   setupTeacherToolbarListeners();
+  
+  // АВТО-ЗАПУСК: Активуємо слухач кнопки збереження відразу при ініціалізації дошки!
+  initTeacherSaveReviewListener();
 }
 
 function saveTeacherState() {
@@ -640,7 +655,7 @@ function handleTeacherMouseUp() {
   }
 }
 
-// ✅ ЗАЛІЗОБЕТОННИЙ ПЕРЕМИКАЧ ПОВНОГО ЕКРАНУ
+// ✅ ПЕРЕМИКАЧ ПОВНОГО ЕКРАНУ
 window.toggleTeacherFullscreen = function() {
   const zone = document.getElementById('teacher-editor-zone');
   const fullscreenBtn = document.getElementById('t-btn-fullscreen');
@@ -674,8 +689,8 @@ function setupTeacherToolbarListeners() {
   }
 
   function setActiveTool(activeBtn) {
-    [brushBtn, textBtn, eraserBtn].forEach(b => b.classList.remove('tool-active'));
-    activeBtn.classList.add('tool-active');
+    [brushBtn, textBtn, eraserBtn].forEach(b => b && b.classList.remove('tool-active'));
+    if (activeBtn) activeBtn.classList.add('tool-active');
   }
 
   if (undoBtn) {
@@ -727,6 +742,9 @@ function initTeacherSaveReviewListener() {
       return;
     }
 
+    const feedbackField = document.getElementById('t-teacher-feedback');
+    const teacherCommentText = feedbackField ? feedbackField.value.trim() : "";
+
     const originalText = saveBtn.innerHTML;
     saveBtn.disabled = true;
     saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Зберігаю рецензію...`;
@@ -749,7 +767,11 @@ function initTeacherSaveReviewListener() {
         .from('homework-attachments')
         .getPublicUrl(fileName);
 
-      let updatePayload = { status: 'reviewed', student_response_url: publicUrl };
+      let updatePayload = { 
+        status: 'reviewed', 
+        student_response_url: publicUrl,
+        teacher_comment: teacherCommentText 
+      };
 
       const { error: dbError } = await teacherSupabase
         .from('homeworks')
@@ -759,7 +781,10 @@ function initTeacherSaveReviewListener() {
       if (dbError && dbError.code === 'PGRST204') {
         const { error: statusOnlyError } = await teacherSupabase
           .from('homeworks')
-          .update({ status: 'reviewed' })
+          .update({ 
+            status: 'reviewed',
+            teacher_comment: teacherCommentText 
+          })
           .eq('id', currentReviewHomeworkId);
           
         if (statusOnlyError) throw statusOnlyError;
@@ -767,17 +792,19 @@ function initTeacherSaveReviewListener() {
         throw dbError;
       }
 
-      alert("🎉 Завдання успішно перевірено! Учень побачить ваші виправлення.");
+      alert("🎉 Завдання успішно перевірено! Учень побачить ваші виправлення та текстовий коментар.");
       
       const zone = document.getElementById('teacher-editor-zone');
       if (zone) {
-        zone.style.display = 'none';
+        zone.classList.add('hidden');
         zone.classList.remove('fullscreen-mode');
       }
       isFullscreenActive = false;
 
       if (typeof loadTeacherHomeworkJournal === "function") {
         loadTeacherHomeworkJournal(selectedStudentId);
+      } else if (typeof loadTeacherHomeworkLog === "function") {
+        loadTeacherHomeworkLog(selectedStudentId);
       }
 
     } catch (err) {
@@ -789,7 +816,6 @@ function initTeacherSaveReviewListener() {
     }
   };
 }
-
 // ==========================================================================
 // ЛОГІКА ДЛЯ МОДЕРАЦІЇ ВІДГУКІВ (SUPABASE)
 // ==========================================================================
@@ -1192,4 +1218,277 @@ async function loadGeneralCalendarEvents() {
       }
     });
   });
+}
+
+
+
+// =========================================================================
+// 11. МОБІЛЬНЕ МЕНЮ ДЛЯ ВЧИТЕЛІВ (БУРГЕР)
+// =========================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const burgerBtn = document.getElementById('dash-burger-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('dash-sidebar-overlay');
+  const sidebarLinks = document.querySelectorAll('.sidebar-link');
+
+  // Функція перемикання меню
+  const toggleSidebar = () => {
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+  };
+
+  if (burgerBtn) burgerBtn.addEventListener('click', toggleSidebar);
+  if (overlay) overlay.addEventListener('click', toggleSidebar);
+
+  // Автоматично закривати сайдбар на мобільних після вибору вкладки
+  sidebarLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 1024) {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+      }
+    });
+  });
+});
+
+
+// =========================================================================
+// КЕРУВАННЯ ЖУРНАЛОМ ДЗ: ЗАВАНТАЖЕННЯ, МОДАЛЬНИЙ ПЕРЕГЛЯД ТА ВИДАЛЕННЯ
+// =========================================================================
+
+/**
+ * 1. Завантаження та рендеринг історії завдань для обраного учня
+ */
+async function loadTeacherHomeworkJournal(studentId) {
+  const tbody = document.getElementById('teacher-homework-list-tbody');
+  if (!tbody) return;
+
+  console.log("Завантаження історії ДЗ для учня з ID:", studentId);
+
+  try {
+    // Робимо запит до Supabase, сортуємо від найновіших за датою створення
+    const { data: homeworks, error } = await teacherSupabase
+      .from('homeworks')
+      .select('*')
+      .eq('student_id', studentId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    // Якщо завдань немає — виводимо красиву інформативну заглушку
+    if (!homeworks || homeworks.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="4" class="table-empty-row" style="text-align: center; padding: 24px; color: #6b7280; font-style: italic;">
+            У цього учня ще немає заданих домашніх завдань.
+          </td>
+        </tr>`;
+      return;
+    }
+
+    tbody.innerHTML = ''; // Очищаємо вміст перед новим рендером
+
+    homeworks.forEach((hw) => {
+      // Генерація бейджів статусів
+      let statusBadge = '';
+      if (hw.status === 'pending') {
+        statusBadge = '<span style="background: #fef3c7; color: #d97706; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 500;">Очікує</span>';
+      } else if (hw.status === 'completed') {
+        statusBadge = '<span style="background: #d1fae5; color: #059669; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 500;">Виконано</span>';
+      } else if (hw.status === 'reviewed') {
+        statusBadge = '<span style="background: #e0e7ff; color: #4f46e5; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 500;">Перевірено</span>';
+      }
+
+      // Обробка дати дедлайну для гарного відображення
+      const deadlineStr = hw.deadline 
+        ? new Date(hw.deadline).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) 
+        : 'Не вказано';
+
+      // Генерація динамічної кнопки перегляду залежно від наявності файлу в attachment_url
+      let actionFileBtn = '';
+      if (hw.attachment_url && hw.attachment_url !== 'null') {
+        // Якщо є файл — створюємо яскраву синю кнопку з передачею екранованого безпечного Base64 тексту
+        const b64Title = btoa(unescape(encodeURIComponent(hw.title || '')));
+        const b64Desc = btoa(unescape(encodeURIComponent(hw.description || '')));
+        
+        actionFileBtn = `
+          <button type="button" class="dash-btn" onclick="openHwPreviewModal('${b64Title}', '${b64Desc}', '${hw.attachment_url}')" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 500; margin-right: 6px; display: inline-flex; align-items: center; gap: 6px;" title="Переглянути прикріплений файл">
+            <i class="fa-solid fa-image"></i> Файл
+          </button>`;
+      } else {
+        // Якщо файлу не було — створюємо акуратну сіру кнопку-заглушку, яка відкриє лише опис тексту завдання
+        const b64Title = btoa(unescape(encodeURIComponent(hw.title || '')));
+        const b64Desc = btoa(unescape(encodeURIComponent(hw.description || '')));
+
+        actionFileBtn = `
+          <button type="button" class="dash-btn" onclick="openHwPreviewModal('${b64Title}', '${b64Desc}', '')" style="background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: 500; margin-right: 6px; display: inline-flex; align-items: center; gap: 6px;" title="Переглянути текстовий опис завдання">
+            <i class="fa-solid fa-file-lines"></i> Текст
+          </button>`;
+      }
+
+      // Кнопка перевірки ДЗ вчителем (Canvas-дошка) — тільки якщо учень здав або вже перевірено
+      let reviewBtn = '';
+      // Визначаємо зображення для рецензування: пріоритет на відповідь учня, потім оригінал
+      let finalImg = '';
+      if (hw.student_response_url && hw.student_response_url !== 'null' && hw.student_response_url !== 'undefined') {
+        finalImg = hw.student_response_url;
+      } else if (hw.attachment_url && hw.attachment_url !== 'null' && hw.attachment_url !== 'undefined') {
+        finalImg = hw.attachment_url;
+      }
+      const currentComment = hw.teacher_comment ? hw.teacher_comment.replace(/'/g, "\\'").replace(/"/g, "&quot;") : '';
+
+      if (hw.status === 'completed' || hw.status === 'done') {
+        reviewBtn = `
+          <button type="button" class="manage-btn" style="background: #10b981; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; margin-right: 6px; display: inline-flex; align-items: center; gap: 6px;" 
+                  onclick="window.openTeacherReviewEditor('${finalImg}', '${hw.id}', '${currentComment}')">
+            <i class="fa-solid fa-file-signature"></i> Перевірити
+          </button>`;
+      } else if (hw.status === 'reviewed') {
+        reviewBtn = `
+          <button type="button" class="manage-btn" style="background: #4b5563; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; margin-right: 6px; display: inline-flex; align-items: center; gap: 6px;"
+                  onclick="window.openTeacherReviewEditor('${finalImg}', '${hw.id}', '${currentComment}')">
+            <i class="fa-solid fa-eye"></i> Редагувати
+          </button>`;
+      }
+
+      // Кнопка остаточного видалення завдання (червоний кошик)
+      const deleteBtn = `
+        <button type="button" class="dash-btn" onclick="deleteHomework('${hw.id}', '${hw.attachment_url}')" style="background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; padding: 6px 10px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;" title="Видалити це завдання">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>`;
+
+      // Формуємо рядок таблиці
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-weight: 500; color: #111827; padding: 12px 8px;">${hw.title}</td>
+        <td style="color: #4b5563; padding: 12px 8px;">${deadlineStr}</td>
+        <td style="padding: 12px 8px;">${statusBadge}</td>
+        <td style="white-space: nowrap; padding: 12px 8px;">
+          ${reviewBtn}
+          ${actionFileBtn}
+          ${deleteBtn}
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+  } catch (err) {
+    console.error("Критичний збій при завантаженні журналу ДЗ:", err);
+  }
+}
+
+/**
+ * 2. Безпечне розпакування тексту та відкриття модального вікна перегляду ДЗ
+ */
+window.openHwPreviewModal = function(encodedTitle, encodedDesc, fileUrl) {
+  const modal = document.getElementById('hw-file-preview-modal');
+  const modalTitle = document.getElementById('preview-modal-title');
+  const modalDesc = document.getElementById('preview-modal-desc');
+  const modalImg = document.getElementById('preview-modal-img');
+  const imgContainer = document.getElementById('preview-image-container');
+
+  if (!modal || !modalTitle || !modalDesc) return;
+
+  // Декодуємо рядки назад з Base64 без пошкодження українських літер
+  const title = decodeURIComponent(escape(atob(encodedTitle)));
+  const desc = decodeURIComponent(escape(atob(encodedDesc)));
+
+  modalTitle.innerText = title || "Без теми";
+  modalDesc.innerText = desc || "Опис відсутній.";
+
+  // Якщо файл є — показуємо картинку, якщо немає — приховуємо контейнер зображення, щоб вікно було компактним
+  if (fileUrl && fileUrl !== 'null' && fileUrl.trim() !== '') {
+    modalImg.src = fileUrl;
+    imgContainer.style.display = 'flex';
+  } else {
+    modalImg.src = '';
+    imgContainer.style.display = 'none';
+  }
+
+  modal.classList.remove('hidden'); // Відображаємо модалку на екрані
+};
+
+/**
+ * 3. Видалення завдання з бази даних + автоматичне чищення файлу зі Storage Supabase
+ */
+window.deleteHomework = async function(hwId, attachmentUrl) {
+  const isConfirmed = confirm("⚠️ Ви впевнені, що хочете видалити це домашнє завдання?\nРобота учня та прикріплений файл зникнуть назавжди.");
+  if (!isConfirmed) return;
+
+  try {
+    console.log("Запущено процес видалення ДЗ:", hwId);
+
+    // КРОК А: Перевіряємо наявність прикріпленого файлу в сховищі Storage і видаляємо його
+    if (attachmentUrl && attachmentUrl !== 'null' && attachmentUrl.includes('/homework-attachments/')) {
+      try {
+        const urlSegments = attachmentUrl.split('/homework-attachments/');
+        if (urlSegments.length > 1) {
+          const filePathInStorage = urlSegments[1];
+          console.log("Очищення сховища: видаляємо файл", filePathInStorage);
+          
+          await teacherSupabase
+            .storage
+            .from('homework-attachments')
+            .remove([filePathInStorage]);
+        }
+      } catch (storageErr) {
+        console.error("Попередження сховища (файл міг бути видалений раніше):", storageErr);
+      }
+    }
+
+    // КРОК Б: Видаляємо запис про ДЗ з таблиці 'homeworks'
+    const { error: dbDeleteError } = await teacherSupabase
+      .from('homeworks')
+      .delete()
+      .eq('id', hwId);
+
+    if (dbDeleteError) throw dbDeleteError;
+
+    alert("✅ Завдання успішно видалено з журналу!");
+
+    // Автоматично перерендеримо оновлену таблицю без перезавантаження сторінки
+    if (typeof selectedStudentId !== 'undefined' && selectedStudentId) {
+      loadTeacherHomeworkJournal(selectedStudentId);
+    }
+
+  } catch (error) {
+    console.error("Помилка видалення завдання:", error);
+    alert(`Помилка під час видалення: ${error.message || error}`);
+  }
+};
+
+// =========================================================================
+// ФУНКЦІЯ ПОВНОГО ВИДАЛЕННЯ ІСТОРІЇ ТА ФАЙЛІВ ДЗ (ТІЛЬКИ ДЛЯ ВЧИТЕЛЯ)
+// =========================================================================
+async function deleteHomeworkReviewHistory(homeworkId) {
+  if (!confirm("⚠️ Ви впевнені, що хочете повністю видалити історію та файл перевірки цього завдання? Цю дію не можна скасувати!")) {
+    return;
+  }
+
+  try {
+    // 1. Видаляємо файл перевірки зі сховища Storage, щоб звільнити місце
+    const fileName = `reviews/review_${homeworkId}`;
+    await teacherSupabase.storage.from('homework-attachments').remove([fileName]);
+
+    // 2. Скидаємо статус завдання до початкового та очищаємо історію коментарів у базі
+    const { error } = await teacherSupabase
+      .from('homeworks')
+      .update({
+        status: 'completed', // повертаємо статус "Здано учнем"
+        teacher_comment: null
+      })
+      .eq('id', homeworkId);
+
+    if (error) throw error;
+
+    alert("🗑️ Історію перевірки успішно видалено з бази!");
+    
+    // Перезавантажуємо журнал
+    if (typeof loadTeacherHomeworkJournal === "function") {
+      loadTeacherHomeworkJournal(selectedStudentId);
+    }
+  } catch (err) {
+    console.error("Помилка видалення історії:", err);
+    alert(`Не вдалося видалити: ${err.message}`);
+  }
 }

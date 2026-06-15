@@ -13,7 +13,7 @@
   <div class="dashboard-wrapper">
     
     <aside class="sidebar">
-      <div class="sidebar-logo" onclick="window.location.href='index.html';" style="cursor: pointer;">
+      <div class="sidebar-logo clickable-logo" onclick="window.location.href='index.html';">
         <img src="img/logo.svg" alt="NovaFlow Logo">
         <div class="logo-text">
           <span class="logo-name">NovaFlow</span>
@@ -112,10 +112,16 @@
           <h2>Домашні завдання</h2>
           <p class="section-description">Тут ви можете переглянути деталі завдання та надіслати відповідь вчителю.</p>
           
-          <div class="homework-alert-box">
+          <div class="homework-alert-box" style="background: #fffbeb; border: 1px solid #fef3c7; padding: 20px; border-radius: 12px; margin-bottom: 20px; position: relative;">
             <h3 id="tab-homework-title">Немає активних завдань</h3>
             <p id="tab-homework-desc">У тебе немає невиконаних домашніх завдань на сьогодні.</p>
-            <p id="tab-homework-deadline" class="alert-deadline"></p>
+            <p id="tab-homework-deadline" class="alert-deadline" style="font-weight: 500; color: #374151; font-size: 0.9rem; margin: 0;"></p>
+            
+            <div id="tab-homework-action-block" style="margin-top: 15px; display: none;">
+              <button type="button" class="dash-btn btn-success" onclick="document.getElementById('homework-editor-zone').classList.remove('hidden'); document.getElementById('homework-editor-zone').style.display='block';" style="background: #059669; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-file-pen"></i> Відкрити інтерактивну дошку з фото
+              </button>
+            </div>
           </div>
 
           <div id="homework-editor-zone" class="hw-editor-zone" style="display: none;">
@@ -125,7 +131,7 @@
               <h3><i class="fa-solid fa-file-pen"></i> Інтерактивний примітчик завдання</h3>
               <button type="button" id="btn-fullscreen" class="editor-btn-secondary"><i class="fa-solid fa-expand"></i> Повний екран</button>
             </div>
-  ...
+
             <p class="editor-subtitle">Пиши відповіді, малюй, підкреслюй або скасовуй помилки прямо на сторінці книги:</p>
             
             <div class="editor-toolbar">
@@ -169,6 +175,48 @@
               </button>
             </div>
           </div>
+
+          <!-- Секція результату перевірки вчителем -->
+          <div id="student-review-zone" class="dash-card section-top-margin" style="display: none; border-left: 5px solid #10b981;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+              <h3 style="margin: 0; color: #10b981;"><i class="fa-solid fa-square-poll-vertical"></i> Результат перевірки вчителем</h3>
+              <button type="button" onclick="document.getElementById('student-review-zone').style.display='none'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #9ca3af;">&times;</button>
+            </div>
+            <p class="section-description">Тут ви можете побачити виправлення вчителя на зображенні та його зауваження.</p>
+            <div style="text-align: center; background: #f3f4f6; border-radius: 8px; padding: 10px; max-height: 500px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px dashed #e5e7eb;">
+              <img id="student-reviewed-image" src="" alt="Перевірене завдання" style="max-width: 100%; max-height: 480px; object-fit: contain; border-radius: 6px;">
+            </div>
+            <div id="student-hw-history-box" style="margin-top: 20px; padding: 15px; background-color: #f3f4f6; border-left: 4px solid #6366f1; border-radius: 6px; white-space: pre-line; font-family: inherit; font-size: 0.95rem; color: #1f2937; max-height: 250px; overflow-y: auto;">
+              <p style="color: #6b7280; font-style: italic; margin: 0;"><i class="fa-solid fa-comment-slash"></i> Текстових коментарів до цього завдання поки немає.</p>
+            </div>
+          </div>
+
+          <!-- Історія домашніх завдань -->
+          <div class="dash-card section-top-margin">
+            <h2><i class="fa-solid fa-clock-rotate-left"></i> Історія моїх домашніх завдань</h2>
+            <p class="section-description">Тут ви можете побачити всі ваші домашні завдання, їхні статуси та переглянути результати перевірки.</p>
+            
+            <div class="table-responsive">
+              <table class="students-table">
+                <thead>
+                  <tr class="table-header-row">
+                    <th>Тема завдання</th>
+                    <th>Дедлайн</th>
+                    <th>Статус</th>
+                    <th>Дія</th>
+                  </tr>
+                </thead>
+                <tbody id="student-homework-history-tbody">
+                  <tr>
+                    <td colspan="4" class="table-empty-row" style="text-align: center; padding: 20px; color: #6b7280;">
+                      Завантаження історії завдань...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -181,7 +229,6 @@
 
       <div id="tab-payments" class="tab-content">
         
-        <!-- Банер поточної мови учня -->
         <div class="dash-card payments-lang-banner" id="payments-lang-banner">
           <div class="lang-banner-inner">
             <div class="lang-banner-icon" id="payments-lang-icon">🎓</div>
@@ -196,21 +243,18 @@
           </div>
         </div>
 
-        <!-- Картки тарифних планів -->
         <div class="payments-section-header">
           <h2>Поповнити баланс уроків</h2>
           <p id="payments-section-desc">Обери план та продовж навчання</p>
         </div>
 
         <div class="dash-pricing-grid" id="dash-pricing-grid">
-          <!-- Генерується динамічно в dashboard.js -->
           <div class="dash-pricing-loading">
             <div class="loading-spinner"></div>
             <p>Завантаження планів...</p>
           </div>
         </div>
 
-        <!-- Кнопка зміни мови -->
         <div class="dash-card change-lang-card">
           <div class="change-lang-inner">
             <div class="change-lang-text">
@@ -226,7 +270,6 @@
         </div>
 
       </div>
-
 
     </main>
   </div>

@@ -228,9 +228,6 @@ async function initStudentCalendar(studentId) {
   }
 }
 
-// =========================================================================
-// 4. Логіка завантаження домашнього завдання + Інтерактивний примітчик
-// =========================================================================
 async function loadStudentHomework(studentId) {
   try {
     console.log("Запитую ДЗ з бази для ID:", studentId);
@@ -254,25 +251,23 @@ async function loadStudentHomework(studentId) {
     const tabDesc = document.getElementById('tab-homework-desc');
     const tabDeadline = document.getElementById('tab-homework-deadline');
     const editorZone = document.getElementById('homework-editor-zone');
+    const actionBlock = document.getElementById('tab-homework-action-block');
 
     if (homeworks && homeworks.length > 0) {
       const latestHomework = homeworks[0];
-      currentHomeworkId = latestHomework.id; // Зберігаємо ID у глобальну змінну!
+      currentHomeworkId = latestHomework.id; 
 
       const dateOptions = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
       const formattedDeadline = new Date(latestHomework.deadline).toLocaleString('uk-UA', dateOptions);
 
-      // Головна сторінка
       if (homeworkTitle) homeworkTitle.innerText = latestHomework.title;
       if (homeworkDesc) homeworkDesc.innerText = latestHomework.description || "Опис відсутній";
       if (homeworkDeadline) homeworkDeadline.innerHTML = `<i class="fa-solid fa-clock"></i> Дедлайн: ${formattedDeadline}`;
 
-      // Вкладка ДЗ
       if (tabTitle) tabTitle.innerText = latestHomework.title;
       if (tabDesc) tabDesc.innerText = latestHomework.description || "Опис відсутній";
       if (tabDeadline) tabDeadline.innerText = `Здати до: ${formattedDeadline}`;
 
-      // Оновлення бейджа та кнопки залежно від статусу
       const statusBadge = document.getElementById('homework-status-badge');
       const actionBtn = document.getElementById('homework-action-btn');
       
@@ -298,22 +293,95 @@ async function loadStudentHomework(studentId) {
         }
       }
 
-      // Фікс пропажі відповідей: Якщо учень вже зберіг свою роботу, відкриваємо її. Інакше — чистий файл вчителя.
-      const urlToLoad = latestHomework.student_response_url ? latestHomework.student_response_url : latestHomework.attachment_url;
+      // Обчислюємо посилання на фото
+      let urlToLoad = null;
+      if (latestHomework.student_response_url && latestHomework.student_response_url !== 'null') {
+        urlToLoad = latestHomework.student_response_url;
+      } else if (latestHomework.attachment_url && latestHomework.attachment_url !== 'null') {
+        urlToLoad = latestHomework.attachment_url;
+      }
 
-      if (urlToLoad && editorZone) {
-        editorZone.style.display = 'block';
-        initHomeworkCanvas(urlToLoad);
-      } else if (editorZone) {
+      // ФІКС: За замовчуванням приховуємо дошку малювання, щоб вона не відкривалась автоматично
+      if (editorZone) {
+        editorZone.classList.add('hidden');
         editorZone.style.display = 'none';
+      }
+
+      if (urlToLoad && urlToLoad.trim() !== '') {
+        if (actionBlock) actionBlock.style.display = 'block'; // показуємо блок керування
+        initHomeworkCanvas(urlToLoad);
+      } else {
+        if (actionBlock) actionBlock.style.display = 'none';
       }
 
     } else {
       if (homeworkTitle) homeworkTitle.innerText = "Активних завдань немає";
       if (homeworkDesc) homeworkDesc.innerText = "Вчитель ще не додав для тебе домашнього завдання.";
       if (homeworkDeadline) homeworkDeadline.innerText = "";
-      if (editorZone) editorZone.style.display = 'none';
+      if (editorZone) {
+        editorZone.classList.add('hidden');
+        editorZone.style.display = 'none';
+      }
+      if (actionBlock) actionBlock.style.display = 'none';
     }
+
+    // Будуємо історію ДЗ у таблиці
+    const tbody = document.getElementById('student-homework-history-tbody');
+    if (tbody) {
+      tbody.innerHTML = '';
+      if (!homeworks || homeworks.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="4" class="table-empty-row" style="text-align: center; padding: 20px; color: #6b7280;">
+              У вас поки немає заданих домашніх завдань.
+            </td>
+          </tr>`;
+      } else {
+        homeworks.forEach(hw => {
+          const deadlineDate = new Date(hw.deadline).toLocaleString('uk-UA', {
+            day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+
+          let statusBadge = '';
+          if (hw.status === 'completed' || hw.status === 'done') {
+            statusBadge = `<span style="background: #def7ec; color: #03543f; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;"><i class="fa-solid fa-circle-check"></i> Здано</span>`;
+          } else if (hw.status === 'reviewed') {
+            statusBadge = `<span style="background: #e1effe; color: #1e429f; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;"><i class="fa-solid fa-check-double"></i> Перевірено</span>`;
+          } else {
+            statusBadge = `<span style="background: #fde8e8; color: #9b1c1c; padding: 4px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: bold;"><i class="fa-solid fa-clock"></i> Очікує</span>`;
+          }
+
+          let actionButtons = '';
+          const b64Hw = btoa(unescape(encodeURIComponent(JSON.stringify(hw))));
+
+          // Кнопка перегляду перевірки (якщо статус reviewed або completed і є student_response_url)
+          if (hw.student_response_url && hw.student_response_url !== 'null' && hw.student_response_url !== 'undefined') {
+            actionButtons += `
+              <button type="button" class="dash-btn btn-success" style="background: #10b981; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; margin-right: 5px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px;" 
+                      onclick="window.displayReviewedHwFromBase64('${b64Hw}')">
+                <i class="fa-solid fa-eye"></i> Перевірка
+              </button>`;
+          }
+
+          // Кнопка для відкриття ДЗ у верхньому блоці для виконання
+          actionButtons += `
+            <button type="button" class="dash-btn" style="background: #6366f1; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 4px;" 
+                    onclick="window.selectHwFromBase64('${b64Hw}')">
+              <i class="fa-solid fa-file-signature"></i> Відкрити ДЗ
+            </button>`;
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td style="font-weight: 600; padding: 12px 8px;">${hw.title}</td>
+            <td style="padding: 12px 8px;">${deadlineDate}</td>
+            <td style="padding: 12px 8px;">${statusBadge}</td>
+            <td style="white-space: nowrap; padding: 12px 8px;">${actionButtons}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+    }
+
   } catch (err) {
     console.error("Помилка виконання функції loadStudentHomework:", err);
   }
@@ -327,10 +395,14 @@ function initHomeworkCanvas(imageUrl) {
   if (!canvas) return;
   ctx = canvas.getContext('2d');
 
-  bgImage.src = imageUrl;
+  console.log("Ініціалізація Canvas. Завантажую фон...");
+
+  // ФІКС CORS: Налаштування заголовків безпеки строго ДО вказання джерела src!
   bgImage.crossOrigin = "anonymous"; 
+  bgImage.src = imageUrl;
   
   bgImage.onload = function() {
+    console.log("Фонове зображення успішно завантажено в Canvas.");
     const maxWidth = 850;
     canvas.width = bgImage.width > maxWidth ? maxWidth : bgImage.width;
     const scale = canvas.width / bgImage.width;
@@ -345,6 +417,10 @@ function initHomeworkCanvas(imageUrl) {
     redoStack = [];
     // Зберігаємо початковий стан (чистий фон) в історію
     saveState();
+  };
+
+  bgImage.onerror = function(err) {
+    console.error("Критична помилка завантаження фонового зображення в Canvas. Можливо, проблема CORS або файл видалено.", err);
   };
 
   // Події миші
@@ -610,7 +686,6 @@ function setupToolbarListeners() {
     };
   }
 }
-
 // =========================================================================
 // 4.2 НАДСИЛАННЯ ТА ЗБЕРЕЖЕННЯ ДЗ У ХМАРУ SUPABASE STORAGE
 // =========================================================================
@@ -1104,3 +1179,126 @@ function showDashToast(message, color = '#4B1F60') {
     setTimeout(() => toast.remove(), 350);
   }, 3200);
 }
+// =========================================================================
+// ВІДОБРАЖЕННЯ ПЕРЕВІРЕНОГО ЗАВДАННЯ ТА ІСТОРІЇ ДЗ У КАБІНЕТІ УЧНЯ
+// =========================================================================
+function displayStudentReviewedHomework(homework) {
+  // 1. Знаходимо або створюємо контейнер для історії коментарів у модалці/зоні учня
+  const previewZone = document.getElementById('student-review-zone'); 
+  if (!previewZone) return;
+
+  // Показуємо зону перегляду
+  previewZone.style.display = 'block';
+
+  // 2. Виведення картинки з хвостиком проти кешування (щоб завжди завантажувався свіжий малюнок)
+  const studentCanvasImg = document.getElementById('student-reviewed-image');
+  if (studentCanvasImg && homework.student_response_url) {
+    studentCanvasImg.src = `${homework.student_response_url}?t=${Date.now()}`;
+  }
+
+  // 3. ЛОГІКА ІСТОРІЇ: Шукаємо або створюємо блок для відображення історії переписки
+  let commentContainer = document.getElementById('student-hw-history-box');
+  
+  if (!commentContainer) {
+    // Якщо блоку ще немає в HTML, створюємо його динамічно під картинкою
+    commentContainer = document.createElement('div');
+    commentContainer.id = 'student-hw-history-box';
+    // Додаємо гарні стилі для історії (сірий блок, схожий на чат)
+    commentContainer.style.cssText = `
+      margin-top: 20px;
+      padding: 15px;
+      background-color: #f3f4f6;
+      border-left: 4px solid #6366f1;
+      border-radius: 6px;
+      white-space: pre-line;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.95rem;
+      color: #1f2937;
+      max-height: 250px;
+      overflow-y: auto;
+    `;
+    previewZone.appendChild(commentContainer);
+  }
+
+  // 4. Заповнюємо блок історією або пишемо, що коментарів немає
+  if (homework.teacher_comment && homework.teacher_comment.trim() !== "") {
+    commentContainer.innerHTML = `
+      <h4 style="margin-top:0; margin-bottom:10px; color:#4f46e5; font-size:1.1rem;">
+        <i class="fa-solid fa-clock-history"></i> Історія перевірки та коментарів:
+      </h4>
+      ${homework.teacher_comment}
+    `;
+  } else {
+    commentContainer.innerHTML = `
+      <p style="color: #6b7280; font-style: italic; margin: 0;">
+        <i class="fa-solid fa-comment-slash"></i> Текстових коментарів до цього завдання поки немає.
+      </p>
+    `;
+  }
+
+  // Плавний скрол до блоку результатів
+  previewZone.scrollIntoView({ behavior: 'smooth' });
+}
+
+window.displayStudentReviewedHomework = displayStudentReviewedHomework;
+
+window.displayReviewedHwFromBase64 = function(b64Data) {
+  try {
+    const hw = JSON.parse(decodeURIComponent(escape(atob(b64Data))));
+    displayStudentReviewedHomework(hw);
+  } catch (err) {
+    console.error("Помилка декодування ДЗ для перегляду:", err);
+  }
+};
+
+window.selectHwFromBase64 = function(b64Data) {
+  try {
+    const hw = JSON.parse(decodeURIComponent(escape(atob(b64Data))));
+    window.selectHomeworkForSolving(hw);
+  } catch (err) {
+    console.error("Помилка декодування ДЗ для виконання:", err);
+  }
+};
+
+window.selectHomeworkForSolving = function(homework) {
+  currentHomeworkId = homework.id;
+  
+  const tabTitle = document.getElementById('tab-homework-title');
+  const tabDesc = document.getElementById('tab-homework-desc');
+  const tabDeadline = document.getElementById('tab-homework-deadline');
+  const editorZone = document.getElementById('homework-editor-zone');
+  const actionBlock = document.getElementById('tab-homework-action-block');
+
+  const dateOptions = { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+  const formattedDeadline = new Date(homework.deadline).toLocaleString('uk-UA', dateOptions);
+
+  if (tabTitle) tabTitle.innerText = homework.title;
+  if (tabDesc) tabDesc.innerText = homework.description || "Опис відсутній";
+  if (tabDeadline) tabDeadline.innerText = `Здати до: ${formattedDeadline}`;
+
+  // Скидаємо/приховуємо саму дошку малювання за замовчуванням
+  if (editorZone) {
+    editorZone.classList.add('hidden');
+    editorZone.style.display = 'none';
+  }
+
+  let urlToLoad = null;
+  if (homework.student_response_url && homework.student_response_url !== 'null') {
+    urlToLoad = homework.student_response_url;
+  } else if (homework.attachment_url && homework.attachment_url !== 'null') {
+    urlToLoad = homework.attachment_url;
+  }
+
+  if (urlToLoad && urlToLoad.trim() !== '') {
+    if (actionBlock) actionBlock.style.display = 'block';
+    initHomeworkCanvas(urlToLoad);
+  } else {
+    if (actionBlock) actionBlock.style.display = 'none';
+  }
+
+  // Скролимо до блоку вирішення
+  const solvingBlock = document.querySelector('.homework-alert-box');
+  if (solvingBlock) {
+    solvingBlock.scrollIntoView({ behavior: 'smooth' });
+  }
+};

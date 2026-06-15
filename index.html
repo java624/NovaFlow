@@ -9,6 +9,7 @@
 </head>
 <body>
 
+  <!-- Page: index.html — Main landing page -->
   <!-- Header -->
   <div class="nav-overlay" id="nav-overlay"></div>
   <header id="header">
@@ -732,7 +733,7 @@
     <div class="container contact-grid">
       <div class="contact-info-panel">
         <h2 class="contact-title" data-i18n="contact_title">Start Your Flow Today</h2>
-        <p class="section-desc" style="text-align: left;" data-i18n="contact_desc">Ready to transform your communication skills? Book your free 1-on-1 placement lesson with one of our certified trainers. We'll assess your speaking level and design your custom roadmap.</p>
+        <p class="section-desc text-left" data-i18n="contact_desc">Ready to transform your communication skills? Book your free 1-on-1 placement lesson with one of our certified trainers. We'll assess your speaking level and design your custom roadmap.</p>
         
         <div class="contact-info-list">
           <div class="contact-info-item">
@@ -811,85 +812,7 @@
     </div>
   </section>
 
-  <!-- Placement Quiz Modal -->
-  <div class="modal" id="quiz-modal">
-    <div class="modal-card">
-      <button class="modal-close" id="modal-close" aria-label="Close Modal">
-        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-      </button>
 
-      <!-- Step 1: Language selection -->
-      <div class="quiz-step active" data-step="1">
-        <div class="quiz-title" data-i18n="quiz_title_1">What language do you want to master?</div>
-        <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width: 25%;"></div></div>
-        <div class="quiz-options">
-          <button class="quiz-opt-btn" data-val="English">
-            <span data-i18n="quiz_opt_1a">English Course</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-          </button>
-          <button class="quiz-opt-btn" data-val="German">
-            <span data-i18n="quiz_opt_1b">German Course</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-          </button>
-          <button class="quiz-opt-btn" data-val="Ukrainian">
-            <span data-i18n="quiz_opt_1c">Ukrainian Course</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Step 2: Main Goal -->
-      <div class="quiz-step" data-step="2">
-        <div class="quiz-title" data-i18n="quiz_title_2">What is your primary learning goal?</div>
-        <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width: 50%;"></div></div>
-        <div class="quiz-options">
-          <button class="quiz-opt-btn" data-val="Career Development">
-            <span data-i18n="quiz_opt_2a">Career progress / Job interviews</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-          </button>
-          <button class="quiz-opt-btn" data-val="Travel and Relocation">
-            <span data-i18n="quiz_opt_2b">Travel or international relocation</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-          </button>
-          <button class="quiz-opt-btn" data-val="Personal Interest">
-            <span data-i18n="quiz_opt_2c">Conversing with relatives / Interest</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Step 3: Schedule dedication -->
-      <div class="quiz-step" data-step="3">
-        <div class="quiz-title" data-i18n="quiz_title_3">How much time can you dedicate daily?</div>
-        <div class="quiz-progress-bar"><div class="quiz-progress-fill" style="width: 75%;"></div></div>
-        <div class="quiz-options">
-          <button class="quiz-opt-btn" data-val="15 minutes">
-            <span data-i18n="quiz_opt_3a">15 minutes - Light Flow path</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-          </button>
-          <button class="quiz-opt-btn" data-val="30 minutes">
-            <span data-i18n="quiz_opt_3b">30 minutes - Recommended Regular path</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-          </button>
-          <button class="quiz-opt-btn" data-val="1 hour+">
-            <span data-i18n="quiz_opt_3c">1 hour+ - Intensive Immersion path</span>
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- Step 4: Results -->
-      <div class="quiz-step" data-step="4">
-        <div class="quiz-result-box">
-          <h3 class="quiz-title" style="font-size: 26px;" data-i18n="quiz_result_title">Your Custom Roadmap is Ready!</h3>
-          <p class="quiz-progress-bar"><span class="quiz-progress-fill" style="width: 100%;"></span></p>
-          <div class="quiz-result-badge" id="quiz-result-badge">English Oncoming Flow</div>
-          <p class="feature-desc" style="margin-top: 10px;" data-i18n="quiz_result_desc">Based on your inputs, we have selected an optimized path: <strong id="quiz-summary-bold">English</strong> for <strong id="quiz-goal-bold">Career</strong> dedicating <strong id="quiz-time-bold">30 mins</strong> daily. You can lock in your first speaking session immediately.</p>
-          <button class="hero-cta-btn" style="align-self: center;" id="quiz-confirm-btn" data-i18n="quiz_btn_book">Book Free Roadmap Session</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Footer -->
   <footer>

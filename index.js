@@ -363,8 +363,8 @@ document.addEventListener('DOMContentLoaded', () => {
       pricingContainer.style.transition = 'transform 0.4s ease-in-out';
 
       function getSlidesPerView() {
-        if (window.innerWidth >= 1100) return 3;
-        if (window.innerWidth >= 680) return 2;
+        if (window.innerWidth >= 1024) return 3;
+        if (window.innerWidth >= 768) return 2;
         return 1;
       }
 

@@ -16,6 +16,24 @@ body.dashboard-body {
   min-height: 100vh;
 }
 
+/* УТИЛІТНІ КЛАСИ */
+.hidden {
+  display: none !important;
+}
+
+.clickable-logo {
+  cursor: pointer;
+}
+
+.section-top-margin {
+  margin-top: 30px;
+}
+
+.table-scroll-wrapper {
+  overflow-x: auto;
+  margin-top: 15px;
+}
+
 /* ГОЛОВНА СІТКА ПАНЕЛІ (Макет) */
 .dashboard-wrapper {
   display: flex;
@@ -133,6 +151,250 @@ body.dashboard-body {
 }
 
 /* =========================================================================
+   БАЗОВІ СТИЛІ ДЛЯ ДЕСКТОПУ (ПРИХОВУВАННЯ МОБІЛЬНИХ ЕЛЕМЕНТІВ)
+   ========================================================================= */
+.dash-mobile-topbar {
+  display: none; /* На комп'ютері мобільна шапка схована */
+}
+
+.dash-sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1999;
+}
+
+/* =========================================================================
+   ЗАЛІЗОБЕТОННА АДАПТИВКА ДЛЯ ПАНЕЛІ ВЧИТЕЛЯ (КРАШ-ТЕСТ ДО 768px)
+   ========================================================================= */
+@media (max-width: 768px) {
+  
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+    background-color: #f9fafb;
+  }
+
+  /* 1. ВМИКАЄМО ВЕРХНЮ МОБІЛЬНУ ПЛАШКУ */
+  .dash-mobile-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: #ffffff;
+    padding: 0 20px;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+    z-index: 1500;
+    box-sizing: border-box;
+  }
+
+  .dash-burger-btn {
+    background: none;
+    border: none;
+    font-size: 1.35rem;
+    color: #111827;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 2. ХОВАЄМО САЙДБАР ЗА МЕЖІ ЕКРАНУ (Виїжджатиме зліва) */
+  .sidebar {
+    position: fixed !important;
+    top: 0;
+    left: -280px; /* Повністю схований зліва */
+    width: 280px !important;
+    height: 100vh !important;
+    z-index: 2000 !important;
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.15);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  /* Стан, коли сайдбар відкритий (додається через JS клас .active) */
+  .sidebar.active {
+    left: 0 !important;
+  }
+
+  /* Показуємо затемнення фону, коли сайдбар активний */
+  .dash-sidebar-overlay.active {
+    display: block;
+  }
+
+  /* 3. СКИДАЄМО ВІДСТУПИ ГОЛОВНОГО КОНТЕНТУ */
+  .main-content {
+    margin-top: 60px !important; /* Відступ зверху, щоб не залазити під мобільну шапку */
+    margin-left: 0 !important; /* Більше контент не зсунутий на 280px! */
+    padding: 80px 16px 40px 16px !important; /* 80px зверху, щоб не залазити під фіксовану мобільну шапку */
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .dash-header {
+    margin-bottom: 24px;
+    text-align: left;
+  }
+
+  .welcome-text h1 {
+    font-size: 1.45rem;
+  }
+
+  .welcome-text p {
+    font-size: 0.88rem;
+  }
+
+  /* 4. ПЕРЕБУДОВА СІТОК В ОДИН СТОВПЧИК */
+  .overview-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .stats-widgets {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .dash-card {
+    padding: 16px !important;
+    margin-bottom: 16px;
+    border-radius: 12px;
+  }
+
+  /* Гнучка сітка Робочої зони (Календар + Форма ДЗ) */
+  .workspace-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .workspace-left, 
+  .workspace-right {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    min-width: 0 !important; /* Прибираємо жорсткі обмеження в px */
+  }
+
+  /* Верхня плашка стану обраного учня */
+  .workspace-status-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .balance-badge {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+  }
+
+  .calendar-header-block {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  #add-lesson-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  /* 5. РЯТУЄМО ТАБЛИЦІ ВІД ЗЛАМУ (Додаємо скролл) */
+  .dash-card:has(table),
+  .table-scroll-wrapper {
+    width: 100%;
+    overflow-x: auto; /* Дозволяє свайпати таблицю вбік, якщо вона не влазить */
+    -webkit-overflow-scrolling: touch;
+    margin-top: 10px;
+  }
+
+  .students-table {
+    min-width: 500px; /* Гарантує, що стовпці не стиснуться в мікро-текст */
+  }
+
+  /* 6. АДАПТАЦІЯ КАЛЕНДАРІВ (FullCalendar) */
+  #calendar-element,
+  #general-calendar-element {
+    padding: 6px !important;
+    font-size: 0.8rem; /* Зменшуємо шрифти інтерфейсу, щоб дні тижня ставали компактно */
+    overflow-x: auto;
+  }
+
+  /* 7. ІНТЕРАКТИВНА ДОШКА (Canvas перевірки ДЗ) */
+  .editor-toolbar {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+    padding: 12px !important;
+  }
+
+  .tool-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .tool-group button {
+    flex: 1 1 auto;
+    justify-content: center;
+    font-size: 0.85rem;
+    padding: 8px 12px;
+  }
+
+  .settings-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar-item {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  /* Форма завантаження та кнопки */
+  .form-group input[type="text"],
+  .form-group input[type="datetime-local"],
+  .form-group textarea {
+    padding: 10px 14px;
+    font-size: 0.92rem;
+  }
+
+  .submit-hw-btn {
+    width: 100% !important;
+    padding: 14px 20px !important;
+  }
+}
+
+/* Маленькі смартфони */
+@media (max-width: 400px) {
+  .welcome-text h1 {
+    font-size: 1.25rem;
+  }
+  
+  .dash-card h2 {
+    font-size: 1.1rem;
+  }
+}
+/* =========================================================================
    ГОЛОВНИЙ КОНТЕНТ (MAIN CONTENT)
    ========================================================================= */
 .main-content {
@@ -174,7 +436,43 @@ body.dashboard-body {
   color: #111827;
   margin-bottom: 8px;
 }
+/* =========================================================================
+   АДАПТИВНІ СТИЛІ ДЛЯ ГОЛОВНОГО КОНТЕНТУ ТА КАРТОК (ДЛЯ ЕКРАНІВ ДО 768px)
+   ========================================================================= */
+@media (max-width: 768px) {
+  
+  .main-content {
+    margin-left: 0 !important; /* Обнуляємо відступ сайдбару, щоб контент не зсувався вправо */
+    padding: 20px 16px !important; /* Зменшуємо паддінги, щоб звільнити місце на екрані телефона */
+    width: 100%;
+    box-sizing: border-box;
+  }
 
+  .dash-header {
+    margin-bottom: 20px;
+  }
+
+  .welcome-text h1 {
+    font-size: 1.4rem; /* Зменшуємо заголовок, щоб він не розривав рядки */
+    margin-bottom: 4px;
+  }
+
+  .welcome-text p {
+    font-size: 0.88rem;
+  }
+
+  /* КАРТКИ-КОНТЕЙНЕРИ (Dash Cards) на мобільних */
+  .dash-card {
+    padding: 16px !important; /* Менші внутрішні відступи, щоб контент всередині мав простір */
+    margin-bottom: 16px;
+    border-radius: 10px; /* Трохи притискаємо радіус для кращого вигляду на малих екранах */
+  }
+
+  .dash-card h2 {
+    font-size: 1.15rem; /* Оптимальний розмір підзаголовків картки для смартфонів */
+    margin-bottom: 6px;
+  }
+}
 /* =========================================================================
    НОВІ СТИЛІ ДЛЯ CRM ТА РОБОЧОЇ ЗОНИ СТУДЕНТА
    ========================================================================= */
@@ -418,7 +716,134 @@ body.dashboard-body {
 .submit-hw-btn:active {
   transform: translateY(0) !important;
 }
+/* =========================================================================
+   АДАПТИВНІ СТИЛІ ДЛЯ CRM ТА РОБОЧОЇ ЗОНИ СТУДЕНТА (ДО 768px)
+   ========================================================================= */
+@media (max-width: 768px) {
 
+  /* --- Інтерактивна таблиця учнів --- */
+  /* Сама таблиця лежить у `.dash-card`, тому додаємо горизонтальний скролл, щоб довгі імена не ламали екран */
+  .dash-card:has(#students-table-body) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  #students-table-body tr {
+    font-size: 0.9rem; /* Трохи компактніший текст для мобільних */
+  }
+
+  .manage-btn {
+    padding: 6px 12px; /* Компактніша кнопка на екранах смартфонів */
+    font-size: 0.85rem;
+  }
+
+  /* --- Верхня плашка стану обраного учня --- */
+  .workspace-status-card {
+    flex-direction: column; /* Текст і баланс тепер один під одним */
+    align-items: stretch; /* Розтягуємо на всю ширину */
+    gap: 12px;
+    padding: 14px 16px !important;
+    border-left-width: 4px; /* Трохи тонша акцентна лінія */
+  }
+
+  .balance-badge {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-between; /* Назва зліва, цифра справа */
+    align-items: center;
+    padding: 8px 14px;
+  }
+
+  .balance-badge .balance-value {
+    font-size: 1.15rem; /* Компактніший розмір шрифту балансу */
+  }
+
+  /* --- Гнучка сітка робочої зони (Календар + ДЗ) --- */
+  .workspace-grid {
+    flex-direction: column; /* Стовпці стають один під один */
+    gap: 16px;
+  }
+
+  .workspace-left, 
+  .workspace-right {
+    width: 100% !important;
+    min-width: 0 !important; /* УБИВАЄМО 450px та 320px, які розривали мобільний екран! */
+    flex: 1 1 100% !important;
+  }
+
+  /* --- Заголовок календаря та елементи розкладу --- */
+  .calendar-header-block {
+    flex-direction: column; /* Заголовок і кнопка "Додати урок" стають в стовпчик */
+    align-items: stretch; /* Розтягуємо на всю ширину */
+    gap: 12px;
+  }
+
+  #add-lesson-btn {
+    width: 100%; /* Кнопка стає великою на всю ширину для зручного тапу пальцем */
+    justify-content: center;
+    padding: 12px;
+  }
+
+  #calendar-element {
+    padding: 10px; /* Менші внутрішні відступи для екрана телефону */
+    font-size: 0.82rem; /* Оптимізуємо шрифти FullCalendar */
+    overflow-x: auto; /* Дозволяє скролити тижневу сітку, якщо вона не вміщається */
+  }
+
+  /* --- Форма створення домашнього завдання --- */
+  #teacher-hw-form {
+    gap: 14px; /* Трохи щільніші відступи між полями */
+  }
+
+  .form-group label {
+    font-size: 0.88rem;
+  }
+
+  .form-group input[type="text"],
+  .form-group input[type="datetime-local"],
+  .form-group textarea {
+    padding: 10px 14px; /* Менші відступи всередині інпутів */
+    font-size: 0.9rem;
+    border-radius: 8px;
+  }
+
+  /* --- Прикріплення файлу (Супер-сучасний мобільний вигляд) --- */
+  .form-group input[type="file"] {
+    padding: 10px;
+    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column; /* Кнопка вибору та текст файлу стають один під одним */
+    gap: 8px;
+    align-items: center;
+    text-align: center;
+  }
+
+  .form-group input[type="file"]::file-selector-button {
+    width: 100%; /* Мобільна кнопка вибору файлу стає на всю ширину */
+    margin-right: 0;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+
+  .form-help-text {
+    font-size: 0.75rem;
+    line-height: 1.3;
+  }
+
+  /* --- Кнопка відправки ДЗ (Преміум Градієнт) --- */
+  .submit-hw-btn {
+    width: 100% !important; /* Кнопка займає 100% ширини картки */
+    padding: 14px 20px !important;
+    font-size: 0.92rem !important;
+    border-radius: 10px !important;
+    box-sizing: border-box;
+  }
+  
+  .submit-hw-btn:hover {
+    transform: none !important; /* На телефонах прибираємо десктопний ефект підстрибування при ховері */
+  }
+}
 /* Стилі для вкладок */
 /* =========================================================================
    СТИЛІ ДЛЯ СТРУКТУРНИХ КЛАСІВ (БЕЗ ІНЛАЙН-СТИЛІВ)
@@ -439,6 +864,16 @@ body.dashboard-body {
   border-collapse: collapse;
   text-align: left;
   margin-top: 10px;
+}
+
+.students-table thead tr.table-header-row {
+  background: #f3f4f6;
+}
+
+.table-empty-row {
+  text-align: center;
+  color: #9ca3af;
+  padding: 20px;
 }
 
 .students-table th {
@@ -521,7 +956,118 @@ body.dashboard-body {
 .tab-content.active {
   display: block;
 }
+/* =========================================================================
+   👑 ЧИСТА ТА НАДІЙНА АДАПТИВКА ДЛЯ СТРУКТУРНИХ КЛАСІВ (FIX ДЛЯ ТЕЛЕФОНІВ)
+   ========================================================================= */
+@media (max-width: 768px) {
 
+  /* --- 1. ТЕКСТИ ТА ОПИСИ РОЗДІЛІВ --- */
+  .tab-description,
+  .calendar-description,
+  .hw-description {
+    font-size: 0.88rem;
+    line-height: 1.4;
+    margin-bottom: 14px;
+    color: #4b5563; /* Трохи контрасніший колір для читабельності на сонці */
+  }
+
+  /* --- 2. РЯТУВАННЯ ТАБЛИЦІ УЧНІВ (БЕЗ ЗЛАМУ СТРУКТУРИ) --- */
+  /* УВАГА: Щоб скрол працював, у HTML-розмітці твоя таблиця 
+     має бути загорнута в див: <div class="table-responsive"><table class="students-table">...</table></div>
+  */
+  .table-responsive {
+    width: 100% !important;
+    overflow-x: auto !important; /* Вмикаємо горизонтальний скрол для контейнера */
+    -webkit-overflow-scrolling: touch; /* Плавність для iPhone */
+    margin-top: 10px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb; /* Акуратна рамка навколо зони скролу */
+    background: #ffffff;
+  }
+
+  .students-table {
+    display: table !important; /* ПРИМУСОВО залишаємо як таблицю, ніяких display: block! */
+    width: 100% !important;
+    margin-top: 0 !important;
+    min-width: 500px; /* Гарантує, що стовпці (Ім'я, Баланс, Кнопка) розправляться і не зліпляться */
+  }
+
+  .students-table th {
+    padding: 10px 12px !important;
+    font-size: 0.82rem !important;
+    background: #f8fafc; /* Світле преміальне тло для шапки */
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+
+  .students-table td {
+    padding: 12px 12px !important;
+    font-size: 0.88rem !important;
+    border-bottom: 1px solid #f1f5f9;
+  }
+
+  /* Зберігаємо оригінальне вирівнювання, воно у флекс-таблиці виглядає набагато крутіше */
+  .students-table th:nth-child(2),
+  .students-table td:nth-child(2) {
+    text-align: center !important;
+  }
+
+  .students-table th:nth-child(3),
+  .students-table td:nth-child(3) {
+    text-align: right !important;
+  }
+
+  /* Порожній рядок у таблиці (якщо немає учнів) */
+  .table-empty-row {
+    display: table-cell !important; /* Повертаємо табличну поведінку */
+    text-align: center !important;
+    padding: 30px 16px !important;
+    color: #6b7280;
+  }
+
+  /* --- 3. ІНФОРМАЦІЯ ПРО УЧНЯ (ВЕРХНЯ ПЛАШКА) --- */
+  .status-info {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .status-info h2 {
+    font-size: 1.25rem;
+    line-height: 1.2;
+    font-weight: 700;
+  }
+
+  .status-subtitle {
+    font-size: 0.82rem;
+    margin-top: 3px;
+    line-height: 1.3;
+  }
+
+  /* --- 4. КНОПКА ВІДПРАВКИ ДЗ ТА ПІДКАЗКИ --- */
+  .form-help-text {
+    font-size: 0.78rem;
+    margin-top: 6px;
+    text-align: left; /* Ліве вирівнювання виглядає природніше під інпутом */
+    line-height: 1.3;
+  }
+
+  .submit-hw-btn {
+    padding: 14px 16px !important; /* Велика тач-зона під палець */
+    font-size: 0.92rem !important;
+    border-radius: 10px !important;
+    margin-top: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .submit-hw-btn:hover {
+    background: #a855f7 !important; /* Прибираємо десктопний ховер для мобілок */
+  }
+
+  .submit-hw-btn:active {
+    background: #9333ea !important; /* Яскравий відгук суто при фізичному натисканні */
+    transform: scale(0.97) !important;
+  }
+}
 /* =========================================================================
    🎨 ПРОФЕСІЙНА СТУДІЯ РЕДАКУВАННЯ (FIGMA / MIRO STYLE)
    ========================================================================= */
@@ -648,6 +1194,103 @@ body.dashboard-body {
   display: block;
   cursor: crosshair;
   border-radius: 8px;
+}
+/* =========================================================================
+   АДАПТИВНІ СТИЛІ ДЛЯ СТУДІЇ РЕДАКУВАННЯ / CANVAS (ДО 768px)
+   ========================================================================= */
+@media (max-width: 768px) {
+
+  /* Головний контейнер редактора */
+  .hw-editor-zone {
+    padding: 14px; /* Зменшуємо відступи, щоб виграти більше робочого простору */
+    border-radius: 16px;
+  }
+
+  /* Панель інструментів (Ефект темного скла) */
+  .editor-toolbar {
+    flex-direction: column; /* Інструменти, дії та налаштування стають один під одним */
+    align-items: stretch; /* Розтягуємо групи кнопок на всю ширину */
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+  }
+
+  /* Групування кнопок (Червона ручка, Текст, Гумка тощо) */
+  .tool-group {
+    display: flex;
+    flex-wrap: wrap; /* Дозволяє кнопкам красиво переноситися, якщо екран зовсім малий */
+    justify-content: space-between;
+    gap: 6px;
+    padding: 6px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Кнопки вибору інструментів та дій */
+  .editor-btn,
+  .editor-btn-action {
+    flex: 1 1 auto; /* Кнопки ділять простір порівну і стають великими */
+    justify-content: center; /* Центруємо іконки та текст усередині кнопки */
+    padding: 10px 12px; /* Ідеальний розмір для натискання пальцем */
+    font-size: 13px;
+    height: auto; /* Скасовуємо десктопну фіксовану висоту 36px */
+  }
+
+  /* Спеціально для налаштувань (вибір кольору та повзунок товщини), які йдуть у твоїй розмітці */
+  .tool-group.settings-group {
+    flex-direction: column; /* Колір та товщина стають окремими рядками */
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .tool-group.settings-group .toolbar-item {
+    display: flex;
+    justify-content: space-between; /* Назва зліва, сам інпут — справа */
+    align-items: center;
+    width: 100%;
+  }
+
+  /* --- Область перегляду та скролу Canvas --- */
+  .canvas-container {
+    padding: 10px; /* Мінімальні відступи, щоб залишити максимум місця під малюнок */
+    border-radius: 12px;
+    min-height: 45vh; /* На мобільних робимо область трохи компактнішою по висоті */
+    max-height: 60vh;
+    
+    /* НАДВАЖЛИВО ДЛЯ ТАЧ-ЕКРАНІВ: */
+    overflow: auto; /* Створює внутрішній ізольований скролл для Canvas */
+    -webkit-overflow-scrolling: touch; /* Робить прокрутку пальцем супер-плавною */
+  }
+
+  /* Оболонка Canvas, яка тримає абсолютні координати тексту */
+  .canvas-wrapper {
+    /* На мобільних, якщо малюнок завдання великий, ми НЕ стискаємо його через CSS,
+       щоб не злетіли JavaScript-координати кліків та малювання ручкою. 
+       Завдяки margin: auto та overflow: auto у контейнері, вчитель зможе 
+       зручно скролити та розглядати завдання пальцем у будь-який бік! */
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    border-radius: 6px;
+  }
+
+  #teacher-canvas {
+    border-radius: 6px;
+    /* Залишаємо оригінальний розмір для коректної роботи JS-малювання */
+  }
+
+  /* Кнопки збереження під канвасом */
+  .editor-actions {
+    margin-top: 14px;
+    width: 100%;
+  }
+
+  .editor-actions .dash-btn {
+    width: 100% !important;
+    padding: 14px !important;
+    font-size: 0.92rem;
+    box-sizing: border-box;
+    justify-content: center;
+  }
 }
 
 /* =========================================================================
@@ -901,6 +1544,119 @@ body.dashboard-body {
   margin-top: 0 !important;
 }
 
+/* =========================================================================
+   АДАПТИВНІ СТИЛІ ДЛЯ LIVE-TEXTAREA, ХЕДЕРА РЕДАКТОРА ТА FULLSCREEN (ДО 768px)
+   ========================================================================= */
+@media (max-width: 768px) {
+
+  /* --- 1. Поле введення тексту поверх Canvas (Живий Текст) --- */
+  .canvas-live-textarea {
+    min-width: 120px; /* Трохи зменшуємо мінімальну ширину під екрани телефонів */
+    max-width: 260px; /* Щоб інпут не вилазив за рамки контейнера мобільного Canvas */
+    font-size: 14px; /* Оптимальний розмір, щоб системна iOS/Android клавіатура не робила авто-зум */
+    padding: 3px 6px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  }
+
+  /* --- 2. Шапка редактора --- */
+  .editor-header {
+    flex-direction: column; /* Назва та кнопка "Повний екран" стають в два рядки */
+    align-items: flex-start;
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+  }
+
+  .editor-header h3 {
+    font-size: 1.05rem; /* Злегка зменшуємо заголовок */
+    line-height: 1.3;
+  }
+
+  .editor-btn-secondary {
+    width: 100%; /* Кнопка перемикання екрану стає великою на всю ширину */
+    justify-content: center;
+    padding: 10px 16px;
+    font-size: 0.85rem;
+  }
+
+  /* --- 3. Налаштування в тулбарі (Колір, Товщина) --- */
+  /* Оскільки у твоєму коді .settings-group має margin-left: auto, на мобілці ми його скидаємо */
+  .settings-group {
+    margin-left: 0;
+    width: 100%;
+    flex-direction: column; /* Розділяємо вибір кольору та повзунок товщини */
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .toolbar-item {
+    justify-content: space-between; /* Текст ліворуч, сам елемент керування — праворуч */
+    width: 100%;
+  }
+
+  /* Збільшуємо зону кліку для палітри кольорів */
+  #t-editor-color {
+    width: 36px;
+    height: 36px;
+  }
+  
+  #t-editor-color:hover {
+    transform: none; /* Вимикаємо десктопний ховер-ефект збільшення на смартфонах */
+  }
+
+  /* Робимо повзунок товщини зручним для мобільного тач-керування */
+  #t-editor-size {
+    width: 130px; /* Збільшуємо довжину треку */
+    height: 10px; /* Робимо сам трек товстішим */
+  }
+
+  #t-editor-size::-webkit-slider-thumb {
+    width: 22px; /* Збільшуємо розмір повзунка (кружечка), щоб в нього легко влучати пальцем */
+    height: 22px;
+  }
+  
+  #t-editor-size::-webkit-slider-thumb:hover {
+    transform: none; /* Прибираємо ховер для тач-скринів */
+  }
+
+  /* --- 4. Нижня панель дій --- */
+  .editor-actions {
+    text-align: center; /* Центруємо або розтягуємо головну кнопку збереження */
+    margin-top: 16px;
+    width: 100%;
+  }
+
+  #btn-teacher-save-review {
+    width: 100%; /* Зелена кнопка займає всю ширину екрану смартфона */
+    justify-content: center;
+    padding: 14px 20px;
+    font-size: 0.92rem;
+    border-radius: 10px;
+  }
+  
+  #btn-teacher-save-review:hover {
+    transform: none; /* Вимикаємо підстрибування кнопки при тапі */
+  }
+
+  /* --- 5. ЗАЛІЗОБЕТОННИЙ ПОВНОЕКРАННИЙ РЕЖИМ ДЛЯ МОБІЛОК --- */
+  /* Перевизначаємо жорсткі десктопні паддінги 40px на компактні мобільні */
+  .hw-editor-zone.fullscreen-mode .editor-header {
+    padding: 12px 16px !important; /* Мінімальні безпечні відступи від країв дисплея */
+  }
+
+  .hw-editor-zone.fullscreen-mode .editor-toolbar {
+    padding: 12px 16px !important;
+    /* Всередині фулскріну тулбар перебудовується в акуратний вертикальний пульт */
+  }
+
+  .hw-editor-zone.fullscreen-mode .canvas-container {
+    padding: 10px !important; /* Даємо максимум простору для самого Canvas */
+  }
+
+  .hw-editor-zone.fullscreen-mode .editor-actions {
+    padding: 12px 16px !important; /* Компактна фіксація зеленої кнопки в самому низу екрана */
+  }
+}
 
 /* ==========================================================================
    ВКЛАДКА КЕРУВАННЯ ВІДГУКАМИ (COMMENTS TAB)
@@ -1404,4 +2160,80 @@ body.dashboard-body {
 .fc .fc-timegrid-now-indicator-arrow {
   border-color: #EF4444 !important;
   border-left-color: #EF4444 !important;
+}
+/* =========================================================================
+   📅 КОРЕКТНИЙ ГОРИЗОНТАЛЬНИЙ СКРОЛ ДЛЯ FULLCALENDAR (ФІКС ОБРІЗАННЯ ТИЖНЯ)
+   ========================================================================= */
+@media (max-width: 768px) {
+
+  /* Головна картка календаря */
+  .general-calendar-card {
+    border-radius: 14px !important;
+    padding: 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Тулбар (кнопки та місяць) залишаємо зверху фіксованими, щоб вони НЕ скролилися */
+  .fc .fc-toolbar {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+
+  /* 
+    ДОЗВОЛЯЄМО СКРОЛ ТУТ:
+    Створюємо обгортку суто для самої сітки календаря. 
+    Вона залізобетонно дозволить гортати дні від понеділка до неділі.
+  */
+  .fc-view-harness,
+  .fc-view {
+    width: 100% !important;
+    overflow-x: auto !important; /* Вмикаємо горизонтальний скрол */
+    display: block !important;
+    -webkit-overflow-scrolling: touch; /* Плавний скрол для iOS */
+  }
+
+  /* 
+    Фіксуємо ширину самої робочої сітки (днів та годин).
+    650px — це ідеальний розмір, щоб усі 7 днів тижня красиво розправилися
+    і не стискалися, а вчитель міг спокійно скролити їх пальцем ліворуч і праворуч.
+  */
+  .fc-view-harness .fc-timegrid,
+  .fc-view-harness .fc-daygrid,
+  .fc-view-harness table {
+    min-width: 650px !important;
+    width: 650px !important;
+  }
+
+  /* Запобігаємо обрізанню контенту у батьківських класах плагіна */
+  .fc-scroller, 
+  .fc-scroller-harness {
+    overflow: visible !important;
+  }
+
+  /* Оптимізація кнопок */
+  .fc-button-group {
+    display: flex !important;
+    width: 100% !important;
+  }
+
+  .fc .fc-button {
+    flex: 1 !important;
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+    height: 34px !important;
+  }
+
+  /* Текст подій та днів тижня */
+  .fc th {
+    font-size: 11px !important;
+    padding: 8px 0 !important;
+  }
+
+  .fc-event-main {
+    font-size: 10px !important;
+  }
 }

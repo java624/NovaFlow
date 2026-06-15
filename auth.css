@@ -61,6 +61,25 @@
   margin-bottom: 20px;
 }
 
+.auth-input-group.password-field {
+  position: relative;
+}
+
+.password-input {
+  padding-right: 40px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.password-toggle-icon {
+  position: absolute;
+  right: 15px;
+  top: 38px;
+  cursor: pointer;
+  color: #666;
+  font-size: 1.1rem;
+}
+
 .auth-input-group label {
   display: block;
   margin-bottom: 8px;
