@@ -1302,3 +1302,361 @@ window.selectHomeworkForSolving = function(homework) {
     solvingBlock.scrollIntoView({ behavior: 'smooth' });
   }
 };
+
+
+// =========================================================================
+// АВТОНОМНИЙ МОДУЛЬ ПРОФІЛЮ + ЗАВАНТАЖЕННЯ АВАТАРОК (ОНОВЛЕНИЙ)
+// =========================================================================
+
+let currentProfileStudentId = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // 1. Завантажуємо дані профілю
+  await loadStudentProfileData();
+
+  // 2. Обробка форми збереження тексту
+  const profileForm = document.getElementById('profile-edit-form');
+  if (profileForm) {
+    profileForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await saveStudentProfileData();
+    });
+  }
+
+  // 3. Слідкуємо за вибором файлу для аватарки
+  const avatarFileInput = document.getElementById('profile-avatar-file');
+  if (avatarFileInput) {
+    avatarFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        await uploadStudentAvatar(file);
+      }
+    });
+  }
+
+  // 4. НОВЕ: Клік по міні-аватарці в шапці перекидає на вкладку «Мій профіль»
+  const topBarAvatarBtn = document.getElementById('header-user-avatar');
+  if (topBarAvatarBtn) {
+    topBarAvatarBtn.addEventListener('click', () => {
+      // Шукаємо кнопку перемикання в бічному меню за текстом або атрибутом
+      const profileMenuBtn = document.querySelector('[data-tab="profile"]') || 
+                             document.getElementById('menu-btn-profile') ||
+                             Array.from(document.querySelectorAll('.sidebar-menu li, .sidebar-menu a, .nav-link'))
+                                  .find(el => el.textContent.includes('Мій профіль'));
+      
+      if (profileMenuBtn) {
+        profileMenuBtn.click(); // Емулюємо клік по пункту меню
+      } else {
+        // Запасний варіант перемикання класів активності, якщо навігація побудована інакше
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        const tabProfile = document.getElementById('tab-profile');
+        if (tabProfile) tabProfile.classList.add('active');
+      }
+    });
+  }
+});
+
+/**
+ * ЗАВАНТАЖЕННЯ ДАНИХ З БАЗИ
+ */
+async function loadStudentProfileData() {
+  if (typeof studentSupabase === 'undefined') {
+    console.error("Помилка: Supabase не підключена.");
+    return;
+  }
+
+  try {
+    const { data: { user }, error: authError } = await studentSupabase.auth.getUser();
+    
+    if (user) {
+      currentProfileStudentId = user.id;
+    } else {
+      currentProfileStudentId = localStorage.getItem('studentId') || 
+                               localStorage.getItem('userId') || 
+                               "8ce6c7d8-e83a-4d1e-aad1-8630f19ea2f4";
+    }
+
+    const { data: student, error: dbError } = await studentSupabase
+      .from('profiles')
+      .select('*')
+      .eq('id', currentProfileStudentId)
+      .single();
+
+    if (dbError) {
+      console.warn("Профіль не знайдено, ініціалізуємо пусту форму.");
+      fillProfileFormUI({});
+      return;
+    }
+
+    if (student) {
+      fillProfileFormUI(student);
+    }
+
+  } catch (err) {
+    console.error("Критична помилка модуля профілю:", err);
+  }
+}
+
+/**
+ * ЗАПОВНЕННЯ ІНТЕРФЕЙСУ
+ */
+function fillProfileFormUI(student) {
+  const elWelcomeName = document.getElementById('profile-full-name');
+  if (elWelcomeName) {
+    const fullName = `${student.first_name || 'Павло'} ${student.last_name || ''}`.trim();
+    elWelcomeName.innerText = fullName;
+  }
+
+  // Розраховуємо або отримуємо URL аватарки (з бази чи заглушку)
+  const finalAvatarUrl = student.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(student.first_name || 'Павло') + '&background=5e077e&color=fff&size=158';
+
+  // Відображення головної аватарки в самому модулі профілю
+  const elFormAvatar = document.getElementById('profile-modal-img');
+  if (elFormAvatar) {
+    elFormAvatar.src = finalAvatarUrl;
+  }
+
+  // НОВЕ: Автоматично оновлюємо маленьку аватарку в шапці (header)
+  const elHeaderAvatar = document.getElementById('header-user-avatar');
+  if (elHeaderAvatar) {
+    elHeaderAvatar.src = finalAvatarUrl;
+  }
+
+  if (document.getElementById('profile-input-name')) {
+    document.getElementById('profile-input-name').value = student.first_name || '';
+  }
+  if (document.getElementById('profile-input-surname')) {
+    document.getElementById('profile-input-surname').value = student.last_name || '';
+  }
+
+  const inputBirth = document.getElementById('profile-input-birth');
+  if (inputBirth) {
+    if (student.birth_date) {
+      inputBirth.value = student.birth_date.split('T')[0];
+    } else {
+      inputBirth.value = '';
+    }
+  }
+
+  if (document.getElementById('profile-display-teacher')) {
+    document.getElementById('profile-display-teacher').value = student.teacher_name || 'Кирило ';
+  }
+  if (document.getElementById('profile-display-created')) {
+    document.getElementById('profile-display-created').value = student.created_at 
+      ? new Date(student.created_at).toLocaleDateString('uk-UA') 
+      : '29.05.2026';
+  }
+}
+
+/**
+ * ФУНКЦІЯ ЗАВАНТАЖЕННЯ ФАЙЛУ АВАТАРКИ В SUPABASE STORAGE
+ */
+async function uploadStudentAvatar(file) {
+  if (!currentProfileStudentId) {
+    alert("❌ Не вдалося визначити ID учня для завантаження фото.");
+    return;
+  }
+
+  // Перевірка розміру файлу (макс. 3MB)
+  if (file.size > 3 * 1024 * 1024) {
+    alert("⚠️ Файл занадто великий! Максимальний розмір: 3 МБ.");
+    return;
+  }
+
+  const elFormAvatar = document.getElementById('profile-modal-img');
+  const elHeaderAvatar = document.getElementById('header-user-avatar'); // НОВЕ: лінк на шапку
+  
+  // Візуальний фідбек — міняємо прозорість під час завантаження
+  if (elFormAvatar) elFormAvatar.style.opacity = '0.4';
+  if (elHeaderAvatar) elHeaderAvatar.style.opacity = '0.4';
+
+  try {
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${currentProfileStudentId}_avatar.${fileExt}`;
+
+    // 1. Завантажуємо файл у бакет 'avatars'
+    const { data: uploadData, error: uploadError } = await studentSupabase.storage
+      .from('avatars')
+      .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    // 2. Отримуємо публічне посилання
+    const { data: { publicUrl } } = studentSupabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    // Додаємо timestamp, щоб обійти кеш браузера
+    const finalAvatarUrl = `${publicUrl}?t=${new Date().getTime()}`;
+
+    // 3. Оновлюємо поле avatar_url в таблиці 'profiles'
+    const { error: updateError } = await studentSupabase
+      .from('profiles')
+      .update({ avatar_url: finalAvatarUrl })
+      .eq('id', currentProfileStudentId);
+
+    if (updateError) throw updateError;
+
+    // Успіх! Оновлюємо картку профілю
+    if (elFormAvatar) {
+      elFormAvatar.src = finalAvatarUrl;
+      elFormAvatar.style.opacity = '1';
+    }
+    
+    // НОВЕ: Синхронно міняємо аватарку в шапці (усі селектори про всяк випадок)
+    if (elHeaderAvatar) {
+      elHeaderAvatar.src = finalAvatarUrl;
+      elHeaderAvatar.style.opacity = '1';
+    }
+    const alternativeTopAvatar = document.querySelector('.user-avatar, .profile-avatar img, .dash-avatar');
+    if (alternativeTopAvatar) {
+      alternativeTopAvatar.src = finalAvatarUrl;
+    }
+
+    alert("✅ Аватарку успішно оновлено!");
+
+  } catch (err) {
+    console.error("Помилка завантаження аватара:", err);
+    alert(`❌ Помилка завантаження фото: ${err.message}`);
+    if (elFormAvatar) elFormAvatar.style.opacity = '1';
+    if (elHeaderAvatar) elHeaderAvatar.style.opacity = '1';
+  }
+}
+
+/**
+ * ЗБЕРЕЖЕННЯ ТЕКСТОВИХ ДАНИХ
+ */
+async function saveStudentProfileData() {
+  if (!currentProfileStudentId) {
+    showProfileAlert("❌ Не знайдено ID користувача.", "error");
+    return;
+  }
+
+  const firstNameVal = document.getElementById('profile-input-name')?.value.trim() || '';
+  const lastNameVal = document.getElementById('profile-input-surname')?.value.trim() || '';
+  const birthDateVal = document.getElementById('profile-input-birth')?.value || null;
+
+  if (!firstNameVal) {
+    showProfileAlert("⚠️ Поле 'Ім'я' є обов'язковим.", "error");
+    return;
+  }
+
+  const saveBtn = document.getElementById('btn-save-profile');
+  const originalBtnHTML = saveBtn ? saveBtn.innerHTML : '';
+  if (saveBtn) {
+    saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Зберігаємо...`;
+    saveBtn.disabled = true;
+  }
+
+  try {
+    const { error } = await studentSupabase
+      .from('profiles')
+      .upsert({
+        id: currentProfileStudentId,
+        first_name: firstNameVal,
+        last_name: lastNameVal,
+        birth_date: birthDateVal,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' });
+
+    if (error) throw error;
+
+    showProfileAlert("✅ Дані успешно збережено!", "success");
+    await loadStudentProfileData();
+
+  } catch (err) {
+    console.error("Помилка Supabase:", err);
+    showProfileAlert(`❌ Помилка: ${err.message}`, "error");
+  } finally {
+    if (saveBtn) {
+      saveBtn.innerHTML = originalBtnHTML;
+      saveBtn.disabled = false;
+    }
+  }
+}
+
+function showProfileAlert(message, type) {
+  const alertEl = document.getElementById('profile-alert');
+  if (!alertEl) {
+    alert(message);
+    return;
+  }
+  alertEl.innerText = message;
+  alertEl.className = `profile-alert ${type}`;
+  alertEl.classList.remove('hidden');
+  setTimeout(() => alertEl.classList.add('hidden'), 4000);
+}
+// =========================================================================
+// ОНОВЛЕНЕ БУРГЕР-МЕНЮ З ОВЕРЛЕЄМ ТА ПЕРЕМИКАННЯМ ВКЛАДОК (ПОВНИЙ ФІКС)
+// =========================================================================
+
+function initMenuListeners() {
+  const burgerToggle = document.getElementById('dash-burger-toggle');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('dash-sidebar-overlay');
+
+  if (burgerToggle && sidebar && overlay) {
+    console.log("NovaFlow: Модуль мобільної навігації успішно ініціалізовано.");
+
+    // 1. Клік по кнопці бургера — відкриваємо/закриваємо меню та оверлей
+    burgerToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebar.classList.toggle('active');
+      overlay.classList.toggle('active');
+    });
+
+    // 2. Клік по оверлею (затемненню) — ховаємо меню
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('active');
+      overlay.classList.remove('active');
+    });
+
+    // 3. Інтегроване перемикання вкладок при кліку на посилання в меню
+    const sidebarLinks = sidebar.querySelectorAll('.sidebar-link');
+    const allTabs = document.querySelectorAll('.tab-content');
+
+    sidebarLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        // Якщо це звичайне посилання-вкладка, скасовуємо стандартний перехід по '#'
+        if (link.getAttribute('href') === '#' || link.hasAttribute('data-tab')) {
+          e.preventDefault();
+        }
+
+        const tabTarget = link.getAttribute('data-tab');
+        
+        // Якщо у лінка є data-tab, перемикаємо контент додатка
+        if (tabTarget) {
+          console.log(`NovaFlow Навігація: Перемикання на вкладку -> tab-${tabTarget}`);
+
+          // А) Змінюємо активний клас для кнопок у меню
+          sidebarLinks.forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
+
+          // Б) Ховаємо всі таби та показуємо лише обрану
+          allTabs.forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.id === `tab-${tabTarget}`) {
+              tab.classList.add('active');
+            }
+          });
+        }
+
+        // В) Після того, як вкладка перемкнулася — плавно ховаємо мобільне меню та оверлей
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+      });
+    });
+
+    // Окремий обробник для кнопки виходу (щоб не ламати її логіку редіректу)
+    const logoutBtn = sidebar.querySelector('.logout-btn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+      });
+    }
+
+  } else {
+    console.warn("NovaFlow Навігація: Не вдалося знайти елементи мобільного меню в HTML структурі.");
+  }
+}

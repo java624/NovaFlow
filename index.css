@@ -4246,61 +4246,82 @@ header.scrolled .header-container {
 }
 
 /* =========================================================================
-   6. LANGUAGES / COURSES WE TEACH
+   6. PREMIUM LANGUAGES / COURSES WE TEACH (ULTRA-SMOOTH CINEMATIC)
    ========================================================================= */
 
 /* Адаптивна та стабільна сітка для карток курсів */
 .languages-grid {
   display: grid;
-  /* Захищає від перетворення карток на "соломинки" та гнучко розподіляє 3, 2 або 1 в ряд */
-  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-  gap: clamp(20px, 4vw, 32px);
+  grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+  gap: clamp(24px, 4vw, 36px);
   margin-bottom: 48px;
   width: 100%;
 }
 
+/* Картка курсу преміум рівня */
 .course-card {
   background: #FFFFFF;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 24px;
+  border: 1px solid rgba(226, 232, 240, 0.7);
   overflow: hidden;
-  box-shadow: var(--shadow-card);
-  transition: var(--transition);
+  box-shadow: 0 10px 30px rgba(94, 7, 126, 0.03), 0 1px 3px rgba(0, 0, 0, 0.01);
   display: flex;
   flex-direction: column;
-  height: 100%; /* Гарантує однакову висоту карток у рядку */
+  height: 100%;
+  position: relative;
+  
+  /* Збільшуємо час (0.6s) і додаємо преміальну інерційну криву для максимальної плавності */
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              box-shadow 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              border-color 0.5s ease;
+  will-change: transform, box-shadow; /* Оптимізація для плавності в браузері */
 }
 
-.course-card:hover {
-  transform: translateY(-8px);
-  box-shadow: var(--shadow-lg);
+/* Ефект наведення на ПК: Тягуче, глибоке неонове світіння з підйомом */
+@media (hover: hover) {
+  .course-card:hover {
+    transform: translateY(-12px); /* Трохи вищий, але м'якший підйом */
+    border-color: rgba(168, 85, 247, 0.4);
+    box-shadow: 0 30px 60px rgba(94, 7, 126, 0.12), 
+                0 0 30px rgba(168, 85, 247, 0.2), 
+                0 2px 5px rgba(0, 0, 0, 0.02);
+  }
 }
 
+/* Upper zone with studio radial light */
 .course-img-wrapper {
-  height: 180px; /* Трохи компактніший та збалансованіший розмір */
+  height: 170px;
   position: relative;
   overflow: hidden;
-  background: var(--accent-light, #f3e8ff);
+  background: radial-gradient(circle at 50% 50%, #f3e8ff 0%, #faf5ff 60%, #ffffff 100%);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Елемент підкладки для прапора у колі */
+/* Круглий ілюмінатор прапора */
 .course-flag-overlay {
-  width: 90px;
-  height: 90px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
   overflow: hidden;
   border: 4px solid #FFFFFF;
-  box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.08));
+  box-shadow: 0 10px 25px rgba(94, 7, 126, 0.12), 0 4px 8px rgba(0, 0, 0, 0.04);
   z-index: 2;
-  transition: var(--transition);
-  background: #ffffff; /* Захист на випадок прозорості в SVG */
+  background: #ffffff;
+  
+  /* Окрема супер-плавна крива для обертання та масштабу */
+  transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), 
+              box-shadow 0.6s ease, 
+              border-color 0.6s ease;
+  will-change: transform;
 }
 
+/* МАГІЯ ХОВЕРУ: Прапор робить плавний, ефектний 3D-оборот (360°) та збільшується */
 .course-card:hover .course-flag-overlay {
-  transform: scale(1.08) rotate(4deg);
+  transform: scale(1.12) translateY(-4px) rotate(360deg);
+  box-shadow: 0 20px 35px rgba(168, 85, 247, 0.3);
+  border-color: #a855f7;
 }
 
 .course-flag-overlay svg,
@@ -4311,259 +4332,320 @@ header.scrolled .header-container {
   display: block;
 }
 
+/* Контентна частина */
 .course-content {
-  padding: clamp(20px, 3vw, 30px);
+  padding: clamp(24px, 4vw, 32px);
   display: flex;
   flex-direction: column;
   flex-grow: 1;
 }
 
+/* Пастельні бейджі */
 .course-badge {
   align-self: flex-start;
   padding: 6px 14px;
-  border-radius: var(--radius-full);
-  font-size: 12px;
+  border-radius: 100px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 14px;
+  letter-spacing: 0.8px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.02);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+/* Легкий рух бейджа при ховері */
+.course-card:hover .course-badge {
+  transform: scale(1.05);
 }
 
-.course-card.uk-course .course-badge {
-  background: #E0F2FE;
-  color: #0369A1;
-}
+.course-card.uk-course .course-badge { background: #e0f2fe; color: #0369a1; }
+.course-card.de-course .course-badge { background: #fef3c7; color: #b45309; }
+.course-card.ua-course .course-badge { background: #dcfce7; color: #15803d; }
 
-.course-card.de-course .course-badge {
-  background: #FEF3C7;
-  color: #B45309;
-}
-
-.course-card.ua-course .course-badge {
-  background: #ECFDF5;
-  color: #047857;
-}
-
+/* Назва курсу плавно змінює колір */
 .course-title {
+  font-family: 'Montserrat', sans-serif;
   font-size: clamp(1.25rem, 2.5vw, 1.4rem);
   font-weight: 800;
-  color: var(--dark, #111827);
-  margin-bottom: 10px;
-  line-height: 1.3;
+  color: #0f172a;
+  margin-bottom: 12px;
+  line-height: 1.35;
+  transition: color 0.4s ease, transform 0.4s ease;
+}
+.course-card:hover .course-title {
+  color: #5e077e;
+  transform: translateX(2px);
 }
 
 .course-desc {
   font-size: 14.5px;
-  color: var(--gray-medium, #6b7280);
-  line-height: 1.55;
-  margin-bottom: 24px;
-  flex-grow: 1; /* Штовхає мету та кнопку донизу, вирівнюючи їх по лінійці */
+  color: #475569;
+  line-height: 1.6;
+  margin-bottom: 26px;
+  flex-grow: 1;
 }
 
-/* Мета-дані (рівні, кількість занять) */
+/* Мета-дані (Рівні, уроки) */
 .course-meta {
   display: flex;
   justify-content: space-between;
-  border-top: 1px solid var(--gray-light, #f1f5f9);
-  padding-top: 16px;
-  margin-top: auto; /* Завжди притиснуті до нижньої частини */
-  margin-bottom: 20px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 18px;
+  margin-bottom: 22px;
   font-size: 13.5px;
-  color: var(--gray-medium, #6b7280);
+  color: #64748b;
   font-weight: 600;
 }
 
 .course-meta-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .course-meta-item svg {
-  width: 16px;
-  height: 16px;
-  color: var(--primary, #6b21a8);
+  width: 18px;
+  height: 18px;
+  color: #8b5cf6;
+  transition: transform 0.5s ease;
+}
+/* Іконки в мета-даних теж злегка грають при наведенні */
+.course-card:hover .course-meta-item svg {
+  transform: scale(1.15) rotate(5deg);
 }
 
-/* Кнопка — Виправлено баг з inline-елементом <a> */
+/* Кнопка з ефектом вибуху кольору на ховері */
 .course-btn {
-  display: flex; /* Було inline, через що ламалися вертикальні падінги при ховері */
+  display: flex;
   width: 100%;
-  padding: 14px;
+  padding: 15px;
+  box-sizing: border-box;
   border: 1px solid rgba(94, 7, 126, 0.15);
-  border-radius: var(--radius, 12px);
-  background: transparent;
-  color: var(--primary, #6b21a8);
+  border-radius: 14px;
+  background: #faf5ff;
+  color: #5e077e;
   font-weight: 700;
   font-size: 14.5px;
   text-decoration: none;
-  text-align: center;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: var(--transition);
+  /* Уповільнюємо перехід кнопки для кінематографічності */
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+.course-btn span {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Перетворення кнопки на ховері */
 .course-card:hover .course-btn {
-  background: var(--primary, #6b21a8);
+  background: linear-gradient(135deg, #5e077e 0%, #8b5cf6 100%);
   color: #FFFFFF;
-  border-color: var(--primary, #6b21a8);
-  box-shadow: 0 4px 12px var(--primary-glow, rgba(107, 33, 168, 0.15));
+  border-color: transparent;
+  box-shadow: 0 10px 25px rgba(94, 7, 126, 0.25);
+}
+
+.course-card:hover .course-btn span {
+  transform: translateX(6px); /* Стрілочка вилітає чітко й плавно */
 }
 
 /* =========================================================================
-   PRACTICE INTERACTIVE WIDGET
+   PRACTICE INTERACTIVE WIDGET (SMOOTH GLOW)
    ========================================================================= */
 .practice-widget {
   background: #FFFFFF;
-  border-radius: var(--radius-lg);
-  padding: clamp(24px, 5vw, 40px);
-  box-shadow: var(--shadow-card);
+  border-radius: 28px;
+  padding: clamp(24px, 5vw, 44px);
+  box-shadow: 0 25px 60px rgba(94, 7, 126, 0.05);
   border: 1px solid rgba(226, 232, 240, 0.8);
-  max-width: 760px;
-  margin: clamp(40px, 8vw, 60px) auto 0 auto;
+  max-width: 740px;
+  margin: 60px auto 0 auto;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .widget-title {
-  font-size: clamp(1.25rem, 3vw, 1.5rem);
-  font-weight: 700;
-  color: var(--dark, #111827);
+  font-family: 'Montserrat', sans-serif;
+  font-size: clamp(1.35rem, 3vw, 1.55rem);
+  font-weight: 800;
+  color: #0f172a;
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 26px;
 }
 
 .widget-tabs {
   display: flex;
   justify-content: center;
   gap: 10px;
-  margin-bottom: 24px;
-  flex-wrap: wrap; /* Запобігає вилазанню табів на вузьких смартфонах */
+  margin-bottom: 26px;
+  flex-wrap: wrap;
 }
 
 .widget-tab-btn {
-  padding: 10px 18px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--gray-light, #e2e8f0);
+  padding: 11px 22px;
+  border-radius: 100px;
+  border: 1px solid #e2e8f0;
   background: #FFFFFF;
-  font-weight: 600;
-  font-size: 14px;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #475569;
   cursor: pointer;
-  transition: var(--transition);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.widget-tab-btn:hover {
+  background: #faf5ff;
+  color: #5e077e;
+  border-color: rgba(94, 7, 126, 0.2);
 }
 
 .widget-tab-btn.active {
-  background: var(--primary, #6b21a8);
+  background: linear-gradient(135deg, #5e077e 0%, #8b5cf6 100%);
   color: #FFFFFF;
-  border-color: var(--primary, #6b21a8);
-}
-
-.widget-tab-btn svg {
-  border-radius: 50%;
-  display: block;
-  flex-shrink: 0;
+  border-color: transparent;
+  box-shadow: 0 8px 20px rgba(94, 7, 126, 0.15);
 }
 
 .widget-content-box {
-  background: var(--bg-soft-purple, #faf5ff);
-  border-radius: var(--radius, 12px);
-  padding: clamp(20px, 4vw, 32px);
+  background: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 100%);
+  border-radius: 20px;
+  padding: clamp(30px, 5vw, 40px) 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
   text-align: center;
+  border: 1px solid rgba(139, 92, 246, 0.1);
+  box-shadow: inset 0 2px 8px rgba(94, 7, 126, 0.02);
 }
 
 .phrase-original {
-  font-size: clamp(1.4rem, 4vw, 1.75rem);
+  font-family: 'Montserrat', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 1.9rem);
   font-weight: 800;
-  color: var(--primary, #6b21a8);
-  line-height: 1.25;
+  color: #5e077e;
+  line-height: 1.3;
 }
 
 .phrase-translation {
-  font-size: clamp(1rem, 2vw, 1.15rem);
-  font-weight: 500;
-  color: var(--gray-medium, #6b7280);
-  font-style: italic;
+  font-size: clamp(1.05rem, 2vw, 1.2rem);
+  font-weight: 600;
+  color: #334155;
 }
 
 .phrase-pronounce {
-  font-size: 13.5px;
-  color: var(--accent, #a855f7);
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  background: rgba(168, 85, 247, 0.06);
-  padding: 4px 10px;
-  border-radius: 6px;
+  font-size: 13px;
+  color: #8b5cf6;
+  font-family: SFMono-Regular, Consolas, monospace;
+  background: #ffffff;
+  padding: 6px 14px;
+  border-radius: 8px;
   display: inline-block;
   align-self: center;
+  box-shadow: 0 4px 10px rgba(94, 7, 126, 0.05);
+  font-weight: 700;
 }
 
 .widget-actions {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 14px;
+  margin-top: 20px;
 }
 
 .widget-action-btn {
-  padding: 12px 22px;
-  border-radius: var(--radius, 12px);
-  font-weight: 600;
+  padding: 14px 28px;
+  border-radius: 14px;
+  font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  transition: var(--transition);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   border: none;
-  flex: 1; /* Рівномірна ширина кнопок на мобільних */
+  flex: 1;
   max-width: 180px;
 }
 
 .widget-action-btn.play-btn {
-  background: var(--primary, #6b21a8);
+  background: #8b5cf6;
   color: #FFFFFF;
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.25);
 }
-
 .widget-action-btn.play-btn:hover {
-  background: var(--primary-hover, #581c87);
+  background: #7c3aed;
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.35);
+  transform: translateY(-2px);
 }
 
 .widget-action-btn.next-btn {
   background: #FFFFFF;
-  color: var(--dark, #111827);
-  border: 1px solid var(--gray-light, #e2e8f0);
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
 }
-
 .widget-action-btn.next-btn:hover {
-  background: var(--gray-light, #f1f5f9);
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-2px);
 }
 
 /* =========================================================================
-   MEDIA QUERIES (Тонке налаштування інтерфейсу під брекпоінти)
+   MEDIA BREAKPOINTS (СТАБІЛЬНА АДАТИВНІСТЬ НА ТЕЛЕФОНАХ)
    ========================================================================= */
 
+@media (max-width: 991px) {
+  .languages-grid {
+    grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+    gap: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .languages-grid {
+    grid-template-columns: 1fr;
+    max-width: 440px;
+    margin: 0 auto 36px auto;
+  }
+  
+  /* Вимикаємо складні 3D ховер-ефекти на тач-екранах, щоб не було залипань */
+  .course-card:hover .course-flag-overlay {
+    transform: none;
+  }
+}
+
 @media (max-width: 480px) {
-  /* Перебудова кнопок віджету в стовпчик, якщо екран занадто малий */
+  .practice-widget {
+    padding: 20px 16px;
+    border-radius: 24px;
+  }
+  
+  .widget-content-box {
+    padding: 24px 16px;
+  }
+
   .widget-actions {
     flex-direction: column;
+    gap: 12px;
     align-items: center;
     width: 100%;
   }
-  
+
   .widget-action-btn {
     max-width: 100%;
     width: 100%;
+    height: 50px;
   }
 
-  /* Зменшення внутрішніх відступів карток для економії простору */
   .course-content {
-    padding: 20px;
+    padding: 24px 20px;
+  }
+
+  .course-img-wrapper {
+    height: 150px;
+  }
+
+  .course-flag-overlay {
+    width: 88px;
+    height: 88px;
   }
 }
 

@@ -735,35 +735,33 @@ const paymentModalHTML = `
     <h2 class="pmodal-title" id="pmodal-plan-name">Active Flow</h2>
     <div class="pmodal-price-row">
       <span class="pmodal-price" id="pmodal-price">$120</span>
-      <span class="pmodal-period" id="pmodal-period">/ міс (8 уроків)</span>
+      <span class="pmodal-period" id="pmodal-period">/ month</span>
     </div>
     <ul class="pmodal-features" id="pmodal-features"></ul>
     <div class="pmodal-actions">
-      <button class="pmodal-btn-cancel" id="pmodal-btn-cancel">Скасувати</button>
+      <button class="pmodal-btn-cancel" id="pmodal-btn-cancel">Cancel</button>
       <button class="pmodal-btn-confirm" id="pmodal-btn-confirm">
         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
-        <span id="pmodal-confirm-label">Підтвердити оплату</span>
+        <span id="pmodal-confirm-label">Confirm Payment</span>
       </button>
     </div>
-    <p class="pmodal-secure-note">
+    <p class="pmodal-secure-note" id="pmodal-secure-note">
       <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1l9 4v6c0 5.25-3.84 10.13-9 11.5C6.84 21.13 3 16.25 3 11V5l9-4z"/></svg>
-      Захищено 256-bit SSL шифруванням
+      Secured with 256-bit SSL encryption
     </p>
   </div>
 </div>`;
 
 document.body.insertAdjacentHTML('beforeend', paymentModalHTML);
 
-const PLAN_DETAILS = {
-  'Trial Placement': { features: ['1-on-1 Placement Lesson', 'Custom Speaking Assessment', 'Tailored Study Plan', 'Dashboard Access'], period: '30-хв безкоштовна сесія', isFree: true },
-  'Active Flow': { features: ['8 Уроків з викладачем', 'Доступ до Practice Lab 24/7', 'Щотижневі матеріали', 'Community Access'], period: '/ міс (8 уроків)', isFree: false },
-  'Immersion Pro': { features: ['16 Уроків (4x/тиждень)', 'Персональний Success Coach', 'Підготовка до Job Interview', 'Lifetime Speech Lab'], period: '/ міс (16 уроків)', isFree: false }
-};
-
 const LANG_FLAGS = { english: '🇬🇧', german: '🇩🇪', ukrainian: '🇺🇦' };
-const LANG_LABELS = { english: 'English Course', german: 'German Course', ukrainian: 'Ukrainian Course' };
+const LANG_LABELS = { 
+  en: { english: 'English Course', german: 'German Course', ukrainian: 'Ukrainian Course' },
+  uk: { english: 'Курс англійської', german: 'Курс німецької', ukrainian: 'Курс української' },
+  de: { english: 'Englisch Kurs', german: 'Deutsch Kurs', ukrainian: 'Ukrainisch Kurs' }
+};
 
 const pmOverlay = document.getElementById('payment-modal-overlay');
 const pmClose = document.getElementById('payment-modal-close');
@@ -776,26 +774,70 @@ const pmPeriod = document.getElementById('pmodal-period');
 const pmFeatures = document.getElementById('pmodal-features');
 const pmConfirmLabel = document.getElementById('pmodal-confirm-label');
 const pmIconWrap = document.getElementById('pmodal-icon-wrap');
+const pmSecureNote = document.getElementById('pmodal-secure-note');
 
 let currentPaymentData = null;
 
-function openPaymentModal(lang, plan, price, lessons) {
-  const planInfo = PLAN_DETAILS[plan] || {};
-  const isFree = planInfo.isFree || price === '0' || price === 0;
+function openPaymentModal(lang, plan, price, lessons, cardElement) {
+  const activeLang = localStorage.getItem('novaflowLang') || 'en';
+  const isFree = price === '0' || price === 0;
 
   currentPaymentData = { lang, plan, price, lessons, isFree };
 
-  pmLangTag.textContent = `${LANG_FLAGS[lang] || ''} ${LANG_LABELS[lang] || lang}`;
-  pmPlanName.textContent = plan;
-  pmPrice.textContent = isFree ? 'Безкоштовно' : `$${price}`;
-  pmPeriod.textContent = planInfo.period || '';
-  pmConfirmLabel.textContent = isFree ? '🎯 Записатися безкоштовно' : '💳 Підтвердити оплату';
+  // Localized Labels
+  const labels = LANG_LABELS[activeLang] || LANG_LABELS['en'];
+  pmLangTag.textContent = `${LANG_FLAGS[lang] || ''} ${labels[lang] || lang}`;
+
+  // Extract from the DOM if available to get the exact translation dynamically
+  let planTitle = plan;
+  let priceText = isFree ? (activeLang === 'uk' ? 'Безкоштовно' : activeLang === 'de' ? 'Kostenlos' : 'Free') : `$${price}`;
+  let periodText = '';
+  let features = [];
+
+  if (cardElement) {
+    const titleEl = cardElement.querySelector('.pricing-title');
+    if (titleEl) planTitle = titleEl.textContent;
+
+    const priceEl = cardElement.querySelector('.pricing-price [data-i18n]');
+    if (priceEl) priceText = priceEl.textContent;
+
+    const periodEl = cardElement.querySelector('.pricing-period');
+    if (periodEl) periodText = periodEl.textContent;
+
+    const featItems = cardElement.querySelectorAll('.pricing-feature-item span, .pricing-features span');
+    featItems.forEach(item => {
+      features.push(item.textContent);
+    });
+  }
+
+  pmPlanName.textContent = planTitle;
+  pmPrice.textContent = priceText;
+  pmPeriod.textContent = periodText;
+
+  // Localized Actions
+  if (pmCancel) {
+    pmCancel.textContent = activeLang === 'uk' ? 'Скасувати' : activeLang === 'de' ? 'Abbrechen' : 'Cancel';
+  }
+
+  if (pmConfirmLabel) {
+    if (isFree) {
+      pmConfirmLabel.textContent = activeLang === 'uk' ? '🎯 Записатися безкоштовно' : activeLang === 'de' ? '🎯 Kostenlos anmelden' : '🎯 Book Free Lesson';
+    } else {
+      pmConfirmLabel.textContent = activeLang === 'uk' ? '💳 Підтвердити оплату' : activeLang === 'de' ? '💳 Zahlung bestätigen' : '💳 Confirm Payment';
+    }
+  }
+
+  if (pmSecureNote) {
+    const shieldIcon = `<svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 1l9 4v6c0 5.25-3.84 10.13-9 11.5C6.84 21.13 3 16.25 3 11V5l9-4z"/></svg>`;
+    const secureText = activeLang === 'uk' ? 'Захищено 256-bit SSL шифруванням' : activeLang === 'de' ? 'Gesichert mit 256-Bit-SSL-Verschlüsselung' : 'Secured with 256-bit SSL encryption';
+    pmSecureNote.innerHTML = `${shieldIcon} ${secureText}`;
+  }
 
   const iconColors = { english: '#0057b7', german: '#DD0000', ukrainian: '#0057B7' };
   pmIconWrap.style.background = `linear-gradient(135deg, ${iconColors[lang] || '#4B1F60'}22, ${iconColors[lang] || '#4B1F60'}11)`;
   pmIconWrap.style.color = iconColors[lang] || '#4B1F60';
 
-  pmFeatures.innerHTML = (planInfo.features || [])
+  pmFeatures.innerHTML = features
     .map(f => `<li><svg fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>${f}</li>`)
     .join('');
 
@@ -817,6 +859,7 @@ if (pmConfirm) {
   pmConfirm.addEventListener('click', async () => {
     if (!currentPaymentData) return;
     const { lang, plan, price, lessons, isFree } = currentPaymentData;
+    const activeLang = localStorage.getItem('novaflowLang') || 'en';
 
     localStorage.setItem('novaflow_selected_lang', lang);
     localStorage.setItem('novaflow_selected_plan', plan);
@@ -824,7 +867,9 @@ if (pmConfirm) {
 
     const originalHTML = pmConfirm.innerHTML;
     pmConfirm.disabled = true;
-    pmConfirm.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Обробка...`;
+
+    const processingText = activeLang === 'uk' ? 'Обробка...' : activeLang === 'de' ? 'Verarbeitung...' : 'Processing...';
+    pmConfirm.innerHTML = `<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="animation:spin 1s linear infinite"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> ${processingText}`;
 
     await new Promise(r => setTimeout(r, 1200));
 
@@ -838,15 +883,27 @@ if (pmConfirm) {
     } else {
       showPurchaseToast(lang, plan, false);
       setTimeout(() => {
-        alert(`💳 Перенаправлення на безпечную оплату...\n\nПлан: ${plan}\nМова: ${LANG_LABELS[lang]}\nСума: $${price}\n\n[Тут буде Stripe або WayForPay]`);
+        const labels = LANG_LABELS[activeLang] || LANG_LABELS['en'];
+        const redirText = activeLang === 'uk' 
+          ? `💳 Перенаправлення на безпечну оплату...\n\nПлан: ${plan}\nМова: ${labels[lang]}\nСума: $${price}\n\n[Тут буде Stripe або WayForPay]`
+          : activeLang === 'de'
+          ? `💳 Weiterleitung zur sicheren Kasse...\n\nPlan: ${plan}\nSprache: ${labels[lang]}\nBetrag: $${price}\n\n[Stripe oder WayForPay hier]`
+          : `💳 Redirecting to secure checkout...\n\nPlan: ${plan}\nLanguage: ${labels[lang]}\nAmount: $${price}\n\n[Stripe or WayForPay here]`;
+        alert(redirText);
       }, 300);
     }
   });
 }
 
 function showPurchaseToast(lang, plan, isFree) {
+  const activeLang = localStorage.getItem('novaflowLang') || 'en';
   const existing = document.getElementById('nf-purchase-toast');
   if (existing) existing.remove();
+
+  const labels = LANG_LABELS[activeLang] || LANG_LABELS['en'];
+  const titleText = isFree 
+    ? (activeLang === 'uk' ? 'Записано!' : activeLang === 'de' ? 'Registriert!' : 'Registered!')
+    : (activeLang === 'uk' ? 'Оплату підтверджено!' : activeLang === 'de' ? 'Zahlung bestätigt!' : 'Payment Confirmed!');
 
   const toast = document.createElement('div');
   toast.id = 'nf-purchase-toast';
@@ -854,8 +911,8 @@ function showPurchaseToast(lang, plan, isFree) {
   toast.innerHTML = `
     <div class="nf-toast-icon">🎉</div>
     <div class="nf-toast-text">
-      <strong>${isFree ? 'Записано!' : 'Оплату підтверджено!'}</strong>
-      <span>${LANG_LABELS[lang]} — ${plan}</span>
+      <strong>${titleText}</strong>
+      <span>${labels[lang] || lang} — ${plan}</span>
     </div>`;
   document.body.appendChild(toast);
 
@@ -871,6 +928,7 @@ buyButtons.forEach(btn => {
     const plan = this.getAttribute('data-plan') || 'Trial Placement';
     const price = this.getAttribute('data-price') || '0';
     const lessons = this.getAttribute('data-lessons') || '1';
-    openPaymentModal(lang, plan, price, lessons);
+    const card = this.closest('.pricing-card');
+    openPaymentModal(lang, plan, price, lessons, card);
   });
 });

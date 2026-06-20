@@ -45,9 +45,12 @@
               <i class="fa-solid fa-users"></i> Мої Учні
             </a>
           </li>
-          <li id="workspace-menu-item">
-            <a href="#" class="sidebar-link" data-tab="workspace">
-              <i class="fa-solid fa-graduation-cap"></i> Робоча зона: <span id="sidebar-student-name">...</span>
+          <li id="workspace-menu-item" style="display: none;">
+            <a href="#" class="sidebar-link" data-tab="workspace" style="display: flex; align-items: center; gap: 12px;">
+              <div class="sidebar-student-avatar-container" style="width: 24px; height: 24px; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #e5e7eb; border: 1px solid #cbd5e1;">
+                <img id="sidebar-student-avatar" src="https://ui-avatars.com/api/?name=Учень&background=5e077e&color=fff" alt="Student Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+              </div>
+              <span>Робоча зона: <span id="sidebar-student-name">...</span></span>
             </a>
           </li>
           <li>
@@ -71,6 +74,9 @@
         <div class="welcome-text">
           <h1 id="teacher-welcome">Вітаємо, викладачу 👋</h1>
           <p>Керування розкладом, балансом учнів та домашніми завданнями.</p>
+        </div>
+        <div class="user-profile-nav" id="teacher-student-nav" style="display: none;">
+          <img id="header-student-avatar" src="https://ui-avatars.com/api/?name=Учень&background=5e077e&color=fff" alt="Student Avatar" class="dash-avatar trigger-student-profile" title="Профіль учня" style="cursor: pointer;">
         </div>
       </header>
 
@@ -230,6 +236,9 @@
         </div>
 
         <div id="teacher-editor-zone" class="hw-editor-zone hidden">
+          <button type="button" class="fullscreen-close-btn" onclick="window.toggleTeacherFullscreen()" title="Вийти з повноекранного режиму">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
           <div class="editor-header">
             <h3><i class="fa-solid fa-chalkboard-user"></i> Перевірка та рецензування роботи учня</h3>
             <button type="button" id="t-btn-fullscreen" class="editor-btn-secondary" onclick="window.toggleTeacherFullscreen()">
@@ -245,6 +254,8 @@
             </div>
             <div class="tool-group">
               <button type="button" id="t-tool-undo" class="editor-btn-action" title="Крок назад"><i class="fa-solid fa-arrow-rotate-left"></i></button>
+            </div>
+            <div class="tool-group">
               <button type="button" id="t-tool-clear" class="editor-btn-action clear-tool" title="Очистити виправлення"><i class="fa-solid fa-trash-can"></i> Очистити</button>
             </div>
             <div class="tool-group settings-group">
@@ -298,11 +309,69 @@
 
   <div id="hw-file-preview-modal" class="dash-modal hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: flex; align-items: center; justify-content: center;">
     <div style="background: #fff; padding: 20px; border-radius: 12px; max-width: 90%; max-height: 90%; width: 520px; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.25); border: 1px solid #e5e7eb;">
-      <button type="button" onclick="document.getElementById('hw-file-preview-modal').classList.add('hidden')" style="position: absolute; top: 12px; right: 15px; background: none; border: none; font-size: 1.6rem; cursor: pointer; color: #9ca3af; line-height: 1;">&times;</button>
+      <button type="button" onclick="document.getElementById('hw-file-preview-modal').classList.remove('active'); document.getElementById('hw-file-preview-modal').classList.add('hidden');" style="position: absolute; top: 12px; right: 15px; background: none; border: none; font-size: 1.6rem; cursor: pointer; color: #9ca3af; line-height: 1;">&times;</button>
       <h3 id="preview-modal-title" style="margin-top: 0; margin-bottom: 12px; color: #111827; font-size: 1.25rem; font-weight: 600; padding-right: 20px;">Тема завдання</h3>
       <p id="preview-modal-desc" style="font-size: 0.95rem; color: #374151; margin-bottom: 16px; white-space: pre-wrap; max-height: 110px; overflow-y: auto; background: #f9fafb; padding: 10px; border-radius: 8px; border: 1px solid #f3f4f6; line-height: 1.5;"></p>
       <div id="preview-image-container" style="text-align: center; background: #f3f4f6; border-radius: 8px; padding: 10px; max-height: 400px; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px dashed #e5e7eb;">
         <img id="preview-modal-img" src="" alt="Прикріплене зображення" style="max-width: 100%; max-height: 380px; object-fit: contain; border-radius: 6px;">
+      </div>
+    </div>
+  </div>
+
+  <!-- Модалка редагування профілю учня (для вчителя) -->
+  <div id="student-profile-modal" class="dash-modal hidden">
+    <div class="dash-modal-content" style="width: 480px; padding: 30px; position: relative;">
+      <button type="button" id="close-student-profile-modal" style="position: absolute; top: 12px; right: 15px; background: none; border: none; font-size: 1.6rem; cursor: pointer; color: #9ca3af; line-height: 1;">&times;</button>
+      
+      <div class="profile-card" style="border: none; padding: 0; box-shadow: none; background: transparent;">
+        <div class="profile-avatar-zone">
+          <div class="avatar-wrapper" id="teacher-student-avatar-wrapper" title="Натисніть, щоб змінити аватар учня">
+            <img id="modal-student-avatar" src="img/avatar-placeholder.png" alt="Аватар учня">
+            <div class="avatar-overlay">
+              <i class="fa-solid fa-camera"></i>
+            </div>
+          </div>
+          <input type="file" id="modal-student-avatar-file" accept="image/*" style="display: none;">
+          
+          <h2 id="modal-student-full-name">Ім'я Учня</h2>
+          <p class="profile-subtitle">Керування профілем учня</p>
+        </div>
+
+        <form id="teacher-student-edit-form" class="profile-form">
+          <div class="form-group">
+            <label for="edit-student-name"><i class="fa-solid fa-user"></i> Ім'я:</label>
+            <input type="text" id="edit-student-name" placeholder="Ім'я учня" required>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-student-surname"><i class="fa-solid fa-id-card"></i> Прізвище:</label>
+            <input type="text" id="edit-student-surname" placeholder="Прізвище учня">
+          </div>
+
+          <div class="form-group">
+            <label for="edit-student-birth"><i class="fa-solid fa-cake-candles"></i> Дата народження:</label>
+            <input type="date" id="edit-student-birth">
+          </div>
+
+          <div class="form-group">
+            <label for="edit-student-lessons"><i class="fa-solid fa-graduation-cap"></i> Баланс занять:</label>
+            <input type="number" id="edit-student-lessons" min="0" placeholder="Кількість занять" required style="width: 100%; height: 46px; padding: 0 16px; font-size: 14.5px; border: 1px solid #cbd5e1; border-radius: var(--radius-md); outline: none; box-sizing: border-box;">
+          </div>
+
+          <div class="form-group">
+            <label for="edit-student-language"><i class="fa-solid fa-language"></i> Напрямок/Мова навчання:</label>
+            <input type="text" id="edit-student-language" placeholder="Наприклад: english:English B2">
+            <small class="form-help-text">Формат: мова:рівень (наприклад: english:English B2)</small>
+          </div>
+
+          <div class="profile-actions" style="margin-top: 10px;">
+            <button type="submit" class="dash-btn btn-primary" id="btn-save-student-profile">
+              <i class="fa-solid fa-floppy-disk"></i> Зберегти зміни
+            </button>
+          </div>
+        </form>
+
+        <div id="student-profile-alert" class="profile-alert hidden"></div>
       </div>
     </div>
   </div>

@@ -139,6 +139,31 @@ body.dashboard-body {
 /* КЕРУВАННЯ ТАБАМИ (ПРИХОВУВАННЯ) */
 .tab-content { display: none; }
 .tab-content.active { display: block; }
+
+/* Міні-аватарка в шапці */
+.dash-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 2px solid #7c3aed;
+  cursor: pointer;
+  background: transparent !important;
+  transition: all 0.2s ease;
+}
+
+.dash-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(124, 58, 237, 0.3);
+  border-color: #5e077e;
+}
+
+/* Клас для елементів, які мають перемикати вкладку на профіль */
+.trigger-profile-tab {
+  cursor: pointer;
+}
+
 /* =========================================================================
    СТИЛЬНИЙ ІНТЕРАКТИВНИЙ РЕДАКТОР (ОНОВЛЕНІ ВІДСТУПИ ТА ВАУ-ЕФЕКТ)
    ========================================================================= */
@@ -1235,5 +1260,382 @@ body.dashboard-body {
     text-align: left;
     flex-direction: row;
     justify-content: space-between;
+  }
+}
+
+/* ==========================================================================
+   ПРЕМІУМ-СТИЛІ ТА АДАПТИВКА ДЛЯ МОДУЛЯ ПРОФІЛЮ (NOVAFLOW STYLE)
+   ========================================================================== */
+
+/* Головний контейнер вкладки */
+#tab-profile {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px 10px;
+}
+
+/* Картка профілю */
+.dash-card.profile-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 10px 30px rgba(94, 7, 126, 0.03);
+  border: 1px solid #f1f5f9;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Зона аватарки та заголовка */
+.profile-avatar-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+/* Контейнер аватарки з фіксом полоски */
+.avatar-wrapper {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: transparent !important; /* ВИПРАВЛЕНО: прибираємо фон, який визирав смужкою */
+  border: 3px solid #7c3aed;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Картинка всередині з фіксом згладжування edges */
+.avatar-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;        /* ВИПРАВЛЕНО: прибирає базові інлайнові відступи тегу */
+  border-radius: 50%;    /* ВИПРАВЛЕНО: змушує браузер обрізати картинку ідеально по колу */
+}
+
+/* Ефект наведення камери на аватар (якщо додавав overlay у верстку) */
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border-radius: 50%;
+}
+
+.avatar-wrapper:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar-overlay i {
+  color: #ffffff;
+  font-size: 20px;
+}
+
+.profile-avatar-zone h2 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.profile-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Структура форми */
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Групи полів (Label + Input) */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-group label i {
+  color: #7c3aed; /* Фіолетові іконки під бренд */
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+}
+
+/* Стилізація інпутів (Текст та Дата) */
+.form-group input[type="text"],
+.form-group input[type="date"] {
+  width: 100%;
+  height: 46px;
+  padding: 0 16px;
+  font-size: 14.5px;
+  font-family: inherit;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+/* Поля, які заблоковані для редагування (Викладач, Дата реєстрації) */
+.form-group input:disabled {
+  background: #f8fafc !important;
+  color: #64748b;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+}
+
+/* Фокус на активному інпуті */
+.form-group input[type="text"]:focus,
+.form-group input[type="date"]:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+  background: #ffffff;
+}
+
+/* Плейсхолдери */
+.form-group input::placeholder {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+/* Підказки (маленький текст) */
+.form-help-text {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+/* Кнопка збереження */
+.profile-actions {
+  margin-top: 8px;
+}
+
+.profile-actions .btn-primary {
+  width: 100%;
+  height: 48px;
+  background: linear-gradient(135deg, #5e077e 0%, #7c3aed 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 14px rgba(94, 7, 126, 0.2);
+  transition: all 0.25s ease;
+}
+
+.profile-actions .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+  filter: brightness(1.05);
+}
+
+.profile-actions .btn-primary:disabled {
+  background: #cbd5e1 !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Блок сповіщень (Alert) */
+.profile-alert {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.profile-alert.success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.profile-alert.error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.profile-alert.hidden {
+  display: none !important;
+}
+
+/* ==========================================================================
+   АДАПТИВНИЙ МЕДІА-ЗАПИТ ДЛЯ МОБІЛЬНИХ ПРИСТРОЇВ (max-width: 768px)
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+  #tab-profile {
+    padding: 10px 4px;
+  }
+
+  .dash-card.profile-card {
+    padding: 24px 16px;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);
+  }
+
+  /* Адаптуємо розмір круга аватарки на мобілках */
+  .avatar-wrapper {
+    width: 88px;
+    height: 88px;
+    border-width: 2.5px;
+  }
+
+  .profile-avatar-zone h2 {
+    font-size: 21px;
+  }
+
+  .form-group input[type="text"],
+  .form-group input[type="date"] {
+    height: 48px;
+    font-size: 15px;
+  }
+
+  .profile-actions .btn-primary {
+    height: 50px;
+    font-size: 15.5px;
+    border-radius: 14px;
+  }
+}
+
+/* =========================================================================
+   ГЛОБАЛЬНЕ ПЕРЕЗАПИСАННЯ СТИЛІВ ДЛЯ МОБІЛЬНОГО МЕНЮ (ПОВНИЙ ФІКС КЛІКІВ)
+   ========================================================================= */
+
+/* На великих екранах (ПК) ховаємо елементи мобілки */
+.dash-mobile-topbar, 
+.dash-sidebar-overlay {
+  display: none !important;
+}
+
+@media screen and (max-width: 768px) {
+  
+  /* 1. Вмикаємо мобільну плашку зверху (Нижній шар навігації) */
+  .dash-mobile-topbar {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 60px !important;
+    background: #ffffff !important;
+    padding: 0 20px !important;
+    box-sizing: border-box !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    z-index: 990 !important; /* Нижче за оверлей та сайдбар */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  /* Кнопка бургера у плашці */
+  .dash-burger-btn {
+    background: none !important;
+    border: none !important;
+    font-size: 1.4rem !important;
+    color: #4f46e5 !important;
+    cursor: pointer !important;
+    padding: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* 2. ОВЕРЛЕЙ (Середній шар — затемнює контент сайту, але лежить ПІД меню) */
+  .dash-sidebar-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(3px) !important;
+    z-index: 1000 !important; /* Рівно посередині */
+    display: block !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: opacity 0.3s ease, visibility 0.3s ease !important;
+  }
+
+  /* Коли меню відкрите, оверлей стає видимим */
+  .dash-sidebar-overlay.active {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* 3. САЙДБАР З ПОСИЛАННЯМИ (Найвищий шар — тепер кліки точно працюють) */
+  .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: -285px !important; /* Повністю виштовхуємо ліворуч */
+    width: 260px !important;
+    height: 100vh !important;
+    background-color: #ffffff !important;
+    z-index: 1010 !important; /* Вище за оверлей, щоб посилання натискалися */
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 5px 0 25px rgba(0, 0, 0, 0.15) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin: 0 !important;
+    padding: 20px !important;
+  }
+
+  /* Клас, який JS додає при кліку — меню плавно виїжджає перед оверлеєм */
+  .sidebar.active {
+    left: 0 !important;
+  }
+
+  /* 4. НАЛАШТУВАННЯ ГОЛОВНОГО КОНТЕНТУ */
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 85px 15px 20px 15px !important; /* Великий відступ зверху через плашку */
+    box-sizing: border-box !important;
+  }
+
+  /* Скидаємо блочну обгортку, якщо вона ламає мобільну сітку */
+  .dashboard-wrapper {
+    display: block !important;
   }
 }

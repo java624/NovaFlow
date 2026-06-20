@@ -10,9 +10,20 @@
 </head>
 <body class="dashboard-body">
 
+  <div class="dash-mobile-topbar">
+     <div class="mobile-logo-mini">
+       <strong style="color: #111827; font-size: 1.15rem;">NovaFlow</strong>
+     </div>
+     <button type="button" class="dash-burger-btn" id="dash-burger-toggle">
+       <i class="fa-solid fa-bars"></i>
+     </button>
+  </div>
+
+  <div class="dash-sidebar-overlay" id="dash-sidebar-overlay"></div>
+
   <div class="dashboard-wrapper">
     
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
       <div class="sidebar-logo clickable-logo" onclick="window.location.href='index.html';">
         <img src="img/logo.svg" alt="NovaFlow Logo">
         <div class="logo-text">
@@ -28,6 +39,7 @@
           <li><a href="#" class="sidebar-link" data-tab="homework"><i class="fa-solid fa-book-open"></i> Домашні завдання</a></li>
           <li><a href="#" class="sidebar-link" data-tab="materials"><i class="fa-solid fa-folder-open"></i> Матеріали</a></li>
           <li><a href="#" class="sidebar-link" data-tab="payments"><i class="fa-solid fa-credit-card"></i> Оплата</a></li>
+          <li><a href="#" class="sidebar-link" data-tab="profile" id="menu-btn-profile"><i class="fa-solid fa-user-gear"></i> Мій профіль</a></li>
         </ul>
       </nav>
 
@@ -44,8 +56,7 @@
           <p>Твій мовний потік активний. Продовжуй у тому ж дусі!</p>
         </div>
         <div class="user-profile-nav">
-          <div class="streak-badge"><i class="fa-solid fa-fire"></i> 5 днів streak</div>
-          <img src="img/avatar-placeholder.png" alt="User Avatar" class="dash-avatar">
+          <img id="header-user-avatar" src="https://ui-avatars.com/api/?name=Павло&background=5e077e&color=fff" alt="User Avatar" class="dash-avatar trigger-profile-tab" title="Перейти до профілю">
         </div>
       </header>
 
@@ -74,7 +85,7 @@
             <div class="dash-card lesson-card highlight">
               <span class="card-tag">Наступний урок</span>
               <h2>Вівторок — 18:00</h2>
-              <p><i class="fa-solid fa-user-tie"></i> Викладач: Emma</p>
+              <p><i class="fa-solid fa-user-tie"></i> Викладач: </p>
               <a href="https://zoom.us" target="_blank" class="dash-btn btn-success"><i class="fa-solid fa-video"></i> Join Lesson</a>
             </div>
 
@@ -119,7 +130,7 @@
             
             <div id="tab-homework-action-block" style="margin-top: 15px; display: none;">
               <button type="button" class="dash-btn btn-success" onclick="document.getElementById('homework-editor-zone').classList.remove('hidden'); document.getElementById('homework-editor-zone').style.display='block';" style="background: #059669; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
-                <i class="fa-solid fa-file-pen"></i> Відкрити інтерактивну дошку з фото
+                <i class="fa-solid fa-file-pen"></i> Відкрити інтерактивну дошку з photo
               </button>
             </div>
           </div>
@@ -176,7 +187,6 @@
             </div>
           </div>
 
-          <!-- Секція результату перевірки вчителем -->
           <div id="student-review-zone" class="dash-card section-top-margin" style="display: none; border-left: 5px solid #10b981;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
               <h3 style="margin: 0; color: #10b981;"><i class="fa-solid fa-square-poll-vertical"></i> Результат перевірки вчителем</h3>
@@ -191,7 +201,6 @@
             </div>
           </div>
 
-          <!-- Історія домашніх завдань -->
           <div class="dash-card section-top-margin">
             <h2><i class="fa-solid fa-clock-rotate-left"></i> Історія моїх домашніх завдань</h2>
             <p class="section-description">Тут ви можете побачити всі ваші домашні завдання, їхні статуси та переглянути результати перевірки.</p>
@@ -270,6 +279,60 @@
         </div>
 
       </div>
+
+      <div id="tab-profile" class="tab-content">
+         <div class="dash-card profile-card">
+            <div class="profile-avatar-zone">
+              <div class="avatar-wrapper" onclick="document.getElementById('profile-avatar-file').click();" title="Натисніть, щоб змінити аватар">
+               <img id="profile-modal-img" src="img/avatar-placeholder.png" alt="Аватар учня">
+         <div class="avatar-overlay">
+         <i class="fa-solid fa-camera"></i>
+         </div>
+         </div>
+         <input type="file" id="profile-avatar-file" accept="image/*" style="display: none;">
+  
+         <h2 id="profile-full-name">Павло</h2>
+         <p class="profile-subtitle">Студент платформи NovaFlow</p>
+      </div>
+
+    <form id="profile-edit-form" class="profile-form">
+      
+      <div class="form-group">
+        <label for="profile-input-name"><i class="fa-solid fa-user"></i> Ім'я:</label>
+        <input type="text" id="profile-input-name" placeholder="Введіть ваше ім'я" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="profile-input-surname"><i class="fa-solid fa-id-card"></i> Прізвище:</label>
+        <input type="text" id="profile-input-surname" placeholder="Введіть ваше прізвище">
+      </div>
+      
+      <div class="form-group">
+        <label for="profile-input-birth"><i class="fa-solid fa-cake-candles"></i> Дата народження:</label>
+        <input type="date" id="profile-input-birth">
+      </div>
+      
+      <div class="form-group">
+        <label for="profile-display-teacher"><i class="fa-solid fa-chalkboard-user"></i> Ваш викладач:</label>
+        <input type="text" id="profile-display-teacher" disabled style="background: #f3f4f6; cursor: not-allowed; color: #6b7280;">
+        <small class="form-help-text">Змінити викладача можна лише через адміністратора.</small>
+      </div>
+
+      <div class="form-group">
+        <label for="profile-display-created"><i class="fa-solid fa-calendar-day"></i> На платформі з:</label>
+        <input type="text" id="profile-display-created" disabled style="background: #f3f4f6; cursor: not-allowed; color: #6b7280;">
+      </div>
+      
+      <div class="profile-actions">
+        <button type="submit" class="dash-btn btn-primary" id="btn-save-profile">
+          <i class="fa-solid fa-floppy-disk"></i> Зберегти зміни
+        </button>
+      </div>
+    </form>
+    
+    <div id="profile-alert" class="profile-alert hidden"></div>
+  </div>
+ </div>
 
     </main>
   </div>

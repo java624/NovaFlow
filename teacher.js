@@ -10,6 +10,7 @@ const supabaseClient = teacherSupabase;
 
 let selectedStudentId = null;  // Поточний обраний учень (ID)
 let selectedStudentName = "";  // Ім'я обраного учня
+let currentSelectedStudentData = null; // Повний об'єкт обраного учня
 let globalCalendar = null;     // Об'єкт календаря FullCalendar
 
 // Глобальні змінні для Canvas перевірки вчителя
@@ -33,6 +34,7 @@ document.addEventListener("DOMContentLoaded", function() {
   loadStudentsForTeacher();
   handleHomeworkPosting();
   initTeacherSaveReviewListener(); // Ініціалізація кнопки відправки перевіреного ДЗ
+  initStudentProfileEditingForTeacher(); // Керування профілем учня
 });
 
 // =========================================================================
@@ -65,6 +67,24 @@ async function verifyTeacherSession() {
 // =========================================================================
 function initTeacherMenu() {
   const links = document.querySelectorAll('.sidebar-link');
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('dash-sidebar-overlay');
+  const burgerToggle = document.getElementById('dash-burger-toggle');
+
+  // Бургер-меню для мобільних та планшетів
+  if (burgerToggle && sidebar && overlay) {
+    burgerToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebar.classList.toggle('active');
+      overlay.classList.toggle('active');
+    });
+
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('active');
+      overlay.classList.remove('active');
+    });
+  }
+
   links.forEach(link => {
     link.addEventListener('click', (e) => {
       e.preventDefault();
@@ -76,18 +96,32 @@ function initTeacherMenu() {
         return;
       }
       switchTab(tabId);
+
+      // Закриваємо мобільне меню після вибору вкладки
+      if (sidebar && overlay) {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+      }
     });
   });
 
   // Кнопка Виходу з системи
-  document.querySelector('.logout-btn').addEventListener('click', async (e) => {
-    e.preventDefault();
-    if (confirm("Вийти з системи?")) {
-      await teacherSupabase.auth.signOut();
-      localStorage.clear();
-      window.location.href = "login.html";
-    }
-  });
+  const logoutBtn = document.querySelector('.logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (confirm("Вийти з системи?")) {
+        // Закриваємо меню перед виходом
+        if (sidebar && overlay) {
+          sidebar.classList.remove('active');
+          overlay.classList.remove('active');
+        }
+        await teacherSupabase.auth.signOut();
+        localStorage.clear();
+        window.location.href = "login.html";
+      }
+    });
+  }
 }
 
 window.switchTab = function(tabId) {
@@ -158,6 +192,18 @@ async function loadStudentsForTeacher() {
 function openStudentWorkspace(student) {
   selectedStudentId = student.id;
   selectedStudentName = student.full_name;
+  currentSelectedStudentData = student;
+
+  const finalAvatarUrl = student.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(student.first_name || student.full_name || 'Учень') + '&background=5e077e&color=fff&size=158';
+
+  const headerAvatarImg = document.getElementById('header-student-avatar');
+  if (headerAvatarImg) headerAvatarImg.src = finalAvatarUrl;
+
+  const studentNavContainer = document.getElementById('teacher-student-nav');
+  if (studentNavContainer) studentNavContainer.style.display = 'flex';
+
+  const sidebarAvatarImg = document.getElementById('sidebar-student-avatar');
+  if (sidebarAvatarImg) sidebarAvatarImg.src = finalAvatarUrl;
 
   document.getElementById('sidebar-student-name').innerText = student.full_name;
   let courseName = "Курс не обрано";
@@ -534,8 +580,14 @@ function saveTeacherState() {
 // ТОЧНИЙ КЛІК ТА СТВОРЕННЯ ПОЛЯ ВВЕДЕННЯ ТЕКСТУ
 function handleTeacherMouseDown(e) {
   const rect = tCanvas.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  // Дисплейні координати (для позиціонування HTML-елементів)
+  const displayX = e.clientX - rect.left;
+  const displayY = e.clientY - rect.top;
+  // Внутрішні координати Canvas (для малювання) з урахуванням масштабування
+  const scaleX = tCanvas.width / rect.width;
+  const scaleY = tCanvas.height / rect.height;
+  const x = displayX * scaleX;
+  const y = displayY * scaleY;
 
   if (tActiveTextarea) {
     finalizeTeacherLiveText();
@@ -550,14 +602,23 @@ function handleTeacherMouseDown(e) {
     const textarea = document.createElement('textarea');
     textarea.className = 'canvas-live-textarea';
     
-    textarea.style.left = `${x}px`;
-    textarea.style.top = `${y}px`;
-    textarea.style.fontSize = `${fontSize}px`;
+    // Позиціонуємо елемент точно в місце кліку (дисплейні координати)
+    textarea.style.left = `${displayX}px`;
+    textarea.style.top = `${displayY}px`;
+    // Розмір шрифту масштабуємо до дисплейних пікселів
+    const displayFontSize = fontSize / scaleX;
+    textarea.style.fontSize = `${displayFontSize}px`;
     textarea.style.color = color;
     textarea.style.lineHeight = '1.2';
+    textarea.style.height = `${displayFontSize * 1.4}px`;
+    textarea.style.minWidth = '120px';
+    textarea.style.width = 'auto';
 
+    // Зберігаємо ВНУТРІШНІ координати Canvas для точного малювання при збереженні
     textarea.dataset.canvasX = x.toString();
     textarea.dataset.canvasY = y.toString();
+    textarea.dataset.canvasFontSize = fontSize.toString();
+    textarea.dataset.canvasColor = color;
 
     const wrapper = document.getElementById('t-canvas-wrapper') || tCanvas.parentElement;
     wrapper.appendChild(textarea);
@@ -567,6 +628,8 @@ function handleTeacherMouseDown(e) {
     textarea.addEventListener('input', () => {
       textarea.style.height = 'auto';
       textarea.style.height = `${textarea.scrollHeight}px`;
+      textarea.style.width = 'auto';
+      textarea.style.width = `${textarea.scrollWidth + 10}px`;
     });
 
     textarea.addEventListener('keydown', (event) => {
@@ -576,6 +639,16 @@ function handleTeacherMouseDown(e) {
       }
       if (event.key === 'Escape') {
         event.preventDefault();
+        textarea.remove();
+        tActiveTextarea = null;
+      }
+    });
+
+    // Запікання при втраті фокусу
+    textarea.addEventListener('blur', () => {
+      if (textarea.value.trim() !== '') {
+        finalizeTeacherLiveText();
+      } else {
         textarea.remove();
         tActiveTextarea = null;
       }
@@ -595,10 +668,12 @@ function finalizeTeacherLiveText() {
 
   const text = tActiveTextarea.value.trim();
   if (text !== "") {
+    // Використовуємо ВНУТРІШНІ координати Canvas (незалежно від масштабування)
     const x = parseFloat(tActiveTextarea.dataset.canvasX);
     const y = parseFloat(tActiveTextarea.dataset.canvasY);
-    const fontSize = parseFloat(tActiveTextarea.style.fontSize);
-    const color = tActiveTextarea.style.color;
+    // Використовуємо збережений розмір шрифту для Canvas (не дисплейний!)
+    const fontSize = parseFloat(tActiveTextarea.dataset.canvasFontSize);
+    const color = tActiveTextarea.dataset.canvasColor || tActiveTextarea.style.color;
 
     tCtx.font = `bold ${fontSize}px 'Plus Jakarta Sans', sans-serif`;
     tCtx.fillStyle = color;
@@ -622,8 +697,11 @@ function handleTeacherMouseMove(e) {
   if (!tIsDrawing || tCurrentTool === 'text') return;
   
   const rect = tCanvas.getBoundingClientRect();
-  const currentX = e.clientX - rect.left;
-  const currentY = e.clientY - rect.top;
+  // Конвертуємо дисплейні координати у внутрішні координати Canvas
+  const scaleX = tCanvas.width / rect.width;
+  const scaleY = tCanvas.height / rect.height;
+  const currentX = (e.clientX - rect.left) * scaleX;
+  const currentY = (e.clientY - rect.top) * scaleY;
 
   tCtx.beginPath();
   tCtx.moveTo(tLastX, tLastY);
@@ -673,6 +751,16 @@ window.toggleTeacherFullscreen = function() {
       fullscreenBtn.innerHTML = `<i class="fa-solid fa-expand"></i> Повний екран`;
     }
   }
+
+  // Оновлюємо розмір canvas після зміни режиму
+  setTimeout(() => {
+    if (tCanvas) {
+      const container = document.getElementById('t-canvas-container');
+      if (container) {
+        container.scrollTop = 0;
+      }
+    }
+  }, 100);
 };
 
 function setupTeacherToolbarListeners() {
@@ -983,35 +1071,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Логіка перемикання вкладок у Сайдбарі
-const sidebarLinks = document.querySelectorAll('.sidebar-link');
-const tabContents = document.querySelectorAll('.tab-content');
-
-sidebarLinks.forEach(link => {
-  link.addEventListener('click', (e) => {
-    e.preventDefault();
-    
-    const targetTab = link.getAttribute('data-tab');
-    
-    // Видаляємо active клас у всіх посилань та вкладок
-    sidebarLinks.forEach(l => l.classList.remove('active'));
-    tabContents.forEach(tab => tab.style.display = 'none'); // Або classList.remove('active') залежно від твого CSS
-    
-    // Додаємо active потрібній вкладці
-    link.classList.add('active');
-    const activeTabEl = document.getElementById(`tab-${targetTab}`);
-    if (activeTabEl) {
-      activeTabEl.style.display = 'block';
-    }
-    
-    // Якщо вчитель переходить на вкладку "Головна", оновлюємо великий календар, щоб він рівно перемалювався
-    if (targetTab === 'dashboard' && window.generalCalendar) {
-      window.generalCalendar.render();
-    }
-  });
-});
-
-
 document.addEventListener('DOMContentLoaded', async () => {
   // Твій існуючий код завантаження учнів...
   
@@ -1223,36 +1282,6 @@ async function loadGeneralCalendarEvents() {
 
 
 // =========================================================================
-// 11. МОБІЛЬНЕ МЕНЮ ДЛЯ ВЧИТЕЛІВ (БУРГЕР)
-// =========================================================================
-document.addEventListener('DOMContentLoaded', () => {
-  const burgerBtn = document.getElementById('dash-burger-toggle');
-  const sidebar = document.querySelector('.sidebar');
-  const overlay = document.getElementById('dash-sidebar-overlay');
-  const sidebarLinks = document.querySelectorAll('.sidebar-link');
-
-  // Функція перемикання меню
-  const toggleSidebar = () => {
-    sidebar.classList.toggle('active');
-    overlay.classList.toggle('active');
-  };
-
-  if (burgerBtn) burgerBtn.addEventListener('click', toggleSidebar);
-  if (overlay) overlay.addEventListener('click', toggleSidebar);
-
-  // Автоматично закривати сайдбар на мобільних після вибору вкладки
-  sidebarLinks.forEach(link => {
-    link.addEventListener('click', () => {
-      if (window.innerWidth <= 1024) {
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
-      }
-    });
-  });
-});
-
-
-// =========================================================================
 // КЕРУВАННЯ ЖУРНАЛОМ ДЗ: ЗАВАНТАЖЕННЯ, МОДАЛЬНИЙ ПЕРЕГЛЯД ТА ВИДАЛЕННЯ
 // =========================================================================
 
@@ -1405,7 +1434,9 @@ window.openHwPreviewModal = function(encodedTitle, encodedDesc, fileUrl) {
     imgContainer.style.display = 'none';
   }
 
-  modal.classList.remove('hidden'); // Відображаємо модалку на екрані
+  // Відображаємо модалку: додаємо active (для CSS .dash-modal) і прибираємо hidden
+  modal.classList.remove('hidden');
+  modal.classList.add('active');
 };
 
 /**
@@ -1491,4 +1522,245 @@ async function deleteHomeworkReviewHistory(homeworkId) {
     console.error("Помилка видалення історії:", err);
     alert(`Не вдалося видалити: ${err.message}`);
   }
+}
+
+// =========================================================================
+// 10. РЕДАГУВАННЯ ТА КЕРУВАННЯ ПРОФІЛЕМ ОБРАНОГО УЧНЯ ВЧИТЕЛЕМ
+// =========================================================================
+function initStudentProfileEditingForTeacher() {
+  const avatarBtn = document.getElementById('header-student-avatar');
+  const modal = document.getElementById('student-profile-modal');
+  const closeBtn = document.getElementById('close-student-profile-modal');
+  
+  if (avatarBtn && modal) {
+    // Відкриття модалки при кліку на аватарку в шапці
+    avatarBtn.addEventListener('click', () => {
+      openStudentProfileModal();
+    });
+  }
+
+  if (closeBtn && modal) {
+    // Закриття модалки
+    closeBtn.addEventListener('click', () => {
+      closeStudentProfileModal();
+    });
+
+    // Закриття модалки при кліку на оверлей поза контентом
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeStudentProfileModal();
+      }
+    });
+  }
+
+  // Обробка зміни фото аватарки
+  const avatarWrapper = document.getElementById('teacher-student-avatar-wrapper');
+  const fileInput = document.getElementById('modal-student-avatar-file');
+  if (avatarWrapper && fileInput) {
+    avatarWrapper.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        await uploadStudentAvatarByTeacher(file);
+      }
+    });
+  }
+
+  // Обробка збереження форми
+  const form = document.getElementById('teacher-student-edit-form');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await saveStudentProfileByTeacher();
+    });
+  }
+}
+
+function openStudentProfileModal() {
+  const student = currentSelectedStudentData;
+  if (!student) return;
+
+  const modal = document.getElementById('student-profile-modal');
+  if (!modal) return;
+
+  // Оновлюємо картинку та ім'я в шапці модалки
+  const finalAvatarUrl = student.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(student.first_name || student.full_name || 'Учень') + '&background=5e077e&color=fff&size=158';
+  document.getElementById('modal-student-avatar').src = finalAvatarUrl;
+  document.getElementById('modal-student-full-name').innerText = student.full_name || `${student.first_name || 'Учень'} ${student.last_name || ''}`.trim();
+
+  // Заповнюємо поля форми
+  document.getElementById('edit-student-name').value = student.first_name || '';
+  document.getElementById('edit-student-surname').value = student.last_name || '';
+  document.getElementById('edit-student-birth').value = student.birth_date ? student.birth_date.split('T')[0] : '';
+  document.getElementById('edit-student-lessons').value = student.lessons_left || 0;
+  document.getElementById('edit-student-language').value = student.learning_language || '';
+
+  // Скидаємо повідомлення
+  const alertEl = document.getElementById('student-profile-alert');
+  if (alertEl) {
+    alertEl.classList.add('hidden');
+    alertEl.innerText = "";
+  }
+
+  // Відкриваємо модалку
+  modal.classList.remove('hidden');
+  modal.classList.add('active');
+}
+
+function closeStudentProfileModal() {
+  const modal = document.getElementById('student-profile-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.classList.add('hidden');
+  }
+}
+
+async function uploadStudentAvatarByTeacher(file) {
+  if (!selectedStudentId) return;
+
+  if (file.size > 3 * 1024 * 1024) {
+    alert("⚠️ Файл занадто великий! Максимальний розмір: 3 МБ.");
+    return;
+  }
+
+  const modalAvatar = document.getElementById('modal-student-avatar');
+  const headerAvatar = document.getElementById('header-student-avatar');
+  const sidebarAvatar = document.getElementById('sidebar-student-avatar');
+
+  if (modalAvatar) modalAvatar.style.opacity = '0.4';
+  if (headerAvatar) headerAvatar.style.opacity = '0.4';
+  if (sidebarAvatar) sidebarAvatar.style.opacity = '0.4';
+
+  try {
+    const fileExt = file.name.split('.').pop();
+    const filePath = `${selectedStudentId}_avatar.${fileExt}`;
+
+    const { data: uploadData, error: uploadError } = await teacherSupabase.storage
+      .from('avatars')
+      .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = teacherSupabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+
+    const finalAvatarUrl = `${publicUrl}?t=${new Date().getTime()}`;
+
+    const { error: updateError } = await teacherSupabase
+      .from('profiles')
+      .update({ avatar_url: finalAvatarUrl })
+      .eq('id', selectedStudentId);
+
+    if (updateError) throw updateError;
+
+    // Оновлюємо об'єкт
+    if (currentSelectedStudentData) {
+      currentSelectedStudentData.avatar_url = finalAvatarUrl;
+    }
+
+    // Змінюємо аватарки в UI
+    if (modalAvatar) { modalAvatar.src = finalAvatarUrl; modalAvatar.style.opacity = '1'; }
+    if (headerAvatar) { headerAvatar.src = finalAvatarUrl; headerAvatar.style.opacity = '1'; }
+    if (sidebarAvatar) { sidebarAvatar.src = finalAvatarUrl; sidebarAvatar.style.opacity = '1'; }
+
+    showStudentProfileAlert("✅ Аватарку учня успішно оновлено!", "success");
+  } catch (err) {
+    console.error("Помилка завантаження аватара учня:", err);
+    showStudentProfileAlert(`❌ Помилка завантаження фото: ${err.message}`, "error");
+    if (modalAvatar) modalAvatar.style.opacity = '1';
+    if (headerAvatar) headerAvatar.style.opacity = '1';
+    if (sidebarAvatar) sidebarAvatar.style.opacity = '1';
+  }
+}
+
+async function saveStudentProfileByTeacher() {
+  if (!selectedStudentId) return;
+
+  const firstNameVal = document.getElementById('edit-student-name').value.trim();
+  const lastNameVal = document.getElementById('edit-student-surname').value.trim();
+  const birthDateVal = document.getElementById('edit-student-birth').value || null;
+  const lessonsLeftVal = parseInt(document.getElementById('edit-student-lessons').value, 10) || 0;
+  const learningLanguageVal = document.getElementById('edit-student-language').value.trim();
+
+  if (!firstNameVal) {
+    showStudentProfileAlert("⚠️ Поле 'Ім'я' є обов'язковим.", "error");
+    return;
+  }
+
+  const saveBtn = document.getElementById('btn-save-student-profile');
+  const originalBtnHTML = saveBtn ? saveBtn.innerHTML : '';
+  if (saveBtn) {
+    saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Зберігаємо...`;
+    saveBtn.disabled = true;
+  }
+
+  try {
+    const fullNameVal = `${firstNameVal} ${lastNameVal}`.trim();
+    const { data: updatedStudent, error } = await teacherSupabase
+      .from('profiles')
+      .update({
+        first_name: firstNameVal,
+        last_name: lastNameVal,
+        birth_date: birthDateVal,
+        lessons_left: lessonsLeftVal,
+        learning_language: learningLanguageVal,
+        full_name: fullNameVal,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', selectedStudentId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Оновлюємо локальний об'єкт
+    currentSelectedStudentData = updatedStudent;
+    selectedStudentName = updatedStudent.full_name;
+
+    // Оновлюємо UI на сторінці
+    document.getElementById('sidebar-student-name').innerText = updatedStudent.full_name;
+    document.getElementById('modal-student-full-name').innerText = updatedStudent.full_name;
+    
+    let courseName = "Курс не обрано";
+    if (updatedStudent.learning_language) {
+      const parts = updatedStudent.learning_language.split(':');
+      courseName = parts.length > 1 ? parts[1] : parts[0];
+    }
+    document.getElementById('workspace-student-title').innerText = `Учень: ${updatedStudent.full_name} (${courseName})`;
+    document.getElementById('workspace-student-lessons').innerText = `${updatedStudent.lessons_left || 0} уроків`;
+
+    // Оновлюємо таблицю учнів та розклад
+    loadStudentsForTeacher();
+    initOrRefreshCalendar();
+
+    showStudentProfileAlert("✅ Дані учня успішно збережено!", "success");
+    setTimeout(() => {
+      closeStudentProfileModal();
+    }, 1500);
+
+  } catch (err) {
+    console.error("Помилка збереження профілю учня:", err);
+    showStudentProfileAlert(`❌ Помилка: ${err.message}`, "error");
+  } finally {
+    if (saveBtn) {
+      saveBtn.innerHTML = originalBtnHTML;
+      saveBtn.disabled = false;
+    }
+  }
+}
+
+function showStudentProfileAlert(message, type) {
+  const alertEl = document.getElementById('student-profile-alert');
+  if (!alertEl) {
+    alert(message);
+    return;
+  }
+  alertEl.innerText = message;
+  alertEl.className = `profile-alert ${type}`;
+  alertEl.classList.remove('hidden');
+  setTimeout(() => alertEl.classList.add('hidden'), 4000);
 }
