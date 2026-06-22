@@ -1063,11 +1063,16 @@ body.dashboard-body {
   padding: 40px;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
   border: 2px dashed #CBD5E1;
   overflow: auto;
   max-height: 80vh;
   margin-bottom: 24px;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  scroll-behavior: smooth;
+  position: relative;
 }
 
 .canvas-wrapper {
@@ -1075,13 +1080,25 @@ body.dashboard-body {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08);
   background: #FFFFFF;
   border-radius: 8px;
-  overflow: hidden;
+  overflow: visible;
+  touch-action: none;
+  transform-origin: 0 0;
+  cursor: grab;
+}
+
+.canvas-wrapper.dragging {
+  cursor: grabbing;
+}
+
+.canvas-wrapper.drawing-mode {
+  cursor: crosshair;
+  touch-action: none;
 }
 
 #homework-canvas {
   display: block;
-  max-width: 100%;
-  cursor: crosshair;
+  max-width: none;
+  cursor: inherit;
 }
 
 .hw-editor-zone.fullscreen-mode {
