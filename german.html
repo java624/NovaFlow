@@ -311,6 +311,7 @@
         </div>
       </div>
 
+      <!-- Contact Form -->
       <div class="contact-form-card">
         <form id="contact-form">
           <div class="form-group-row">
@@ -324,13 +325,18 @@
             </div>
           </div>
 
+          <div class="form-group">
+            <label class="form-label" for="form-phone" data-i18n="form_label_phone">Phone Number</label>
+            <input type="tel" id="form-phone" class="form-control" data-i18n="placeholder_phone" placeholder="+380 (50) 123-45-67">
+          </div>
+
           <div class="form-group-row">
             <div class="form-group">
               <label class="form-label" for="form-lang" data-i18n="form_label_lang">Target Language</label>
               <select id="form-lang" class="form-control" required>
-                <option value="" disabled data-i18n="select_lang_placeholder">Select Language</option>
+                <option value="" disabled selected data-i18n="select_lang_placeholder">Select Language</option>
                 <option value="English">English</option>
-                <option value="German" selected>German</option>
+                <option value="German">German</option>
                 <option value="Ukrainian">Ukrainian</option>
               </select>
             </div>

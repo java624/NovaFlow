@@ -807,6 +807,14 @@ function initMenuListeners() {
       e.preventDefault();
       const tabName = link.getAttribute('data-tab');
       if (tabName) window.switchTab(tabName);
+      
+      // Закриваємо мобільне меню після вибору вкладки
+      const sidebar = document.querySelector('.sidebar');
+      const overlay = document.getElementById('dash-sidebar-overlay');
+      if (sidebar && overlay) {
+        sidebar.classList.remove('active');
+        overlay.classList.remove('active');
+      }
     });
   });
 
@@ -815,10 +823,35 @@ function initMenuListeners() {
     logoutBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       if (confirm("Ти дійсно хочеш вийти з особистого кабінету?")) {
+        // Закриваємо меню перед виходом
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('dash-sidebar-overlay');
+        if (sidebar && overlay) {
+          sidebar.classList.remove('active');
+          overlay.classList.remove('active');
+        }
         await studentSupabase.auth.signOut();
         localStorage.clear();
         window.location.href = "login.html"; 
       }
+    });
+  }
+
+  // Бургер-меню для мобільних та планшетів
+  const burgerToggle = document.getElementById('dash-burger-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('dash-sidebar-overlay');
+
+  if (burgerToggle && sidebar && overlay) {
+    burgerToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebar.classList.toggle('active');
+      overlay.classList.toggle('active');
+    });
+
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('active');
+      overlay.classList.remove('active');
     });
   }
 }
@@ -1585,78 +1618,4 @@ function showProfileAlert(message, type) {
   alertEl.className = `profile-alert ${type}`;
   alertEl.classList.remove('hidden');
   setTimeout(() => alertEl.classList.add('hidden'), 4000);
-}
-// =========================================================================
-// ОНОВЛЕНЕ БУРГЕР-МЕНЮ З ОВЕРЛЕЄМ ТА ПЕРЕМИКАННЯМ ВКЛАДОК (ПОВНИЙ ФІКС)
-// =========================================================================
-
-function initMenuListeners() {
-  const burgerToggle = document.getElementById('dash-burger-toggle');
-  const sidebar = document.getElementById('sidebar');
-  const overlay = document.getElementById('dash-sidebar-overlay');
-
-  if (burgerToggle && sidebar && overlay) {
-    console.log("NovaFlow: Модуль мобільної навігації успішно ініціалізовано.");
-
-    // 1. Клік по кнопці бургера — відкриваємо/закриваємо меню та оверлей
-    burgerToggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      sidebar.classList.toggle('active');
-      overlay.classList.toggle('active');
-    });
-
-    // 2. Клік по оверлею (затемненню) — ховаємо меню
-    overlay.addEventListener('click', () => {
-      sidebar.classList.remove('active');
-      overlay.classList.remove('active');
-    });
-
-    // 3. Інтегроване перемикання вкладок при кліку на посилання в меню
-    const sidebarLinks = sidebar.querySelectorAll('.sidebar-link');
-    const allTabs = document.querySelectorAll('.tab-content');
-
-    sidebarLinks.forEach(link => {
-      link.addEventListener('click', (e) => {
-        // Якщо це звичайне посилання-вкладка, скасовуємо стандартний перехід по '#'
-        if (link.getAttribute('href') === '#' || link.hasAttribute('data-tab')) {
-          e.preventDefault();
-        }
-
-        const tabTarget = link.getAttribute('data-tab');
-        
-        // Якщо у лінка є data-tab, перемикаємо контент додатка
-        if (tabTarget) {
-          console.log(`NovaFlow Навігація: Перемикання на вкладку -> tab-${tabTarget}`);
-
-          // А) Змінюємо активний клас для кнопок у меню
-          sidebarLinks.forEach(l => l.classList.remove('active'));
-          link.classList.add('active');
-
-          // Б) Ховаємо всі таби та показуємо лише обрану
-          allTabs.forEach(tab => {
-            tab.classList.remove('active');
-            if (tab.id === `tab-${tabTarget}`) {
-              tab.classList.add('active');
-            }
-          });
-        }
-
-        // В) Після того, як вкладка перемкнулася — плавно ховаємо мобільне меню та оверлей
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
-      });
-    });
-
-    // Окремий обробник для кнопки виходу (щоб не ламати її логіку редіректу)
-    const logoutBtn = sidebar.querySelector('.logout-btn');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        sidebar.classList.remove('active');
-        overlay.classList.remove('active');
-      });
-    }
-
-  } else {
-    console.warn("NovaFlow Навігація: Не вдалося знайти елементи мобільного меню в HTML структурі.");
-  }
 }

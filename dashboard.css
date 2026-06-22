@@ -1,20 +1,19 @@
 /* Dashboard styles */
-/* Очищення стилів та шрифти */
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
 body.dashboard-body {
   font-family: 'Inter', sans-serif;
-  background-color: #F8F9FA; /* Світло-сірий преміум фон */
+  background-color: #F8F9FA;
   color: #1E293B;
   overflow-x: hidden;
 }
 
-/* Головний контейнер-сітка */
 .dashboard-wrapper {
   display: flex;
   min-height: 100vh;
 }
 
-/* ЛІВЕ МЕНЮ (SIDEBAR) */
+/* Sidebar */
 .sidebar {
   width: 280px;
   background-color: #FFFFFF;
@@ -32,13 +31,24 @@ body.dashboard-body {
   gap: 12px;
   margin-bottom: 40px;
 }
+
 .sidebar-logo img { height: 35px; }
-.clickable-logo { cursor: pointer; }
-.hidden { display: none !important; }
-.logo-name { font-weight: 800; font-size: 20px; color: #4B1F60; font-family: 'Montserrat', sans-serif; }
-.logo-sub { font-size: 10px; color: #64748B; letter-spacing: 1px; }
+
+.logo-name { 
+  font-weight: 800; 
+  font-size: 20px; 
+  color: #4B1F60; 
+  font-family: 'Montserrat', sans-serif; 
+}
+
+.logo-sub { 
+  font-size: 10px; 
+  color: #64748B; 
+  letter-spacing: 1px; 
+}
 
 .sidebar-nav ul { list-style: none; }
+
 .sidebar-link {
   display: flex;
   align-items: center;
@@ -49,9 +59,11 @@ body.dashboard-body {
   font-weight: 500;
   border-radius: 12px;
   margin-bottom: 8px;
-  transition: 0.3s;
+  transition: all 0.2s ease;
 }
+
 .sidebar-link i { font-size: 18px; }
+
 .sidebar-link:hover, .sidebar-link.active {
   background-color: rgba(75, 31, 96, 0.06);
   color: #4B1F60;
@@ -65,57 +77,301 @@ body.dashboard-body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 18px;
+  padding: 12px 16px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: background 0.2s ease;
 }
 
-/* ПРАВА ЧАСТИНА (ОСНОВНИЙ КОНТЕНТ) */
+.logout-btn:hover {
+  background-color: #fef2f2;
+}
+
+/* Main Content */
 .main-content {
-  margin-left: 280px; /* Відступ на ширину сайдбару */
+  margin-left: 280px;
   flex-grow: 1;
   padding: 40px 50px;
 }
 
+.user-profile-nav { 
+  display: flex; 
+  align-items: center; 
+  gap: 20px; 
+}
+
+.dash-avatar { 
+  width: 45px; 
+  height: 45px; 
+  border-radius: 50%; 
+  object-fit: cover; 
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dash-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 10px rgba(124, 58, 237, 0.3);
+}
+
+/* Header */
 .dash-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
+  gap: 20px;
+  flex-wrap: wrap;
 }
-.dash-header h1 { font-family: 'Montserrat', sans-serif; font-size: 28px; color: #24292E; }
-.dash-header p { color: #64748B; font-size: 15px; margin-top: 4px; }
 
-.user-profile-nav { display: flex; align-items: center; gap: 20px; }
-.streak-badge { background: #FFEDD5; color: #C2410C; padding: 6px 14px; border-radius: 20px; font-size: 14px; font-weight: 600; }
-.dash-avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; }
+.welcome-text h1 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
 
-/* КАРТКИ НА DASHBOARD */
+.welcome-text p {
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-width: 600px;
+}
+
+/* Dashboard Grid */
 .dash-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 30px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
 }
 
+/* Cards */
 .dash-card {
-  background: #FFFFFF;
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.02);
-  border: 1px solid rgba(0, 0, 0, 0.01);
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
 }
 
-.dash-card.highlight {
+.dash-card:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-color: #4B1F60;
+}
+
+.dash-card h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dash-card h2 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 12px;
+}
+
+/* Progress Card */
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.level-badge {
+  background: #f3e8ff;
+  color: #6b21a8;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.percentage {
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: #4B1F60;
+}
+
+.progress-bar-wrapper {
+  background: #e5e7eb;
+  height: 8px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  background: #4B1F60;
+  height: 100%;
+  border-radius: 8px;
+  width: 72%;
+}
+
+/* Trial Card */
+.trial-card {
+  grid-column: 1 / -1;
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+}
+
+.trial-card h2 {
+  color: #78350f;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.trial-card p {
+  color: #92400e;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
+.trial-card .btn-success {
+  background: #f59e0b;
+  color: #ffffff;
+  width: auto;
+  padding: 10px 20px;
+}
+
+.trial-card .btn-success:hover {
+  background: #d97706;
+}
+
+/* Paid Content Group */
+.paid-content-group {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+}
+
+/* Lesson Card */
+.lesson-card.highlight {
   background: linear-gradient(135deg, #4B1F60 0%, #321440 100%);
-  color: #FFFFFF;
+  color: #ffffff;
 }
 
-/* PROGRESS BAR */
-.progress-info { display: flex; justify-content: space-between; align-items: center; margin: 20px 0 10px; }
-.level-badge { background: #EEF2F6; color: #4B1F60; padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 14px; }
-.percentage { font-weight: 700; font-size: 18px; }
-.progress-bar-wrapper { background: #E2E8F0; height: 10px; border-radius: 10px; overflow: hidden; }
-.progress-bar-fill { background: #4B1F60; height: 100%; border-radius: 10px; }
+.lesson-card .card-tag {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
 
-/* КНОПКИ КАБІНЕТУ */
+.lesson-card.highlight h2 {
+  color: #ffffff;
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.lesson-card.highlight p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+}
+
+.lesson-card.highlight .btn-success {
+  background: #ffffff;
+  color: #4B1F60;
+  font-weight: 600;
+}
+
+/* Homework Card */
+.homework-card h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.homework-card p {
+  color: #64748b;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.deadline-text {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #dc2626;
+  font-weight: 600;
+  font-size: 0.8rem;
+  margin-bottom: 10px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.status-badge.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.info {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+/* Balance Card */
+.balance-card {
+  text-align: center;
+}
+
+.balance-card h3 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+.balance-number {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 3rem;
+  font-weight: 800;
+  color: #4B1F60;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.balance-card p {
+  color: #64748b;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+
+.balance-card .btn-primary {
+  width: auto;
+  padding: 10px 24px;
+}
+
+/* Buttons */
 .dash-btn {
   display: inline-flex;
   align-items: center;
@@ -128,105 +384,518 @@ body.dashboard-body {
   cursor: pointer;
   border: none;
   margin-top: 20px;
-  transition: 0.3s;
+  transition: all 0.2s ease;
   width: 100%;
 }
-.btn-success { background: #22C55E; color: white; }
-.btn-success:hover { background: #16A34A; }
-.btn-primary { background: #4B1F60; color: white; }
-.btn-outline { border: 2px solid #4B1F60; color: #4B1F60; background: transparent; }
 
-/* КЕРУВАННЯ ТАБАМИ (ПРИХОВУВАННЯ) */
-.tab-content { display: none; }
-.tab-content.active { display: block; }
+.btn-success { 
+  background: #22C55E; 
+  color: white; 
+}
 
-/* Міні-аватарка в шапці */
-.dash-avatar {
-  width: 42px;
-  height: 42px;
+.btn-success:hover { 
+  background: #16A34A; 
+}
+
+.btn-primary { 
+  background: #4B1F60; 
+  color: white; 
+}
+
+.btn-outline { 
+  border: 2px solid #4B1F60; 
+  color: #4B1F60; 
+  background: transparent; 
+}
+
+.btn-outline:hover {
+  background: #4B1F60;
+  color: white;
+}
+
+/* Tabs */
+.tab-content { 
+  display: none; 
+}
+
+.tab-content.active { 
+  display: block; 
+}
+
+/* Calendar Responsive Fixes */
+@media (max-width: 768px) {
+  #student-calendar-element {
+    padding: 8px !important;
+    font-size: 0.75rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  #student-calendar-element .fc {
+    font-size: 0.75rem;
+  }
+
+  #student-calendar-element .fc-header-toolbar {
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  #student-calendar-element .fc-toolbar-title {
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+  }
+
+  #student-calendar-element .fc-button {
+    padding: 4px 8px !important;
+    font-size: 0.7rem !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+  }
+
+  #student-calendar-element .fc-timegrid-slot {
+    height: 36px !important;
+  }
+
+  #student-calendar-element .fc-timegrid-col {
+    min-width: 50px !important;
+  }
+
+  #student-calendar-element .fc-event {
+    font-size: 0.7rem !important;
+    padding: 2px 4px !important;
+  }
+
+  #student-calendar-element .fc-col-header-cell {
+    padding: 4px 2px !important;
+    font-size: 0.7rem !important;
+  }
+
+  #student-calendar-element .fc-scrollgrid {
+    min-width: 600px !important;
+  }
+
+  #student-calendar-element .fc-scrollgrid-section-body {
+    overflow-x: auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #student-calendar-element {
+    padding: 4px !important;
+    font-size: 0.7rem;
+  }
+
+  #student-calendar-element .fc-header-toolbar {
+    flex-direction: column !important;
+    gap: 6px !important;
+  }
+
+  #student-calendar-element .fc-toolbar-title {
+    font-size: 0.9rem !important;
+  }
+
+  #student-calendar-element .fc-button {
+    padding: 3px 6px !important;
+    font-size: 0.65rem !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+  }
+
+  #student-calendar-element .fc-timegrid-slot {
+    height: 32px !important;
+  }
+
+  #student-calendar-element .fc-timegrid-col {
+    min-width: 40px !important;
+  }
+
+  #student-calendar-element .fc-scrollgrid {
+    min-width: 500px !important;
+  }
+}
+
+/* Responsive — планшети та менше */
+@media (max-width: 1024px) {
+  .dashboard-wrapper {
+    display: block !important;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 85px 24px 24px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .dash-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 22px;
+  }
+
+  .user-profile-nav {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .dash-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .paid-content-group {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 75px 18px 18px;
+  }
+
+  .dash-header h1 {
+    font-size: 24px;
+  }
+
+  .dash-btn {
+    padding: 12px 16px;
+  }
+
+  .dash-card {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 600px) {
+  .main-content {
+    padding: 70px 14px 16px;
+  }
+
+  .dash-btn {
+    width: 100%;
+  }
+
+  .dash-header {
+    gap: 18px;
+  }
+}
+
+/* Profile Module */
+#tab-profile {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px 10px;
+}
+
+.dash-card.profile-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 10px 30px rgba(94, 7, 126, 0.03);
+  border: 1px solid #f1f5f9;
+}
+
+.profile-avatar-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.avatar-wrapper {
+  position: relative;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
+  overflow: hidden;
+  background: transparent !important;
+  border: 3px solid #7c3aed;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.avatar-wrapper img {
+  width: 100%;
+  height: 100%;
   object-fit: cover;
   display: block;
-  border: 2px solid #7c3aed;
-  cursor: pointer;
-  background: transparent !important;
+  border-radius: 50%;
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  border-radius: 50%;
+}
+
+.avatar-wrapper:hover .avatar-overlay {
+  opacity: 1;
+}
+
+.avatar-overlay i {
+  color: #ffffff;
+  font-size: 20px;
+}
+
+.profile-avatar-zone h2 {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px 0;
+}
+
+.profile-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-group label i {
+  color: #7c3aed;
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+}
+
+.form-group input[type="text"],
+.form-group input[type="date"] {
+  width: 100%;
+  height: 46px;
+  padding: 0 16px;
+  font-size: 14.5px;
+  font-family: inherit;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  outline: none;
+  box-sizing: border-box;
   transition: all 0.2s ease;
 }
 
-.dash-avatar:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 10px rgba(124, 58, 237, 0.3);
-  border-color: #5e077e;
+.form-group input:disabled {
+  background: #f8fafc !important;
+  color: #64748b;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
 }
 
-/* Клас для елементів, які мають перемикати вкладку на профіль */
-.trigger-profile-tab {
-  cursor: pointer;
+.form-group input[type="text"]:focus,
+.form-group input[type="date"]:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
+  background: #ffffff;
 }
 
-/* =========================================================================
-   СТИЛЬНИЙ ІНТЕРАКТИВНИЙ РЕДАКТОР (ОНОВЛЕНІ ВІДСТУПИ ТА ВАУ-ЕФЕКТ)
-   ========================================================================= */
-
-/* Опис секції */
-.section-description {
-  color: #64748B;
-  font-size: 15px;
-  margin-top: 6px;
-  margin-bottom: 24px;
-}
-
-/* Красива тіньова картка */
-.dash-card.shadow-card {
-  box-shadow: 0 10px 30px rgba(75, 31, 96, 0.04), 0 1px 3px rgba(75, 31, 96, 0.02);
-  border: 1px solid rgba(75, 31, 96, 0.06);
-  padding: 35px; /* Більше відступів для основної картки */
-}
-
-/* Повідомлення про ДЗ (Homework Alert Box) */
-.homework-alert-box {
-  background: #FFFBEB;
-  border-left: 4px solid #F59E0B;
-  border-radius: 12px;
-  padding: 20px 24px;
-  margin-bottom: 25px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
-}
-
-.homework-alert-box h3 {
-  color: #78350F;
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.homework-alert-box p {
-  color: #92400E;
-  font-size: 15px;
-  line-height: 1.5;
-}
-
-.homework-alert-box .alert-deadline {
-  font-weight: 700;
+.form-group input::placeholder {
+  color: #94a3b8;
   font-size: 14px;
-  color: #DC2626 !important;
-  margin-top: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 }
 
-/* Інтерактивний примітчик - інтегрована стильна зона */
+.form-help-text {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.profile-actions {
+  margin-top: 8px;
+}
+
+.profile-actions .btn-primary {
+  width: 100%;
+  height: 48px;
+  background: linear-gradient(135deg, #5e077e 0%, #7c3aed 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 14px rgba(94, 7, 126, 0.2);
+  transition: all 0.25s ease;
+}
+
+.profile-actions .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+}
+
+.profile-actions .btn-primary:disabled {
+  background: #cbd5e1 !important;
+  color: #94a3b8 !important;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.profile-alert {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.profile-alert.success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.profile-alert.error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.profile-alert.hidden {
+  display: none !important;
+}
+
+/* Mobile Menu */
+.dash-mobile-topbar, 
+.dash-sidebar-overlay {
+  display: none !important;
+}
+
+@media screen and (max-width: 1024px) {
+  .dash-mobile-topbar {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 60px !important;
+    background: #ffffff !important;
+    padding: 0 20px !important;
+    box-sizing: border-box !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    z-index: 990 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+  }
+
+  .dash-burger-btn {
+    background: none !important;
+    border: none !important;
+    font-size: 1.4rem !important;
+    color: #4f46e5 !important;
+    cursor: pointer !important;
+    padding: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .dash-sidebar-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+    backdrop-filter: blur(3px) !important;
+    z-index: 1000 !important;
+    display: block !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: opacity 0.3s ease, visibility 0.3s ease !important;
+  }
+
+  .dash-sidebar-overlay.active {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: -285px !important;
+    width: 260px !important;
+    height: 100vh !important;
+    background-color: #ffffff !important;
+    z-index: 1010 !important;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 5px 0 25px rgba(0, 0, 0, 0.15) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    margin: 0 !important;
+    padding: 20px !important;
+  }
+
+  .sidebar.active {
+    left: 0 !important;
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 85px 15px 20px 15px !important;
+    box-sizing: border-box !important;
+  }
+
+  .dashboard-wrapper {
+    display: block !important;
+  }
+}
+
+/* Homework Editor */
 .hw-editor-zone {
   background: #FAFAFC;
   border: 1px solid rgba(75, 31, 96, 0.08);
   border-radius: 16px;
   padding: 28px;
   margin-top: 30px;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
-/* Заголовок редактора */
 .editor-header {
   display: flex;
   justify-content: space-between;
@@ -253,7 +922,6 @@ body.dashboard-body {
   margin-bottom: 20px;
 }
 
-/* Панель інструментів малювання */
 .editor-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -264,7 +932,6 @@ body.dashboard-body {
   border-radius: 14px;
   border: 1px solid rgba(75, 31, 96, 0.08);
   margin-bottom: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
 .tool-group {
@@ -277,7 +944,6 @@ body.dashboard-body {
   border: 1px solid #E2E8F0;
 }
 
-/* Кнопки інструментів */
 .editor-btn, .editor-btn-action, .editor-btn-secondary {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
@@ -299,7 +965,6 @@ body.dashboard-body {
   color: #1E293B;
 }
 
-/* Активний інструмент */
 .editor-btn.tool-active {
   background: #4B1F60;
   color: #FFFFFF;
@@ -325,12 +990,11 @@ body.dashboard-body {
   color: #321440;
 }
 
-/* Кнопка Очистити */
 .btn-clear-canvas {
   background: #FEF2F2;
   color: #EF4444;
   border: 1px solid #FEE2E2;
-  margin-left: auto; /* Вирівнювання вправо */
+  margin-left: auto;
 }
 
 .btn-clear-canvas:hover {
@@ -339,7 +1003,6 @@ body.dashboard-body {
   border-color: #FCA5A5;
 }
 
-/* Налаштування кольору та товщини */
 .settings-group {
   display: flex;
   align-items: center;
@@ -363,7 +1026,6 @@ body.dashboard-body {
   letter-spacing: 0.05em;
 }
 
-/* Гарний пікер кольору */
 .color-picker-wrapper {
   width: 32px;
   height: 32px;
@@ -395,11 +1057,10 @@ body.dashboard-body {
   cursor: pointer;
 }
 
-/* Область полотна (Canvas Container з вільними відступами від країв) */
 .canvas-container {
   background: #F1F5F9;
   border-radius: 16px;
-  padding: 40px; /* Суттєво збільшено відступи для вільного перегляду */
+  padding: 40px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -411,7 +1072,7 @@ body.dashboard-body {
 
 .canvas-wrapper {
   position: relative;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08);
   background: #FFFFFF;
   border-radius: 8px;
   overflow: hidden;
@@ -423,11 +1084,6 @@ body.dashboard-body {
   cursor: crosshair;
 }
 
-/* =========================================================================
-   ОНОВЛЕНИЙ ПОВНОЕКРАННИЙ РЕЖИМ ТА ЖИВИЙ ТЕКСТ
-   ========================================================================= */
-
-/* Контейнер редактора в повноекранному режимі */
 .hw-editor-zone.fullscreen-mode {
   position: fixed;
   top: 0;
@@ -436,14 +1092,13 @@ body.dashboard-body {
   height: 100vh;
   z-index: 9999;
   border-radius: 0;
-  padding: 0; /* Прибираємо внутрішні падінги */
-  background: #1e293b; /* Робимо темний професійний фон */
+  padding: 0;
+  background: #1e293b;
   display: flex;
   flex-direction: column;
-  overflow-y: auto; /* Дозволяємо всьому редактору скролитися вниз! */
+  overflow-y: auto;
 }
 
-/* Приліплений тулбар вгорі */
 .hw-editor-zone.fullscreen-mode .editor-toolbar {
   position: sticky;
   top: 0;
@@ -456,26 +1111,23 @@ body.dashboard-body {
   padding: 15px 24px;
 }
 
-/* Захобаємо заголовок в повноекранному режимі, щоб зекономити місце */
 .hw-editor-zone.fullscreen-mode .editor-header,
 .hw-editor-zone.fullscreen-mode .editor-subtitle {
   display: none;
 }
 
-/* Контейнер для Canvas */
 .hw-editor-zone.fullscreen-mode .canvas-container {
   flex: 1;
-  max-height: none; /* Знімаємо обмеження висоти */
+  max-height: none;
   padding: 40px 20px;
-  background: #0f172a; /* Глибокий колір фону для фокусу на книзі */
-  overflow: visible; /* Дозволяємо скролити сторінку */
+  background: #0f172a;
+  overflow: visible;
 }
 
-/* Стилі для «живого» текстового поля прямо на Canvas */
 .canvas-live-textarea {
   position: absolute;
-  background: rgba(255, 255, 255, 0.2); /* Напівпрозорий квадрат */
-  border: 1px dashed #a855f7; /* Тонка рамка виділення */
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px dashed #a855f7;
   color: #dc2626;
   font-family: 'Inter', sans-serif;
   font-weight: bold;
@@ -489,7 +1141,6 @@ body.dashboard-body {
   line-height: 1.2;
 }
 
-/* Приховуємо нижню кнопку відправки в режимі Fullscreen, щоб не заважала малювати */
 .hw-editor-zone.fullscreen-mode .editor-actions {
   position: fixed;
   bottom: 20px;
@@ -497,9 +1148,9 @@ body.dashboard-body {
   z-index: 10001;
   margin-top: 0;
 }
-/* Плаваючий хрестик для виходу з фулскріну */
+
 .fullscreen-close-floating {
-  display: none; /* Показуємо тільки в повноекранному режимі */
+  display: none;
   position: fixed;
   top: 15px;
   right: 25px;
@@ -523,16 +1174,11 @@ body.dashboard-body {
   transform: scale(1.05);
 }
 
-/* Вмикаємо хрестик, коли активовано fullscreen */
 .hw-editor-zone.fullscreen-mode .fullscreen-close-floating {
   display: block;
 }
 
-/* =========================================================================
-   ВКЛАДКА ОПЛАТИ — Стилі
-   ========================================================================= */
-
-/* Банер поточної мови */
+/* Payments */
 .payments-lang-banner {
   border-left: 4px solid #4B1F60;
   margin-bottom: 30px;
@@ -588,7 +1234,6 @@ body.dashboard-body {
   font-weight: 500;
 }
 
-/* Заголовок секції */
 .payments-section-header {
   margin-bottom: 24px;
 }
@@ -606,7 +1251,6 @@ body.dashboard-body {
   color: #64748B;
 }
 
-/* Сітка карток планів */
 .dash-pricing-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -614,7 +1258,6 @@ body.dashboard-body {
   margin-bottom: 30px;
 }
 
-/* Картка плану */
 .dash-plan-card {
   background: #FFFFFF;
   border-radius: 20px;
@@ -639,7 +1282,6 @@ body.dashboard-body {
   box-shadow: 0 10px 30px rgba(75, 31, 96, 0.12);
 }
 
-/* Бейдж "Популярний" */
 .dash-plan-badge {
   position: absolute;
   top: -14px;
@@ -656,7 +1298,6 @@ body.dashboard-body {
   white-space: nowrap;
 }
 
-/* Заголовок картки */
 .dash-plan-header {
   display: flex;
   flex-direction: column;
@@ -702,7 +1343,6 @@ body.dashboard-body {
   width: fit-content;
 }
 
-/* Список фіч */
 .dash-plan-features {
   list-style: none;
   display: flex;
@@ -727,7 +1367,6 @@ body.dashboard-body {
   flex-shrink: 0;
 }
 
-/* Кнопки купівлі */
 .dash-plan-btn {
   width: 100%;
   padding: 13px;
@@ -774,7 +1413,6 @@ body.dashboard-body {
   cursor: not-allowed;
 }
 
-/* Секція зміни мови */
 .change-lang-card {
   margin-top: 10px;
 }
@@ -828,7 +1466,6 @@ body.dashboard-body {
   transform: translateY(-2px);
 }
 
-/* Завантаження */
 .dash-pricing-loading {
   grid-column: 1 / -1;
   display: flex;
@@ -953,172 +1590,7 @@ body.dashboard-body {
   font-weight: 700;
 }
 
-/* Адаптивність */
-@media (max-width: 1024px) {
-  .dashboard-wrapper {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    position: relative;
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid rgba(75, 31, 96, 0.08);
-    padding: 24px 20px;
-  }
-
-  .main-content {
-    margin-left: 0;
-    padding: 34px 24px 24px;
-  }
-
-  .dash-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 22px;
-  }
-
-  .user-profile-nav {
-    justify-content: space-between;
-    width: 100%;
-    gap: 12px;
-  }
-
-  .dash-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dash-card {
-    padding: 26px;
-  }
-
-  .sidebar-link {
-    padding: 13px 16px;
-  }
-
-  .logout-btn {
-    padding: 13px 16px;
-  }
-
-  .dash-pricing-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .lang-banner-inner {
-    flex-wrap: wrap;
-  }
-
-  .change-lang-inner {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-@media (max-width: 760px) {
-  .main-content {
-    padding: 24px 18px 18px;
-  }
-
-  .sidebar {
-    padding: 18px 16px;
-  }
-
-  .dash-header h1 {
-    font-size: 24px;
-  }
-
-  .dash-btn {
-    padding: 12px 16px;
-  }
-
-  .homework-alert-box,
-  .hw-editor-zone,
-  .dash-card {
-    padding: 20px;
-  }
-
-  .editor-toolbar {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .editor-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .students-table th,
-  .students-table td {
-    padding: 12px 10px;
-  }
-}
-
-@media (max-width: 600px) {
-  .sidebar {
-    padding: 16px;
-  }
-
-  .main-content {
-    padding: 18px 14px 16px;
-  }
-
-  .dash-btn {
-    width: 100%;
-  }
-
-  .progress-info {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .homework-alert-box,
-  .hw-editor-zone {
-    padding: 18px;
-  }
-
-  .dash-header {
-    gap: 18px;
-  }
-}
-/* =========================================================================
-   СТИЛІ ТА АДАПТИВКА ДЛЯ ІСТОРІЇ ДЗ ТА ЗОНИ ПЕРЕВІРКИ УЧНЯ
-   ========================================================================= */
-
-/* 1. Стилізація контейнера історії коментарів (чат-логу) */
-#student-hw-history-box {
-  margin-top: 20px;
-  padding: 15px;
-  background-color: #f8fafc; /* Ніжніший світлий відтінок */
-  border-left: 4px solid #4f46e5; /* Стильний індиго акцент */
-  border-radius: 8px;
-  white-space: pre-line; /* Зберігає переноси рядків з бази даних */
-  font-size: 0.95rem;
-  color: #334155;
-  max-height: 250px;
-  overflow-y: auto;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-/* Красивий тонкий скролбар для історії коментарів */
-#student-hw-history-box::-webkit-scrollbar {
-  width: 6px;
-}
-#student-hw-history-box::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-#student-hw-history-box::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
-}
-#student-hw-history-box::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
-}
-
-/* 2. Загальні стилі таблиці історії ДЗ */
+/* Table Styles */
 .table-responsive {
   width: 100%;
   overflow-x: auto;
@@ -1161,7 +1633,6 @@ body.dashboard-body {
   background-color: #f8fafc;
 }
 
-/* Стилі для кнопок дій в таблиці */
 .btn-view-review {
   display: inline-flex;
   align-items: center;
@@ -1181,12 +1652,7 @@ body.dashboard-body {
   background-color: #059669;
 }
 
-/* =========================================================================
-   📱 МЕДІА-ЗАПИТИ ДЛЯ АДАПТИВНОСТІ (МОБІЛЬНА ВЕРСІЯ)
-   ========================================================================= */
-
 @media screen and (max-width: 768px) {
-  /* Адаптація зони перевірки вчителем */
   #student-review-zone {
     padding: 15px;
   }
@@ -1196,12 +1662,11 @@ body.dashboard-body {
   }
 
   #student-reviewed-image {
-    max-height: 350px; /* Трохи зменшуємо висоту картинки на телефонах */
+    max-height: 350px;
   }
 
-  /* ТРАНСФОРМАЦІЯ ТАБЛИЦІ В КАРТКИ ДЛЯ СУПЕР-АДАПТИВНОСТІ */
   .table-responsive {
-    border: none; /* Прибираємо загальну рамку таблиці */
+    border: none;
   }
 
   .students-table, 
@@ -1210,10 +1675,9 @@ body.dashboard-body {
   .students-table th, 
   .students-table td, 
   .students-table tr {
-    display: block; /* Перетворюємо всі елементи таблиці на блочні */
+    display: block;
   }
 
-  /* Ховаємо оригінальну шапку таблиці */
   .table-header-row {
     display: none;
   }
@@ -1231,411 +1695,389 @@ body.dashboard-body {
     background-color: #ffffff;
   }
 
-  /* Робимо кожен рядок інформативним з лівою назвою колонки */
   .students-table td {
     border-bottom: 1px dashed #f1f5f9;
-    padding: 8px 0;
+    padding: 8px 0 !important;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    text-align: right;
+    text-align: left;
+    flex-direction: row;
+    white-space: normal !important;
+  }
+
+  .students-table td.table-empty-row {
+    display: block !important;
+    text-align: center !important;
+    width: 100% !important;
+    border: none !important;
   }
 
   .students-table td:last-child {
     border-bottom: none;
-    padding-top: 10px;
+    padding-top: 10px !important;
   }
 
-  /* Динамічно додаємо назви колонок через атрибут data-label (за бажанням) або просто вирівнюємо кнопкою */
   .students-table td::before {
-    content: attr(data-label); /* Якщо додаси data-label в JS, буде назва зліва */
     font-weight: 600;
     color: #64748b;
     text-align: left;
     font-size: 0.85rem;
   }
-  
-  /* Якщо дата-лейблів немає, ось фікс, щоб кнопки та статуси займали нормальне положення */
-  .students-table td {
-    text-align: left;
-    flex-direction: row;
-    justify-content: space-between;
+
+  .students-table td:not(.table-empty-row):nth-child(1)::before { content: "Тема завдання:"; }
+  .students-table td:not(.table-empty-row):nth-child(2)::before { content: "Дедлайн:"; }
+  .students-table td:not(.table-empty-row):nth-child(3)::before { content: "Статус:"; }
+  .students-table td:not(.table-empty-row):nth-child(4)::before { content: "Дія:"; }
+
+  /* Compact button styling on mobile */
+  .students-table td button {
+    font-size: 0 !important;
+    padding: 6px 8px !important;
+    min-height: auto !important;
+    width: 34px !important;
+    height: 34px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-right: 5px !important;
+  }
+
+  .students-table td button i {
+    font-size: 14px !important;
+    margin: 0 !important;
   }
 }
 
-/* ==========================================================================
-   ПРЕМІУМ-СТИЛІ ТА АДАПТИВКА ДЛЯ МОДУЛЯ ПРОФІЛЮ (NOVAFLOW STYLE)
-   ========================================================================== */
-
-/* Головний контейнер вкладки */
-#tab-profile {
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 20px 10px;
+/* Homework Alert Box */
+.homework-alert-box {
+  background: #FFFBEB;
+  border-left: 4px solid #F59E0B;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin-bottom: 25px;
 }
 
-/* Картка профілю */
-.dash-card.profile-card {
-  background: #ffffff;
-  border-radius: 24px;
-  padding: 32px;
-  box-shadow: 0 10px 30px rgba(94, 7, 126, 0.03);
-  border: 1px solid #f1f5f9;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Зона аватарки та заголовка */
-.profile-avatar-zone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  margin-bottom: 28px;
-}
-
-/* Контейнер аватарки з фіксом полоски */
-.avatar-wrapper {
-  position: relative;
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  overflow: hidden;
-  background: transparent !important; /* ВИПРАВЛЕНО: прибираємо фон, який визирав смужкою */
-  border: 3px solid #7c3aed;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-/* Картинка всередині з фіксом згладжування edges */
-.avatar-wrapper img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;        /* ВИПРАВЛЕНО: прибирає базові інлайнові відступи тегу */
-  border-radius: 50%;    /* ВИПРАВЛЕНО: змушує браузер обрізати картинку ідеально по колу */
-}
-
-/* Ефект наведення камери на аватар (якщо додавав overlay у верстку) */
-.avatar-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-  border-radius: 50%;
-}
-
-.avatar-wrapper:hover .avatar-overlay {
-  opacity: 1;
-}
-
-.avatar-overlay i {
-  color: #ffffff;
-  font-size: 20px;
-}
-
-.profile-avatar-zone h2 {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 24px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0 0 4px 0;
-}
-
-.profile-subtitle {
-  font-size: 14px;
-  color: #64748b;
-  margin: 0;
-  font-weight: 500;
-}
-
-/* Структура форми */
-.profile-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* Групи полів (Label + Input) */
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-group label {
-  font-size: 13.5px;
+.homework-alert-box h3 {
+  color: #78350F;
+  font-size: 18px;
   font-weight: 600;
-  color: #475569;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  margin-bottom: 8px;
 }
 
-.form-group label i {
-  color: #7c3aed; /* Фіолетові іконки під бренд */
-  font-size: 14px;
-  width: 16px;
-  text-align: center;
-}
-
-/* Стилізація інпутів (Текст та Дата) */
-.form-group input[type="text"],
-.form-group input[type="date"] {
-  width: 100%;
-  height: 46px;
-  padding: 0 16px;
-  font-size: 14.5px;
-  font-family: inherit;
-  color: #1e293b;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 12px;
-  outline: none;
-  box-sizing: border-box;
-  transition: all 0.2s ease;
-}
-
-/* Поля, які заблоковані для редагування (Викладач, Дата реєстрації) */
-.form-group input:disabled {
-  background: #f8fafc !important;
-  color: #64748b;
-  border-color: #e2e8f0;
-  cursor: not-allowed;
-}
-
-/* Фокус на активному інпуті */
-.form-group input[type="text"]:focus,
-.form-group input[type="date"]:focus {
-  border-color: #7c3aed;
-  box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1);
-  background: #ffffff;
-}
-
-/* Плейсхолдери */
-.form-group input::placeholder {
-  color: #94a3b8;
-  font-size: 14px;
-}
-
-/* Підказки (маленький текст) */
-.form-help-text {
-  font-size: 12px;
-  color: #94a3b8;
-  margin-top: 2px;
-  font-weight: 500;
-}
-
-/* Кнопка збереження */
-.profile-actions {
-  margin-top: 8px;
-}
-
-.profile-actions .btn-primary {
-  width: 100%;
-  height: 48px;
-  background: linear-gradient(135deg, #5e077e 0%, #7c3aed 100%);
-  color: #ffffff;
-  border: none;
-  border-radius: 12px;
+.homework-alert-box p {
+  color: #92400E;
   font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  box-shadow: 0 4px 14px rgba(94, 7, 126, 0.2);
-  transition: all 0.25s ease;
+  line-height: 1.5;
 }
 
-.profile-actions .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
-  filter: brightness(1.05);
-}
-
-.profile-actions .btn-primary:disabled {
-  background: #cbd5e1 !important;
-  color: #94a3b8 !important;
-  cursor: not-allowed;
-  transform: none !important;
-  box-shadow: none !important;
-}
-
-/* Блок сповіщень (Alert) */
-.profile-alert {
-  margin-top: 16px;
-  padding: 12px 16px;
-  border-radius: 10px;
+.homework-alert-box .alert-deadline {
+  font-weight: 700;
   font-size: 14px;
-  font-weight: 500;
-  text-align: center;
-  transition: all 0.3s ease;
+  color: #DC2626 !important;
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.profile-alert.success {
-  background: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+.section-description {
+  color: #64748B;
+  font-size: 15px;
+  margin-top: 6px;
+  margin-bottom: 24px;
 }
 
-.profile-alert.error {
-  background: #fef2f2;
-  color: #991b1b;
-  border: 1px solid #fca5a5;
-}
-
-.profile-alert.hidden {
-  display: none !important;
-}
-
-/* ==========================================================================
-   АДАПТИВНИЙ МЕДІА-ЗАПИТ ДЛЯ МОБІЛЬНИХ ПРИСТРОЇВ (max-width: 768px)
-   ========================================================================== */
-@media screen and (max-width: 768px) {
-  #tab-profile {
-    padding: 10px 4px;
-  }
-
-  .dash-card.profile-card {
-    padding: 24px 16px;
-    border-radius: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);
-  }
-
-  /* Адаптуємо розмір круга аватарки на мобілках */
-  .avatar-wrapper {
-    width: 88px;
-    height: 88px;
-    border-width: 2.5px;
-  }
-
-  .profile-avatar-zone h2 {
-    font-size: 21px;
-  }
-
-  .form-group input[type="text"],
-  .form-group input[type="date"] {
-    height: 48px;
-    font-size: 15px;
-  }
-
-  .profile-actions .btn-primary {
-    height: 50px;
-    font-size: 15.5px;
-    border-radius: 14px;
-  }
+.trigger-profile-tab {
+  cursor: pointer;
 }
 
 /* =========================================================================
-   ГЛОБАЛЬНЕ ПЕРЕЗАПИСАННЯ СТИЛІВ ДЛЯ МОБІЛЬНОГО МЕНЮ (ПОВНИЙ ФІКС КЛІКІВ)
+   HOMEWORK SECTION RESPONSIVE
    ========================================================================= */
-
-/* На великих екранах (ПК) ховаємо елементи мобілки */
-.dash-mobile-topbar, 
-.dash-sidebar-overlay {
-  display: none !important;
+@media (max-width: 768px) {
+.homework-alert-box {
+    padding: 16px 18px;
+    margin-bottom: 20px;
 }
 
-@media screen and (max-width: 768px) {
-  
-  /* 1. Вмикаємо мобільну плашку зверху (Нижній шар навігації) */
-  .dash-mobile-topbar {
-    display: flex !important;
-    align-items: center;
-    justify-content: space-between;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: 60px !important;
-    background: #ffffff !important;
-    padding: 0 20px !important;
-    box-sizing: border-box !important;
-    border-bottom: 1px solid #e5e7eb !important;
-    z-index: 990 !important; /* Нижче за оверлей та сайдбар */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+.homework-alert-box h3 {
+    font-size: 16px;
+    margin-bottom: 6px;
+}
+
+.homework-alert-box p {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.homework-alert-box .alert-deadline {
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+  .section-description {
+    font-size: 14px;
+    margin-bottom: 18px;
+}
+
+  /* Homework card improvements */
+  .homework-card {
+    padding: 18px !important;
   }
 
-  /* Кнопка бургера у плашці */
-  .dash-burger-btn {
-    background: none !important;
-    border: none !important;
-    font-size: 1.4rem !important;
-    color: #4f46e5 !important;
-    cursor: pointer !important;
-    padding: 8px !important;
-    display: flex !important;
+  .homework-card h4 {
+    font-size: 1rem !important;
+    margin-bottom: 10px !important;
+}
+
+  .homework-card p {
+    font-size: 0.85rem !important;
+    margin-bottom: 8px !important;
+    line-height: 1.4 !important;
+  }
+
+  .deadline-text {
+    font-size: 0.8rem !important;
+    margin-bottom: 12px !important;
+}
+
+  .status-badge {
+    font-size: 0.75rem !important;
+    padding: 5px 12px !important;
+    margin-bottom: 14px !important;
+}
+
+  /* Homework action buttons */
+  .homework-card .dash-btn {
+    width: 100%;
+    padding: 12px 16px !important;
+    font-size: 0.9rem !important;
+    min-height: 44px;
+  }
+
+  /* Homework editor zone */
+  .hw-editor-zone {
+    padding: 20px !important;
+    margin-top: 20px !important;
+  }
+
+  .hw-editor-zone .editor-header h3 {
+    font-size: 16px !important;
+}
+
+  .hw-editor-zone .editor-subtitle {
+    font-size: 13px !important;
+    margin-bottom: 16px !important;
+}
+
+.student-hw-history-box {
+  margin-top: 20px;
+  padding: 16px;
+  background-color: #F3F4F6;
+  border-left: 4px solid #6366F1;
+  border-radius: 8px;
+  white-space: pre-line;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: #1F2937;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.student-hw-history-box .history-title {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #4F46E5;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.student-hw-history-box .history-comments-content {
+  line-height: 1.5;
+}
+
+.no-comments-placeholder {
+  color: #6B7280;
+  font-style: italic;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+}
+
+/* =========================================================================
+   HOMEWORK & REVIEW SYSTEM RESPONSIVE MEDIA QUERIES
+   ========================================================================= */
+@media (max-width: 768px) {
+  /* Homework alert box changes */
+  .homework-alert-box {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .homework-alert-box h3 {
+    font-size: 1.05rem;
+  }
+
+  .homework-alert-box p {
+    font-size: 0.88rem;
+    line-height: 1.4;
+  }
+
+  .homework-action-block .btn-open-board {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+
+  /* History Table action buttons text hide */
+  .students-table td button {
+    font-size: 0 !important;
+    padding: 8px 10px !important;
+    min-height: 36px !important;
+    width: 36px !important;
+    height: 36px !important;
+    justify-content: center !important;
+    display: inline-flex !important;
     align-items: center !important;
+    margin-right: 6px !important;
+  }
+
+  .students-table td button i {
+    font-size: 14px !important;
+    margin: 0 !important;
+  }
+
+  /* Editor Toolbar Responsive */
+  .editor-toolbar {
+    padding: 10px 12px !important;
+    gap: 8px !important;
+    justify-content: space-between;
+    border-radius: 10px;
+  }
+
+  .editor-toolbar .tool-group {
+    padding: 2px 4px !important;
+    gap: 4px !important;
+  }
+
+  /* Hide labels and texts inside editor buttons to make them compact icon-only buttons */
+  .editor-btn, .editor-btn-secondary, .btn-clear-canvas {
+    font-size: 0 !important;
+    padding: 8px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
     justify-content: center !important;
   }
 
-  /* 2. ОВЕРЛЕЙ (Середній шар — затемнює контент сайту, але лежить ПІД меню) */
-  .dash-sidebar-overlay {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    background: rgba(0, 0, 0, 0.4) !important;
-    backdrop-filter: blur(3px) !important;
-    z-index: 1000 !important; /* Рівно посередині */
-    display: block !important;
-    opacity: 0 !important;
-    visibility: hidden !important;
-    transition: opacity 0.3s ease, visibility 0.3s ease !important;
-  }
-
-  /* Коли меню відкрите, оверлей стає видимим */
-  .dash-sidebar-overlay.active {
-    opacity: 1 !important;
-    visibility: visible !important;
-  }
-
-  /* 3. САЙДБАР З ПОСИЛАННЯМИ (Найвищий шар — тепер кліки точно працюють) */
-  .sidebar {
-    position: fixed !important;
-    top: 0 !important;
-    left: -285px !important; /* Повністю виштовхуємо ліворуч */
-    width: 260px !important;
-    height: 100vh !important;
-    background-color: #ffffff !important;
-    z-index: 1010 !important; /* Вище за оверлей, щоб посилання натискалися */
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    box-shadow: 5px 0 25px rgba(0, 0, 0, 0.15) !important;
-    display: flex !important;
-    flex-direction: column !important;
+  .editor-btn i, .editor-btn-secondary i, .btn-clear-canvas i {
+    font-size: 15px !important;
     margin: 0 !important;
-    padding: 20px !important;
   }
 
-  /* Клас, який JS додає при кліку — меню плавно виїжджає перед оверлеєм */
-  .sidebar.active {
-    left: 0 !important;
-  }
-
-  /* 4. НАЛАШТУВАННЯ ГОЛОВНОГО КОНТЕНТУ */
-  .main-content {
+  /* Keep clear button alignment neat */
+  .btn-clear-canvas {
     margin-left: 0 !important;
-    width: 100% !important;
-    padding: 85px 15px 20px 15px !important; /* Великий відступ зверху через плашку */
-    box-sizing: border-box !important;
   }
 
-  /* Скидаємо блочну обгортку, якщо вона ламає мобільну сітку */
-  .dashboard-wrapper {
-    display: block !important;
+  /* Size slider and Color picker responsiveness */
+  .settings-group {
+    width: 100%;
+    margin-top: 6px;
+    padding: 8px 10px !important;
+    background: #F8FAFC !important;
+    border: 1px solid #E2E8F0 !important;
+    border-radius: 8px !important;
+    justify-content: space-between !important;
+  }
+
+  .toolbar-item {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .toolbar-item:first-child {
+    border-right: 1px solid #E2E8F0;
+    padding-right: 10px;
+  }
+
+  .toolbar-item:last-child {
+    padding-left: 10px;
+  }
+
+  .toolbar-item label {
+    font-size: 11px !important;
+  }
+
+  #editor-size {
+    width: 80px !important;
+    max-width: 100% !important;
+  }
+
+  /* Canvas Container responsiveness */
+  .canvas-container {
+    padding: 16px 12px !important;
+    max-height: 55vh !important;
+    background: #1E293B !important;
+    border-color: #334155 !important;
+  }
+
+  /* Review zone responsiveness */
+  .review-zone {
+    padding: 16px;
+    margin-top: 20px;
+  }
+
+  .review-zone-title {
+    font-size: 1.1rem;
+  }
+
+  .review-image-wrapper {
+    padding: 8px;
+    max-height: 400px;
+  }
+
+  .review-image {
+    max-height: 380px;
+  }
+}
+
+@media (max-width: 480px) {
+  .homework-alert-box {
+    padding: 12px 14px;
+  }
+
+  .homework-alert-box h3 {
+    font-size: 1rem;
+  }
+
+  .homework-alert-box p {
+    font-size: 0.82rem;
+  }
+
+  /* Fullscreen adjustments for smallest screens */
+  .hw-editor-zone.fullscreen-mode .editor-toolbar {
+    padding: 8px 10px !important;
+  }
+
+  .hw-editor-zone.fullscreen-mode .canvas-container {
+    padding: 8px 4px !important;
+  }
+  
+  .review-image-wrapper {
+    max-height: 300px;
+  }
+
+  .review-image {
+    max-height: 280px;
   }
 }
