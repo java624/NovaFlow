@@ -1,0 +1,304 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Додатковий захист для головного контейнера Next.js */
+main, __next {
+  overflow-x: hidden;
+  width: 100%;
+}
+/* ============================================================
+   SCROLL REVEAL ANIMATIONS - site-wide
+   ============================================================ */
+
+/* Hidden state before reveal */
+.reveal,
+.reveal-left,
+.reveal-right,
+.reveal-scale {
+  opacity: 1;
+  transform: translateY(0) translateX(0) scale(1);
+}
+
+/* Hidden state — applied only when NOT visible */
+.reveal:not(.visible),
+.reveal-left:not(.visible),
+.reveal-right:not(.visible),
+.reveal-scale:not(.visible) {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: opacity 0.7s cubic-bezier(0.34, 1.56, 0.64, 1),
+              transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.reveal-left:not(.visible) {
+  transform: translateX(-60px);
+}
+
+.reveal-right:not(.visible) {
+  transform: translateX(60px);
+}
+
+.reveal-scale:not(.visible) {
+  transform: scale(0.85);
+}
+
+/* Revealed state */
+.reveal.visible,
+.reveal-left.visible,
+.reveal-right.visible,
+.reveal-scale.visible {
+  opacity: 1;
+  transform: translateY(0) translateX(0) scale(1);
+}
+
+/* Stagger children — hidden by default, revealed when parent .visible */
+.reveal-stagger:not(.visible) > * {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+              transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.reveal-stagger.visible > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-stagger > *:nth-child(1) { transition-delay: 0s; }
+.reveal-stagger > *:nth-child(2) { transition-delay: 0.1s; }
+.reveal-stagger > *:nth-child(3) { transition-delay: 0.2s; }
+.reveal-stagger > *:nth-child(4) { transition-delay: 0.3s; }
+.reveal-stagger > *:nth-child(5) { transition-delay: 0.4s; }
+.reveal-stagger > *:nth-child(6) { transition-delay: 0.5s; }
+.reveal-stagger > *:nth-child(7) { transition-delay: 0.6s; }
+.reveal-stagger > *:nth-child(8) { transition-delay: 0.7s; }
+.reveal-stagger > *:nth-child(9) { transition-delay: 0.8s; }
+.reveal-stagger > *:nth-child(10) { transition-delay: 0.9s; }
+
+/* ============================================================
+   CONTINUOUS HOVER / GLOW ANIMATIONS
+   ============================================================ */
+
+/* Card hover lift */
+.card-lift {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 0.4s ease;
+}
+.card-lift:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(94, 7, 126, 0.15);
+}
+
+/* Pulsing glow accent */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.6; filter: blur(4px); }
+  50% { opacity: 1; filter: blur(6px); }
+}
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Soft breathing scale */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+.animate-breathe {
+  animation: breathe 4s ease-in-out infinite;
+}
+
+/* Shimmer sweep for badges/buttons */
+@keyframes shimmer-sweep {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.animate-shimmer {
+  background-size: 200% 100%;
+  animation: shimmer-sweep 3s linear infinite;
+}
+
+/* Gentle float */
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.animate-gentle-float {
+  animation: gentle-float 5s ease-in-out infinite;
+}
+
+/* ============================================================
+   SECTION ENTRANCE - fade in + scale up for section titles
+   ============================================================ */
+@keyframes section-title-in {
+  0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-section-title {
+  animation: section-title-in 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ============================================================
+   COUNTER ANIMATION for stats (pulse + scale)
+   ============================================================ */
+@keyframes stat-count-in {
+  0% { opacity: 0; transform: scale(0.5); }
+  60% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-stat {
+  animation: stat-count-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ============================================================
+   HEADER SLIDE-IN ANIMATION
+   ============================================================ */
+@keyframes header-slide {
+  0% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-header-slide {
+  animation: header-slide 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ============================================================
+   PREMIUM FLAG ANIMATIONS
+   ============================================================ */
+
+.perspective-flag {
+  perspective: 800px;
+  transform-style: preserve-3d;
+}
+
+@keyframes flag-float {
+  0%, 100% { transform: translateY(0px); }
+  33% { transform: translateY(-6px); }
+  66% { transform: translateY(-3px); }
+}
+.animate-flag-float {
+  animation: flag-float 4.5s ease-in-out infinite;
+}
+
+@keyframes flag-tilt {
+  0%, 100% { transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+  25% { transform: rotateX(2deg) rotateY(-3deg) rotateZ(1deg); }
+  50% { transform: rotateX(1deg) rotateY(0deg) rotateZ(-0.5deg); }
+  75% { transform: rotateX(-1deg) rotateY(3deg) rotateZ(0.5deg); }
+}
+.animate-flag-tilt {
+  animation: flag-tilt 6s ease-in-out infinite;
+}
+
+@keyframes flag-glow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+.animate-flag-glow {
+  animation: flag-glow 3s ease-in-out infinite;
+}
+
+@keyframes flag-orbit-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.animate-flag-orbit-slow {
+  animation: flag-orbit-slow 8s linear infinite;
+}
+
+@keyframes flag-orbit-fast {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+.animate-flag-orbit-fast {
+  animation: flag-orbit-fast 5s linear infinite;
+}
+
+/* ============================================================
+   PREMIUM WAVE ANIMATIONS
+   ============================================================ */
+
+@keyframes wave-flow {
+  0% { transform: translateX(0) scaleY(1); }
+  25% { transform: translateX(-5px) scaleY(1.02); }
+  50% { transform: translateX(0) scaleY(0.98); }
+  75% { transform: translateX(5px) scaleY(1.01); }
+  100% { transform: translateX(0) scaleY(1); }
+}
+.animate-wave-flow {
+  animation: wave-flow 6s ease-in-out infinite;
+}
+
+@keyframes wave-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.animate-wave-shimmer {
+  background-size: 200% 100%;
+  animation: wave-shimmer 3s linear infinite;
+}
+
+/* ============================================================
+   HERO CARD FLOATING - enhanced for flag circles
+   ============================================================ */
+
+@keyframes float-left-enhanced {
+  0%, 100% { transform: rotate(-12deg) translateY(0); }
+  25% { transform: rotate(-10deg) translateY(-8px); }
+  50% { transform: rotate(-11deg) translateY(-14px); }
+  75% { transform: rotate(-9deg) translateY(-6px); }
+}
+
+@keyframes float-center-enhanced {
+  0%, 100% { transform: rotate(5deg) translateY(0); }
+  25% { transform: rotate(7deg) translateY(-10px); }
+  50% { transform: rotate(6deg) translateY(-16px); }
+  75% { transform: rotate(8deg) translateY(-8px); }
+}
+
+@keyframes float-right-enhanced {
+  0%, 100% { transform: rotate(12deg) translateY(0); }
+  25% { transform: rotate(14deg) translateY(-9px); }
+  50% { transform: rotate(13deg) translateY(-13px); }
+  75% { transform: rotate(15deg) translateY(-5px); }
+}
+
+@keyframes card-flag-pulse {
+  0%, 100% { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 0 0 6px rgba(168, 85, 247, 0.06); }
+  50% { box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14), 0 0 0 9px rgba(168, 85, 247, 0.1); }
+}
+
+/* ============================================================
+   RESPONSIVE FIXES FOR MOBILE FLAG OVERLAPPING WAVE
+   ============================================================ */
+
+@media (max-width: 640px) {
+  #hero {
+    padding-bottom: 80px !important;
+  }
+
+  section[id="hero"] + div.absolute.bottom-0 {
+    z-index: 20 !important;
+  }
+
+  section[id="hero"] .grid .relative.flex.items-center.justify-center.pb-12 {
+    padding-bottom: 32px !important;
+  }
+}

@@ -1544,12 +1544,13 @@ async function loadStudentProfileData() {
 function fillProfileFormUI(student) {
   const elWelcomeName = document.getElementById('profile-full-name');
   if (elWelcomeName) {
-    const fullName = `${student.first_name || 'Павло'} ${student.last_name || ''}`.trim();
+    // Використовуємо full_name з БД, щоб учень бачив те саме, що й учитель
+    const fullName = student.full_name || `${student.first_name || 'Павло'} ${student.last_name || ''}`.trim();
     elWelcomeName.innerText = fullName;
   }
 
   // Розраховуємо або отримуємо URL аватарки (з бази чи заглушку)
-  const finalAvatarUrl = student.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(student.first_name || 'Павло') + '&background=5e077e&color=fff&size=158';
+  const finalAvatarUrl = student.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(student.full_name || student.first_name || 'Павло') + '&background=5e077e&color=fff&size=158';
 
   // Відображення головної аватарки в самому модулі профілю
   const elFormAvatar = document.getElementById('profile-modal-img');

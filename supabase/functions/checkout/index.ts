@@ -74,13 +74,16 @@ Deno.serve(async (req: Request) => {
 
     if (isMockMode || amountCents <= 0) {
       // У тестовому режимі або для безкоштовного тарифу одразу записуємо уроки в профіль
-      const { data: profile } = await supabase
+      const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+      const adminClient = supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : supabase;
+      
+      const { data: profile } = await adminClient
         .from('profiles')
         .select('lessons_left')
         .eq('id', user.id)
         .single();
       const currentLessons = profile?.lessons_left ?? 0;
-      await supabase
+      await adminClient
         .from('profiles')
         .update({ lessons_left: currentLessons + lessonsCount })
         .eq('id', user.id);
