@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import LanguageHeader from '@/components/landing/LanguageHeader';
 import Footer from '@/components/landing/Footer';
 import PricingCarousel from '@/components/landing/PricingCarousel';
-import { languageConfigs, translations, validLangs } from '@/lib/language-data';
+import { useLanguage } from '@/context/LanguageContext';
+import { languageConfigs, validLangs } from '@/lib/language-data';
 
 export default function LanguageCoursePage() {
   const params = useParams();
@@ -19,8 +20,81 @@ export default function LanguageCoursePage() {
     }
   }
 
+  const { language, t } = useLanguage();
   const config = languageConfigs[langKey];
-  const t = translations[config.code] || translations.en;
+
+  const coursePrefix = langKey === 'english' ? 'en' : langKey === 'german' ? 'de' : 'ua';
+
+  const heroBadge = t(`course_${coursePrefix}_badge`) || config.heroBadge;
+  const heroTitle = t(`course_${coursePrefix}_hero_title`) || config.heroTitle;
+  const heroDesc = t(`course_${coursePrefix}_hero_desc`) || config.heroDesc;
+  const contactTitle = t('course_book_title') || config.contactTitle;
+  const contactDesc = t('course_book_desc') || config.contactDesc;
+  const quizBadge = t(`quiz_${coursePrefix}_badge`) || config.quizBadge;
+  const courseName = t(`course_${coursePrefix}_title`) || config.name;
+
+  const translatedProgramSteps = config.programSteps.map((step) => ({
+    ...step,
+    title: t(`prog_${coursePrefix}_title${step.step}`) || step.title,
+    desc: t(`prog_${coursePrefix}_desc${step.step}`) || step.desc,
+  }));
+
+  const translatedPricingPlans = config.pricingPlans.map((plan) => {
+    const titleKey = `price_${coursePrefix}_${plan.id}_title`;
+    const descKey = `price_${coursePrefix}_${plan.id}_desc`;
+    const discountKey = `price_${coursePrefix}_${plan.id}_discount`;
+
+    const featureMap: Record<string, string> = {
+      '1-on-1 Placement Lesson': 'feat_free_1',
+      'Custom Speaking Assessment': 'feat_free_2',
+      'Tailored Study Plan': 'feat_free_3',
+      'Basic Grammar & Vocabulary': 'feat_beginners_1',
+      'Speaking Practice': 'feat_beginners_2',
+      'Listening Exercises': 'feat_beginners_3',
+      'Homework & Feedback': 'feat_beginners_4',
+      'Speaking-Focused Lessons': 'feat_comm_1',
+      'Everyday Vocabulary': 'feat_comm_2',
+      'Pronunciation Training': 'feat_comm_3',
+      'Interactive Discussions': 'feat_comm_4',
+      'Business Vocabulary': 'feat_business_1',
+      'Email Writing': 'feat_business_2',
+      'Meeting & Presentation Skills': 'feat_business_3',
+      'Professional Speaking Practice': 'feat_business_4',
+      'Exam Strategies & Formats': 'feat_exam_1',
+      'Mock Speaking & Writing Tests': 'feat_exam_2',
+      'Advanced Grammar & Structures': 'feat_exam_3',
+      'Time Management Tactics': 'feat_exam_4',
+      'Basic Grammar': 'feat_ua_beginners_1',
+      'Essential Vocabulary': 'feat_ua_beginners_2',
+      'Everyday Conversations': 'feat_ua_beginners_4',
+      'Modern Vocabulary': 'feat_ua_comm_2',
+      'Listening Activities': 'feat_ua_comm_3',
+      'Pronunciation Improvement': 'feat_ua_comm_4',
+    };
+
+    const translatedFeatures = plan.features.map((feat) => {
+      const key = featureMap[feat];
+      return key ? t(key) : feat;
+    });
+
+    const btnTextMap: Record<string, string> = {
+      'Book Free Lesson': 'btn_book_free',
+      'Get 10 Lessons Pack': 'btn_get_pack',
+      'Start Learning': 'btn_start_learning',
+      'Improve Your Speaking': 'btn_improve_speaking',
+    };
+    const btnTextKey = btnTextMap[plan.btnText];
+    const translatedBtnText = btnTextKey ? t(btnTextKey) : plan.btnText;
+
+    return {
+      ...plan,
+      title: t(titleKey) || plan.title,
+      desc: t(descKey) || plan.desc,
+      discount: plan.discount ? t(discountKey) || plan.discount : undefined,
+      features: translatedFeatures,
+      btnText: translatedBtnText,
+    };
+  });
 
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizStep, setQuizStep] = useState(1);
@@ -42,8 +116,8 @@ export default function LanguageCoursePage() {
       document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
       return;
     }
-    const courseName = encodeURIComponent(plan.title);
-    window.location.href = `/dashboard?payment=stripe&lang=${langKey}&plan=${courseName}&price=${plan.btnPrice}&lessons=${plan.btnLessons}`;
+    const courseNameEncoded = encodeURIComponent(plan.title);
+    window.location.href = `/dashboard?payment=stripe&lang=${langKey}&plan=${courseNameEncoded}&price=${plan.btnPrice}&lessons=${plan.btnLessons}`;
   };
 
   return (
@@ -56,19 +130,20 @@ export default function LanguageCoursePage() {
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[70vh] py-12 lg:py-20">
               <div className="relative z-10">
                 <span className="inline-block text-sm font-semibold text-purple-600 bg-purple-50 px-4 py-1.5 rounded-full mb-5">
-                  {config.heroBadge}
+                  {heroBadge}
                 </span>
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight tracking-tight">
-                  {config.heroTitle}
-                </h1>
+                <h1
+                  className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight tracking-tight"
+                  dangerouslySetInnerHTML={{ __html: heroTitle }}
+                />
                 <p className="mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed max-w-xl">
-                  {config.heroDesc}
+                  {heroDesc}
                 </p>
                 <button
                   onClick={() => setShowQuiz(true)}
                   className="mt-8 inline-flex items-center gap-2 px-8 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 group"
                 >
-                  <span>{t.pricing_btn_start}</span>
+                  <span>{t('pricing_btn_start')}</span>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-200 group-hover:translate-x-1">
                     <line x1="5" y1="12" x2="19" y2="12" />
                     <polyline points="12 5 19 12 12 19" />
@@ -123,18 +198,18 @@ export default function LanguageCoursePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-14 sm:mb-20">
               <span className="inline-block text-sm font-semibold text-purple-600 bg-purple-50 px-4 py-1.5 rounded-full mb-4">
-                {t.course_syllabus_title}
+                {t('course_syllabus_title')}
               </span>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight tracking-tight">
-                {t.course_syllabus_title}
+                {t('course_syllabus_title')}
               </h2>
               <p className="mt-4 sm:mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed">
-                {t.course_syllabus_desc}
+                {t('course_syllabus_desc')}
               </p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
-              {config.programSteps.map((p) => (
+              {translatedProgramSteps.map((p) => (
                 <div key={p.step} className="group bg-white rounded-2xl p-8 border border-gray-100 shadow-sm hover:shadow-xl hover:border-purple-100 transition-all duration-300">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-purple-400 text-white text-lg font-bold flex items-center justify-center mb-5">
                     {p.step}
@@ -152,17 +227,17 @@ export default function LanguageCoursePage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto mb-14 sm:mb-20">
               <span className="inline-block text-sm font-semibold text-purple-600 bg-purple-50 px-4 py-1.5 rounded-full mb-4">
-                {t.pricing_tag}
+                {t('pricing_tag')}
               </span>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight tracking-tight">
-                {t.pricing_title}
+                {t('pricing_title')}
               </h2>
               <p className="mt-4 sm:mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed">
-                {t.pricing_desc}
+                {t('pricing_desc')}
               </p>
             </div>
 
-            <PricingCarousel plans={config.pricingPlans} onBuy={handleBuyPlan} />
+            <PricingCarousel plans={translatedPricingPlans} onBuy={handleBuyPlan} />
           </div>
         </section>
 
@@ -172,10 +247,10 @@ export default function LanguageCoursePage() {
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
               <div>
                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-gray-900 leading-tight tracking-tight mb-4">
-                  {config.contactTitle}
+                  {contactTitle}
                 </h2>
                 <p className="text-lg sm:text-xl text-gray-600 leading-relaxed mb-10">
-                  {config.contactDesc}
+                  {contactDesc}
                 </p>
                 <div className="space-y-6">
                   <div className="flex items-start gap-4">
@@ -185,8 +260,8 @@ export default function LanguageCoursePage() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-gray-900">{t.contact_email_title}</h4>
-                      <p className="text-sm text-gray-500">{t.contact_email}</p>
+                      <h4 className="text-sm font-bold text-gray-900">{t('contact_email_title')}</h4>
+                      <p className="text-sm text-gray-500">{t('contact_email')}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -196,8 +271,8 @@ export default function LanguageCoursePage() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-gray-900">{t.contact_phone_title}</h4>
-                      <p className="text-sm text-gray-500">{t.contact_phone}</p>
+                      <h4 className="text-sm font-bold text-gray-900">{t('contact_phone_title')}</h4>
+                      <p className="text-sm text-gray-500">{t('contact_phone')}</p>
                     </div>
                   </div>
                 </div>
@@ -207,50 +282,50 @@ export default function LanguageCoursePage() {
                 <form className="space-y-5">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t.form_label_name}</label>
-                      <input type="text" placeholder={t.placeholder_name} required
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_name')}</label>
+                      <input type="text" placeholder={t('placeholder_name')} required
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t.form_label_email}</label>
-                      <input type="email" placeholder={t.placeholder_email} required
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_email')}</label>
+                      <input type="email" placeholder={t('placeholder_email')} required
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t.form_label_phone}</label>
-                    <input type="tel" placeholder={t.placeholder_phone}
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_phone')}</label>
+                    <input type="tel" placeholder={t('placeholder_phone')}
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" />
                   </div>
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t.form_label_lang}</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_lang')}</label>
                       <select className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" required defaultValue="">
-                        <option value="" disabled>{t.select_lang_placeholder}</option>
+                        <option value="" disabled>{t('select_lang_placeholder')}</option>
                         <option value="English">English</option>
                         <option value="German">German</option>
                         <option value="Ukrainian">Ukrainian</option>
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t.form_label_level}</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_level')}</label>
                       <select className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" required defaultValue="">
-                        <option value="" disabled>{t.select_level_placeholder}</option>
-                        <option value="Absolute Beginner (A0)">{t.option_level_0}</option>
-                        <option value="Elementary (A1-A2)">{t.option_level_1}</option>
-                        <option value="Intermediate (B1-B2)">{t.option_level_2}</option>
-                        <option value="Advanced (C1-C2)">{t.option_level_3}</option>
+                        <option value="" disabled>{t('select_level_placeholder')}</option>
+                        <option value="Absolute Beginner (A0)">{t('option_level_0')}</option>
+                        <option value="Elementary (A1-A2)">{t('option_level_1')}</option>
+                        <option value="Intermediate (B1-B2)">{t('option_level_2')}</option>
+                        <option value="Advanced (C1-C2)">{t('option_level_3')}</option>
                       </select>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t.form_label_msg}</label>
-                    <textarea placeholder={t.placeholder_msg} rows={4} required
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_msg')}</label>
+                    <textarea placeholder={t('placeholder_msg')} rows={4} required
                       className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all resize-none" />
                   </div>
                   <button type="submit"
                     className="w-full inline-flex items-center justify-center gap-2 px-8 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 group">
-                    <span>{t.form_btn}</span>
+                    <span>{t('form_btn')}</span>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-200 group-hover:translate-x-1">
                       <line x1="5" y1="12" x2="19" y2="12" />
                       <polyline points="12 5 19 12 12 19" />
@@ -275,15 +350,15 @@ export default function LanguageCoursePage() {
 
             {quizStep === 1 && (
               <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t.quiz_title_1}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t('quiz_title_1')}</h3>
                 <div className="w-full bg-gray-100 rounded-full h-2 mb-6">
                   <div className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full" style={{ width: '25%' }} />
                 </div>
                 <div className="space-y-3">
                   {[
-                    { val: t.quiz_opt_1a, key: t.quiz_opt_1a },
-                    { val: t.quiz_opt_1b, key: t.quiz_opt_1b },
-                    { val: t.quiz_opt_1c, key: t.quiz_opt_1c },
+                    { val: t('quiz_opt_1a'), key: t('quiz_opt_1a') },
+                    { val: t('quiz_opt_1b'), key: t('quiz_opt_1b') },
+                    { val: t('quiz_opt_1c'), key: t('quiz_opt_1c') },
                   ].map((opt) => (
                     <button key={opt.val} onClick={() => handleQuizSelect(1, opt.val)}
                       className="w-full flex items-center justify-between px-5 py-3.5 text-base font-medium text-gray-700 bg-gray-50 hover:bg-purple-50 hover:text-purple-700 rounded-xl border border-gray-100 hover:border-purple-200 transition-all group">
@@ -299,15 +374,15 @@ export default function LanguageCoursePage() {
 
             {quizStep === 2 && (
               <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t.quiz_title_2}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t('quiz_title_2')}</h3>
                 <div className="w-full bg-gray-100 rounded-full h-2 mb-6">
                   <div className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full" style={{ width: '50%' }} />
                 </div>
                 <div className="space-y-3">
                   {[
-                    { val: t.quiz_opt_2a, label: t.quiz_opt_2a },
-                    { val: t.quiz_opt_2b, label: t.quiz_opt_2b },
-                    { val: t.quiz_opt_2c, label: t.quiz_opt_2c },
+                    { val: t('quiz_opt_2a'), label: t('quiz_opt_2a') },
+                    { val: t('quiz_opt_2b'), label: t('quiz_opt_2b') },
+                    { val: t('quiz_opt_2c'), label: t('quiz_opt_2c') },
                   ].map((opt) => (
                     <button key={opt.val} onClick={() => handleQuizSelect(2, opt.val)}
                       className="w-full flex items-center justify-between px-5 py-3.5 text-base font-medium text-gray-700 bg-gray-50 hover:bg-purple-50 hover:text-purple-700 rounded-xl border border-gray-100 hover:border-purple-200 transition-all group">
@@ -323,15 +398,15 @@ export default function LanguageCoursePage() {
 
             {quizStep === 3 && (
               <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t.quiz_title_3}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t('quiz_title_3')}</h3>
                 <div className="w-full bg-gray-100 rounded-full h-2 mb-6">
                   <div className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full" style={{ width: '75%' }} />
                 </div>
                 <div className="space-y-3">
                   {[
-                    { val: t.quiz_opt_3a, label: t.quiz_opt_3a },
-                    { val: t.quiz_opt_3b, label: t.quiz_opt_3b },
-                    { val: t.quiz_opt_3c, label: t.quiz_opt_3c },
+                    { val: t('quiz_opt_3a'), label: t('quiz_opt_3a') },
+                    { val: t('quiz_opt_3b'), label: t('quiz_opt_3b') },
+                    { val: t('quiz_opt_3c'), label: t('quiz_opt_3c') },
                   ].map((opt) => (
                     <button key={opt.val} onClick={() => handleQuizSelect(3, opt.val)}
                       className="w-full flex items-center justify-between px-5 py-3.5 text-base font-medium text-gray-700 bg-gray-50 hover:bg-purple-50 hover:text-purple-700 rounded-xl border border-gray-100 hover:border-purple-200 transition-all group">
@@ -347,23 +422,39 @@ export default function LanguageCoursePage() {
 
             {quizStep === 4 && (
               <div className="text-center">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t.quiz_result_title}</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t('quiz_result_title')}</h3>
                 <div className="w-full bg-gray-100 rounded-full h-2 mb-6">
                   <div className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full" style={{ width: '100%' }} />
                 </div>
                 <div className="inline-block text-sm font-semibold text-purple-600 bg-purple-50 px-5 py-2 rounded-full mb-4">
-                  {config.quizBadge}
+                  {quizBadge}
                 </div>
                 <p className="text-gray-600 text-base leading-relaxed mb-6">
-                  Based on your inputs, we have selected an optimized path: <strong>{config.name}</strong> for{' '}
-                  <strong>{quizAnswers.step2 || 'Career'}</strong> dedicating{' '}
-                  <strong>{quizAnswers.step3 || '30 mins'}</strong> daily. You can lock in your first speaking session immediately.
+                  {language === 'uk' ? (
+                    <>
+                      На основі ваших відповідей ми підібрали оптимальний шлях: <strong>{courseName}</strong> для{' '}
+                      <strong>{quizAnswers.step2 || 'розвитку кар\'єри'}</strong> приділяючи{' '}
+                      <strong>{quizAnswers.step3 || '30 хвилин'}</strong> щодня. Ви можете забронювати перше розмовне заняття прямо зараз.
+                    </>
+                  ) : language === 'de' ? (
+                    <>
+                      Basierend auf Ihren Angaben haben wir einen optimierten Pfad ausgewählt: <strong>{courseName}</strong> für{' '}
+                      <strong>{quizAnswers.step2 || 'Karriere'}</strong> mit{' '}
+                      <strong>{quizAnswers.step3 || '30 Min.'}</strong> täglich. Sie können Ihre erste Sprechsitzung sofort buchen.
+                    </>
+                  ) : (
+                    <>
+                      Based on your inputs, we have selected an optimized path: <strong>{courseName}</strong> for{' '}
+                      <strong>{quizAnswers.step2 || 'Career'}</strong> dedicating{' '}
+                      <strong>{quizAnswers.step3 || '30 mins'}</strong> daily. You can lock in your first speaking session immediately.
+                    </>
+                  )}
                 </p>
                 <button
                   onClick={() => { resetQuiz(); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }); }}
                   className="inline-flex items-center gap-2 px-8 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
                 >
-                  {t.quiz_btn_book}
+                  {t('quiz_btn_book')}
                 </button>
               </div>
             )}
@@ -372,10 +463,10 @@ export default function LanguageCoursePage() {
       )}
 
       <Footer navItems={[
-        { label: 'Home', href: '/' },
-        { label: 'What You Will Master', href: '#program' },
-        { label: 'Pricing Plans', href: '#pricing' },
-        { label: 'Contact', href: '#contact' },
+        { label: t('nav_home'), href: '/' },
+        { label: t('course_syllabus_title'), href: '#program' },
+        { label: t('pricing_tag'), href: '#pricing' },
+        { label: t('nav_contact'), href: '#contact' },
       ]} />
     </>
   );

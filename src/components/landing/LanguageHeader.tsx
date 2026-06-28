@@ -2,23 +2,23 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { useLanguage } from '@/context/LanguageContext';
 
 const navItems = [
-  { href: '/', label: 'Home' },
-  { href: '#program', label: 'What You Will Master' },
-  { href: '#pricing', label: 'Pricing Plans' },
-  { href: '#contact', label: 'Contact' },
+  { href: '/', labelKey: 'nav_home' },
+  { href: '#program', labelKey: 'course_syllabus_title' },
+  { href: '#pricing', labelKey: 'pricing_tag' },
+  { href: '#contact', labelKey: 'nav_contact' },
 ];
 
 export default function LanguageHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { language, setLanguage, t } = useLanguage();
 
   const toggleMenu = () => setIsMenuOpen((prev) => !prev);
 
   const handleLangChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const langMap: Record<string, string> = { en: 'english', uk: 'ukrainian', de: 'german' };
-    const route = langMap[e.target.value];
-    if (route) window.location.href = `/languages/${route}`;
+    setLanguage(e.target.value as 'en' | 'uk' | 'de');
   };
 
   return (
@@ -59,7 +59,7 @@ export default function LanguageHeader() {
                 {navItems.map((item) => (
                   <li key={item.href}>
                     <a href={item.href} className="text-sm font-medium text-gray-600 hover:text-purple-600 transition-colors duration-200">
-                      {item.label}
+                      {t(item.labelKey)}
                     </a>
                   </li>
                 ))}
@@ -69,15 +69,15 @@ export default function LanguageHeader() {
             {/* Desktop Actions (lg+) */}
             <div className="hidden lg:flex items-center gap-3">
               <div className="relative">
-                <select onChange={handleLangChange} className="appearance-none bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 pr-7 text-sm font-medium text-gray-700 cursor-pointer hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" aria-label="Select Language">
+                <select value={language} onChange={handleLangChange} className="appearance-none bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 pr-7 text-sm font-medium text-gray-700 cursor-pointer hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" aria-label="Select Language">
                   <option value="en">EN</option><option value="uk">UA</option><option value="de">DE</option>
                 </select>
                 <svg className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
-              <a href="/login" className="text-sm font-medium text-gray-700 hover:text-purple-600 px-4 py-2 transition-colors duration-200">Sign In</a>
-              <a href="/login" className="text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 px-5 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-200">Get started</a>
+              <a href="/login" className="text-sm font-medium text-gray-700 hover:text-purple-600 px-4 py-2 transition-colors duration-200">{t('nav_signin')}</a>
+              <a href="/login" className="text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 px-5 py-2 rounded-full shadow-md hover:shadow-lg transition-all duration-200">{t('nav_cta')}</a>
             </div>
           </div>
         </div>
@@ -111,7 +111,7 @@ export default function LanguageHeader() {
                     className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all duration-200 group"
                     onClick={() => setIsMenuOpen(false)}>
                     <span className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-purple-500 transition-colors" />
-                    {item.label}
+                    {t(item.labelKey)}
                   </a>
                 </li>
               ))}
@@ -122,7 +122,7 @@ export default function LanguageHeader() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-500 font-medium">Language:</span>
               <div className="relative">
-                <select onChange={handleLangChange} className="appearance-none bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 pr-7 text-sm font-medium text-gray-700 cursor-pointer" aria-label="Select Language">
+                <select value={language} onChange={handleLangChange} className="appearance-none bg-gray-100 border border-gray-200 rounded-lg px-3 py-1.5 pr-7 text-sm font-medium text-gray-700 cursor-pointer" aria-label="Select Language">
                   <option value="en">EN</option><option value="uk">UA</option><option value="de">DE</option>
                 </select>
                 <svg className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -130,8 +130,8 @@ export default function LanguageHeader() {
                 </svg>
               </div>
             </div>
-            <a href="/login" className="block w-full text-center text-sm font-medium text-gray-700 border-2 border-gray-200 rounded-xl px-5 py-3 hover:border-purple-300 hover:text-purple-600 transition-all">Sign In</a>
-            <a href="/login" className="block w-full text-center text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-xl px-5 py-3 shadow-md hover:shadow-lg transition-all">Get started</a>
+            <a href="/login" className="block w-full text-center text-sm font-medium text-gray-700 border-2 border-gray-200 rounded-xl px-5 py-3 hover:border-purple-300 hover:text-purple-600 transition-all">{t('nav_signin')}</a>
+            <a href="/login" className="block w-full text-center text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-xl px-5 py-3 shadow-md hover:shadow-lg transition-all">{t('nav_cta')}</a>
           </div>
         </div>
       </div>
