@@ -145,6 +145,17 @@ export default function TeacherReviewCanvas({
     };
   }, []);
 
+  /** Returns coordinates relative to the wrapper container (for textarea/absolute positioning) */
+  const getWrapperPos = useCallback((clientX: number, clientY: number): Point => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return { x: 0, y: 0 };
+    const rect = wrapper.getBoundingClientRect();
+    return {
+      x: clientX - rect.left + wrapper.scrollLeft,
+      y: clientY - rect.top + wrapper.scrollTop,
+    };
+  }, []);
+
   const finalizeLiveText = useCallback(() => {
     const ta = activeTextarea.current;
     if (!ta) return;
@@ -189,15 +200,16 @@ export default function TeacherReviewCanvas({
 
       if (currentTool === 'text') {
         const rect = canvas.getBoundingClientRect();
-        const displayPos = getDisplayPos(e.clientX, e.clientY);
+        // Use wrapper-relative coordinates for textarea position (position: absolute inside wrapper)
+        const wrapperPos = getWrapperPos(e.clientX, e.clientY);
         const canvasPos = getCanvasPos(e.clientX, e.clientY);
         const fontSize = parseInt(brushSize.toString()) * 2 + 14;
         const scaleX = canvas.width / rect.width;
 
         const textarea = document.createElement('textarea');
         textarea.className = 't-canvas-live-textarea';
-        textarea.style.left = `${displayPos.x}px`;
-        textarea.style.top = `${displayPos.y}px`;
+        textarea.style.left = `${wrapperPos.x}px`;
+        textarea.style.top = `${wrapperPos.y}px`;
         textarea.style.fontSize = `${fontSize / scaleX}px`;
         textarea.style.color = drawColor;
         textarea.style.width = '160px';
@@ -255,7 +267,7 @@ export default function TeacherReviewCanvas({
       isDrawing.current = true;
       lastPos.current = pos;
     },
-    [currentTool, brushSize, drawColor, getCanvasPos, getDisplayPos, finalizeLiveText]
+    [currentTool, brushSize, drawColor, getCanvasPos, getDisplayPos, getWrapperPos, finalizeLiveText]
   );
 
   const handleCanvasPointerMove = useCallback(

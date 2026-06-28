@@ -39,8 +39,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const navOverlay = document.getElementById('nav-overlay');
 
   if (menuToggle && navMenu) {
+    // Keep reference to original parent (inside header) for desktop layout
+    const originalParent = navMenu.parentNode;
+    let menuMoved = false;
+
     const toggleMenu = (forceState) => {
       const isActive = forceState !== undefined ? forceState : !menuToggle.classList.contains('active');
+
+      // On mobile (<=1024px), move navMenu to document.body to break out of header's stacking context
+      // This fixes the transparent/invisible drawer issue
+      if (window.innerWidth <= 1024) {
+        if (isActive && !menuMoved) {
+          document.body.appendChild(navMenu);
+          menuMoved = true;
+        } else if (!isActive && menuMoved) {
+          if (originalParent) originalParent.appendChild(navMenu);
+          menuMoved = false;
+        }
+      }
+
       menuToggle.classList.toggle('active', isActive);
       navMenu.classList.toggle('active', isActive);
       if (navOverlay) navOverlay.classList.toggle('active', isActive);
@@ -60,6 +77,18 @@ document.addEventListener('DOMContentLoaded', () => {
       link.addEventListener('click', () => {
         toggleMenu(false);
       });
+    });
+
+    // Clean up on resize from mobile to desktop
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 1024 && menuMoved) {
+        if (originalParent) originalParent.appendChild(navMenu);
+        menuMoved = false;
+        navMenu.classList.remove('active');
+        if (navOverlay) navOverlay.classList.remove('active');
+        menuToggle.classList.remove('active');
+        document.body.style.overflow = '';
+      }
     });
   }
 

@@ -371,7 +371,12 @@ export default function LanguageCoursePage() {
         </div>
       )}
 
-      <Footer />
+      <Footer navItems={[
+        { label: 'Home', href: '/' },
+        { label: 'What You Will Master', href: '#program' },
+        { label: 'Pricing Plans', href: '#pricing' },
+        { label: 'Contact', href: '#contact' },
+      ]} />
     </>
   );
 }

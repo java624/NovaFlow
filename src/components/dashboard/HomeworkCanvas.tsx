@@ -19,6 +19,7 @@ export default function HomeworkCanvas({ imageUrl, homeworkId, onSave }: Homewor
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
   const bgImageRef = useRef<HTMLImageElement>(new Image());
   const [currentTool, setCurrentTool] = useState<Tool>('brush');
   const [drawColor, setDrawColor] = useState('#dc2626');
@@ -87,11 +88,30 @@ export default function HomeworkCanvas({ imageUrl, homeworkId, onSave }: Homewor
     };
   }, []);
 
+  const getEventCoords = useCallback((
+    e: React.PointerEvent<HTMLCanvasElement> | React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>
+  ) => {
+    const nativeEvent = e.nativeEvent as any;
+    if (nativeEvent.touches && nativeEvent.touches.length > 0) {
+      return { clientX: nativeEvent.touches[0].clientX, clientY: nativeEvent.touches[0].clientY };
+    }
+    if (nativeEvent.changedTouches && nativeEvent.changedTouches.length > 0) {
+      return { clientX: nativeEvent.changedTouches[0].clientX, clientY: nativeEvent.changedTouches[0].clientY };
+    }
+    const pointerEvent = e as React.PointerEvent<HTMLCanvasElement>;
+    return { clientX: pointerEvent.clientX, clientY: pointerEvent.clientY };
+  }, []);
+
   const getCanvasPos = useCallback((clientX: number, clientY: number): Point => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    return { x: clientX - rect.left, y: clientY - rect.top };
+    const width = rect.width || 1;
+    const height = rect.height || 1;
+    return {
+      x: ((clientX - rect.left) / width) * canvas.width,
+      y: ((clientY - rect.top) / height) * canvas.height,
+    };
   }, []);
 
   const finalizeLiveText = useCallback(() => {
@@ -106,10 +126,10 @@ export default function HomeworkCanvas({ imageUrl, homeworkId, onSave }: Homewor
     if (text) {
       const x = parseFloat(ta.dataset.canvasX || '0');
       const y = parseFloat(ta.dataset.canvasY || '0');
-      const fontSize = parseFloat(ta.style.fontSize);
+      const baseFontSize = parseFloat(ta.dataset.baseFontSize || ta.style.fontSize);
       const color = ta.style.color;
 
-      ctx.font = `bold ${fontSize}px 'Inter', sans-serif`;
+      ctx.font = `bold ${baseFontSize}px 'Inter', sans-serif`;
       ctx.fillStyle = color;
       ctx.textBaseline = 'top';
       ctx.fillText(text, x, y);
@@ -129,22 +149,33 @@ export default function HomeworkCanvas({ imageUrl, homeworkId, onSave }: Homewor
       return;
     }
 
+    const { clientX, clientY } = getEventCoords(e);
+
     if (currentTool === 'text') {
-      const pos = getCanvasPos(e.clientX, e.clientY);
+      const rect = canvas.getBoundingClientRect();
+      const screenX = clientX - rect.left;
+      const screenY = clientY - rect.top;
+      const canvasPos = getCanvasPos(clientX, clientY);
+
       const fontSize = parseInt(brushSize.toString()) * 2 + 14;
+      const scaleX = rect.width ? (rect.width / canvas.width) : 1;
+      const displayFontSize = fontSize * scaleX;
+
       const textarea = document.createElement('textarea');
       textarea.className = 'canvas-live-textarea';
-      textarea.style.left = `${pos.x}px`;
-      textarea.style.top = `${pos.y}px`;
-      textarea.style.fontSize = `${fontSize}px`;
+      textarea.style.left = `${screenX}px`;
+      textarea.style.top = `${screenY}px`;
+      textarea.style.fontSize = `${displayFontSize}px`;
       textarea.style.color = drawColor;
-      textarea.style.width = '160px';
-      textarea.style.height = `${fontSize * 1.4}px`;
-      textarea.dataset.canvasX = pos.x.toString();
-      textarea.dataset.canvasY = pos.y.toString();
+      textarea.style.width = `${160 * scaleX}px`;
+      textarea.style.height = `${displayFontSize * 1.4}px`;
+      
+      textarea.dataset.canvasX = canvasPos.x.toString();
+      textarea.dataset.canvasY = canvasPos.y.toString();
+      textarea.dataset.baseFontSize = fontSize.toString();
 
-      const wrapper = wrapperRef.current;
-      if (wrapper) wrapper.appendChild(textarea);
+      const container = canvasContainerRef.current;
+      if (container) container.appendChild(textarea);
       setTimeout(() => textarea.focus(), 10);
 
       textarea.addEventListener('input', () => {
@@ -164,16 +195,16 @@ export default function HomeworkCanvas({ imageUrl, homeworkId, onSave }: Homewor
 
     if (currentTool === 'hand') {
       isDragging.current = true;
-      dragStart.current = { x: e.clientX - offset.current.x, y: e.clientY - offset.current.y };
+      dragStart.current = { x: clientX - offset.current.x, y: clientY - offset.current.y };
       const wrapper = wrapperRef.current;
       if (wrapper) wrapper.style.cursor = 'grabbing';
       return;
     }
 
-    const pos = getCanvasPos(e.clientX, e.clientY);
+    const pos = getCanvasPos(clientX, clientY);
     isDrawing.current = true;
     lastPos.current = pos;
-  }, [currentTool, brushSize, drawColor, getCanvasPos, finalizeLiveText]);
+  }, [currentTool, brushSize, drawColor, getCanvasPos, getEventCoords, finalizeLiveText]);
 
   const handleCanvasPointerMove = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
@@ -181,18 +212,20 @@ export default function HomeworkCanvas({ imageUrl, homeworkId, onSave }: Homewor
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const { clientX, clientY } = getEventCoords(e);
+
     // Hand panning
     if (currentTool === 'hand' && isDragging.current) {
       const wrapper = wrapperRef.current;
       if (!wrapper) return;
-      offset.current = { x: e.clientX - dragStart.current.x, y: e.clientY - dragStart.current.y };
+      offset.current = { x: clientX - dragStart.current.x, y: clientY - dragStart.current.y };
       wrapper.style.transform = `translate(${offset.current.x}px, ${offset.current.y}px)`;
       return;
     }
 
     if (!isDrawing.current) return;
 
-    const pos = getCanvasPos(e.clientX, e.clientY);
+    const pos = getCanvasPos(clientX, clientY);
 
     if (currentTool === 'eraser') {
       ctx.save();
@@ -211,7 +244,7 @@ export default function HomeworkCanvas({ imageUrl, homeworkId, onSave }: Homewor
     }
 
     lastPos.current = pos;
-  }, [currentTool, brushSize, drawColor, getCanvasPos]);
+  }, [currentTool, brushSize, drawColor, getCanvasPos, getEventCoords]);
 
   const handleCanvasPointerUp = useCallback(() => {
     if (isDrawing.current) {
@@ -439,14 +472,19 @@ export default function HomeworkCanvas({ imageUrl, homeworkId, onSave }: Homewor
         className="relative overflow-auto bg-gray-100/50 touch-none"
         style={{ cursor: currentTool === 'hand' ? 'grab' : 'crosshair' }}
       >
-        <canvas
-          ref={canvasRef}
-          className="block mx-auto shadow-sm"
-          onPointerDown={handleCanvasPointerDown}
-          onPointerMove={handleCanvasPointerMove}
-          onPointerUp={handleCanvasPointerUp}
-          onPointerLeave={handleCanvasPointerUp}
-        />
+        <div
+          ref={canvasContainerRef}
+          className="relative mx-auto shadow-sm w-fit"
+        >
+          <canvas
+            ref={canvasRef}
+            className="block"
+            onPointerDown={handleCanvasPointerDown}
+            onPointerMove={handleCanvasPointerMove}
+            onPointerUp={handleCanvasPointerUp}
+            onPointerLeave={handleCanvasPointerUp}
+          />
+        </div>
       </div>
 
       {/* Save Button */}
@@ -472,18 +510,24 @@ export default function HomeworkCanvas({ imageUrl, homeworkId, onSave }: Homewor
       <style jsx>{`
         .canvas-live-textarea {
           position: absolute;
-          background: transparent;
-          border: 1px dashed #6366f1;
+          background: transparent !important;
+          border: 1px dashed rgba(99, 102, 241, 0.4);
           border-radius: 4px;
           padding: 2px 4px;
           font-family: 'Inter', sans-serif;
           font-weight: bold;
-          outline: none;
+          outline: none !important;
+          box-shadow: none !important;
           resize: none;
           overflow: hidden;
           z-index: 10;
           line-height: 1.2;
           min-width: 60px;
+        }
+        .canvas-live-textarea:focus {
+          outline: none !important;
+          border: 1px dashed rgba(99, 102, 241, 0.6);
+          box-shadow: none !important;
         }
       `}</style>
     </div>

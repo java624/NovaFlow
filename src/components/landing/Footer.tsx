@@ -4,7 +4,11 @@ import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useScrollReveal } from '@/components/hooks/useScrollReveal';
 
-export default function Footer() {
+interface FooterProps {
+  navItems?: Array<{ label: string; href: string }>;
+}
+
+export default function Footer({ navItems }: FooterProps = {}) {
   const { t } = useLanguage();
   const brandRef = useScrollReveal<HTMLDivElement>();
   const linksRef = useScrollReveal<HTMLDivElement>();
@@ -61,15 +65,15 @@ export default function Footer() {
               {t('footer_col_school')}
             </h4>
             <ul className="space-y-3">
-              {[
-                { labelKey: 'footer_about', href: '#about' },
-                { labelKey: 'footer_languages', href: '#languages' },
-                { labelKey: 'footer_reviews', href: '#reviews' },
-                { labelKey: 'footer_contact', href: '#contact' }
-              ].map((item) => (
-                <li key={item.labelKey}>
+              {(navItems ?? [
+                { label: t('footer_about'), href: '#about' },
+                { label: t('footer_languages'), href: '#languages' },
+                { label: t('footer_reviews'), href: '#reviews' },
+                { label: t('footer_contact'), href: '#contact' }
+              ]).map((item, idx) => (
+                <li key={idx}>
                   <a href={item.href} className="text-sm text-gray-400 hover:text-white transition-all duration-200 hover:translate-x-1 inline-block">
-                    {t(item.labelKey)}
+                    {item.label}
                   </a>
                 </li>
               ))}
