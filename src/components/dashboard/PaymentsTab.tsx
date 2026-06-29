@@ -1,7 +1,9 @@
 'use client';
 
-import { StudentProfile } from './types';
+import React from 'react';
+import { StudentProfile, PaymentHistory } from './types';
 import { COURSES, LANG_CONFIG, DISCOUNT_THRESHOLD, DISCOUNT_PRICE } from './config';
+import PaymentHistoryTab from './PaymentHistoryTab';
 
 interface PaymentsTabProps {
   profile: StudentProfile | null;
@@ -10,6 +12,8 @@ interface PaymentsTabProps {
   showCoursePicker: boolean;
   lessonCount: number;
   purchasing: boolean;
+  paymentHistory: PaymentHistory[];
+  paymentHistoryLoading: boolean;
   onSetSelectedCourseName: (name: string | null) => void;
   onSetShowCoursePicker: (show: boolean) => void;
   onSetLessonCount: (count: number) => void;
@@ -101,72 +105,105 @@ function CoursePurchaseView({
 
 export default function PaymentsTab({
   profile, learningLang, selectedCourseName, showCoursePicker,
-  lessonCount, purchasing, onSetSelectedCourseName,
-  onSetShowCoursePicker, onSetLessonCount, onBuyCourse,
+  lessonCount, purchasing, paymentHistory, paymentHistoryLoading,
+  onSetSelectedCourseName, onSetShowCoursePicker, onSetLessonCount, onBuyCourse,
 }: PaymentsTabProps) {
   const courseList = COURSES[learningLang] || COURSES.english;
+  const [showHistory, setShowHistory] = React.useState(false);
 
   return (
     <div className="space-y-6 animate-fadeIn">
       <LanguageBanner profile={profile} learningLang={learningLang} />
 
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">Поповнити баланс уроків</h2>
-        <p className="text-sm text-gray-500 mt-1">Обери план та продовж навчання</p>
+      {/* Toggle between Buy and History */}
+      <div className="flex items-center gap-2 bg-white rounded-xl p-1 border border-gray-100 shadow-sm w-fit">
+        <button
+          onClick={() => setShowHistory(false)}
+          className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${
+            !showHistory
+              ? 'bg-purple-600 text-white shadow-sm'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          💳 Поповнити
+        </button>
+        <button
+          onClick={() => setShowHistory(true)}
+          className={`px-5 py-2 text-sm font-semibold rounded-lg transition-all ${
+            showHistory
+              ? 'bg-purple-600 text-white shadow-sm'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          📜 Історія
+        </button>
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        {selectedCourseName && !showCoursePicker ? (
-          (() => {
-            const course = courseList.find((c: { name: string }) => c.name === selectedCourseName) || courseList[0];
-            return (
-              <CoursePurchaseView
-                course={course}
-                lessonCount={lessonCount}
-                purchasing={purchasing}
-                learningLang={learningLang}
-                onBuyCourse={onBuyCourse}
-                onSetLessonCount={onSetLessonCount}
-                onBackToPicker={() => { onSetShowCoursePicker(true); onSetLessonCount(10); }}
-              />
-            );
-          })()
-        ) : (
-          courseList.map((course: { id: string; name: string; pricePerLesson: number; desc: string }) => (
-            <div key={course.id}
-              className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-purple-200 transition-all flex flex-col">
-              <div className="flex-1">
-                <h3 className="font-bold text-gray-900">{course.name}</h3>
-                <div className="mt-3 flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-gray-900">${course.pricePerLesson}</span>
-                  <span className="text-sm text-gray-500">/ урок</span>
-                </div>
-                <p className="text-sm text-gray-500 mt-3 leading-relaxed">{course.desc}</p>
-              </div>
-              <button onClick={() => { onSetSelectedCourseName(course.name); onSetShowCoursePicker(false); onSetLessonCount(10); }}
-                className="mt-6 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-xl shadow-md hover:shadow-lg transition-all">
-                Обрати цей курс
-              </button>
-            </div>
-          ))
-        )}
-      </div>
-
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-        <div className="flex flex-col sm:flex-row items-start gap-4">
-          <div className="flex-1">
-            <h4 className="font-bold text-gray-900">Хочеш змінити мову навчання?</h4>
-            <p className="text-sm text-gray-500 mt-1">
-              Відвідай сторінку потрібного курсу та придбай план — він автоматично оновиться тут.
-            </p>
-          </div>
-          <a href="/languages/english"
-            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gray-800 hover:bg-gray-700 rounded-xl transition-colors shadow-sm">
-            🏫 До курсів
-          </a>
+      {showHistory ? (
+        <div>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Історія платежів</h2>
+          <PaymentHistoryTab payments={paymentHistory} loading={paymentHistoryLoading} />
         </div>
-      </div>
+      ) : (
+        <>
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Поповнити баланс уроків</h2>
+            <p className="text-sm text-gray-500 mt-1">Обери план та продовж навчання</p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {selectedCourseName && !showCoursePicker ? (
+              (() => {
+                const course = courseList.find((c: { name: string }) => c.name === selectedCourseName) || courseList[0];
+                return (
+                  <CoursePurchaseView
+                    course={course}
+                    lessonCount={lessonCount}
+                    purchasing={purchasing}
+                    learningLang={learningLang}
+                    onBuyCourse={onBuyCourse}
+                    onSetLessonCount={onSetLessonCount}
+                    onBackToPicker={() => { onSetShowCoursePicker(true); onSetLessonCount(10); }}
+                  />
+                );
+              })()
+            ) : (
+              courseList.map((course: { id: string; name: string; pricePerLesson: number; desc: string }) => (
+                <div key={course.id}
+                  className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md hover:border-purple-200 transition-all flex flex-col">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-gray-900">{course.name}</h3>
+                    <div className="mt-3 flex items-baseline gap-1">
+                      <span className="text-3xl font-bold text-gray-900">${course.pricePerLesson}</span>
+                      <span className="text-sm text-gray-500">/ урок</span>
+                    </div>
+                    <p className="text-sm text-gray-500 mt-3 leading-relaxed">{course.desc}</p>
+                  </div>
+                  <button onClick={() => { onSetSelectedCourseName(course.name); onSetShowCoursePicker(false); onSetLessonCount(10); }}
+                    className="mt-6 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-xl shadow-md hover:shadow-lg transition-all">
+                    Обрати цей курс
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="flex flex-col sm:flex-row items-start gap-4">
+              <div className="flex-1">
+                <h4 className="font-bold text-gray-900">Хочеш змінити мову навчання?</h4>
+                <p className="text-sm text-gray-500 mt-1">
+                  Відвідай сторінку потрібного курсу та придбай план — він автоматично оновиться тут.
+                </p>
+              </div>
+              <a href="/languages/english"
+                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gray-800 hover:bg-gray-700 rounded-xl transition-colors shadow-sm">
+                🏫 До курсів
+              </a>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
-

@@ -44,7 +44,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-gray-900">{t('contact_phone_title')}</h4>
-                  <p className="text-sm text-gray-500">+380 (50) 123-45-67</p>
+                  <p className="text-sm text-gray-500">+380759648499</p>
                 </div>
               </div>
             </div>

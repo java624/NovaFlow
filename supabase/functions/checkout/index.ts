@@ -66,30 +66,65 @@ Deno.serve(async (req: Request) => {
     }
 
     const baseUrl = resolveSiteBaseUrl(req, siteUrl);
-    const successUrl = `${baseUrl}/dashboard.html?payment=success`;
-    const cancelUrl = `${baseUrl}/dashboard.html?payment=cancelled`;
+    // ✅ FIXED: Use Next.js /dashboard route instead of dashboard.html
+    const successUrl = `${baseUrl}/dashboard?payment=success&session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${baseUrl}/dashboard?payment=cancelled`;
 
-    const amountCents = Math.round(price * 100);
+    const amountCents = Math.round(price * lessonsCount * 100);
     const isMockMode = !stripeSecretKey;
 
     if (isMockMode || amountCents <= 0) {
-      // У тестовому режимі або для безкоштовного тарифу одразу записуємо уроки в профіль
+      // Тестовий режим — записуємо уроки та створюємо запис в payments_history
       const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
       const adminClient = supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : supabase;
       
+      // Get current lesson balance
       const { data: profile } = await adminClient
         .from('profiles')
         .select('lessons_left')
         .eq('id', user.id)
         .single();
       const currentLessons = profile?.lessons_left ?? 0;
-      await adminClient
+
+      // Update lessons
+      const { error: updateError } = await adminClient
         .from('profiles')
         .update({ lessons_left: currentLessons + lessonsCount })
         .eq('id', user.id);
 
+      if (updateError) {
+        console.error("Mock mode profile update failed:", updateError);
+        return jsonResponse({ error: "Failed to update lessons balance" }, 500);
+      }
+
+      // Record the payment in payments_history
+      const mockSessionId = `mock_${user.id}_${Date.now()}`;
+      const { error: paymentRecordError } = await adminClient
+        .from('payments_history')
+        .insert({
+          user_id: user.id,
+          stripe_session_id: mockSessionId,
+          plan_name: planName,
+          learning_language: lang,
+          lessons_purchased: lessonsCount,
+          amount_paid_cents: amountCents,
+          currency: 'usd',
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          metadata: {
+            mock: true,
+            price_per_lesson: price,
+            lessons_count: lessonsCount,
+          },
+        });
+
+      if (paymentRecordError) {
+        console.error("Mock payment record failed:", paymentRecordError);
+        // Non-fatal: lessons were already added
+      }
+
       return jsonResponse({
-        url: isMockMode ? `${successUrl}&mock=true` : successUrl,
+        url: `${successUrl.replace('{CHECKOUT_SESSION_ID}', mockSessionId)}&mock=true`,
         mock: true,
         message: isMockMode
           ? "Stripe не налаштований; згенеровано тестовий успіх"
@@ -97,12 +132,13 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Build Stripe Checkout Session via raw fetch (no Stripe SDK needed)
     const params = new URLSearchParams();
     params.set("mode", "payment");
     params.set("success_url", successUrl);
     params.set("cancel_url", cancelUrl);
     params.set("client_reference_id", user.id);
-    params.set("line_items[0][quantity]", "1");
+    params.set("line_items[0][quantity]", String(lessonsCount));
     params.set("line_items[0][price_data][currency]", "usd");
     params.set(
       "line_items[0][price_data][product_data][name]",
@@ -112,7 +148,7 @@ Deno.serve(async (req: Request) => {
       "line_items[0][price_data][product_data][description]",
       `${lessonsCount} lesson(s) · ${lang}`,
     );
-    params.set("line_items[0][price_data][unit_amount]", String(amountCents));
+    params.set("line_items[0][price_data][unit_amount]", String(price * 100));
     params.set("metadata[user_id]", user.id);
     params.set("metadata[plan_name]", planName);
     params.set("metadata[lessons_count]", String(lessonsCount));
@@ -141,7 +177,35 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ error: "Stripe did not return a session URL" }, 502);
     }
 
-    return jsonResponse({ url: stripeSession.url });
+    // Create a pending payment record BEFORE redirect
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+    const adminClient = supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
+
+    if (adminClient) {
+      const { error: pendingRecordError } = await adminClient
+        .from('payments_history')
+        .insert({
+          user_id: user.id,
+          stripe_session_id: stripeSession.id,
+          plan_name: planName,
+          learning_language: lang,
+          lessons_purchased: lessonsCount,
+          amount_paid_cents: amountCents,
+          currency: 'usd',
+          status: 'pending',
+          metadata: {
+            price_per_lesson: price,
+            lessons_count: lessonsCount,
+          },
+        });
+
+      if (pendingRecordError) {
+        console.error("Failed to create pending payment record:", pendingRecordError);
+        // Non-fatal: webhook will create it if missing
+      }
+    }
+
+    return jsonResponse({ url: stripeSession.url, sessionId: stripeSession.id });
   } catch (err) {
     console.error("checkout error:", err);
     const message = err instanceof Error ? err.message : "Internal server error";
@@ -150,9 +214,11 @@ Deno.serve(async (req: Request) => {
 });
 
 function resolveSiteBaseUrl(req: Request, configuredSiteUrl: string): string {
-  if (configuredSiteUrl) return configuredSiteUrl;
+  // 1. Спочатку беремо динамічний origin з браузера (localhost:3000 або твоя netlify.app)
   const origin = req.headers.get("origin");
   if (origin) return origin.replace(/\/$/, "");
+
+  // 2. Якщо origin чомусь немає, пробуємо витягнути з referer
   const referer = req.headers.get("referer");
   if (referer) {
     try {
@@ -161,7 +227,10 @@ function resolveSiteBaseUrl(req: Request, configuredSiteUrl: string): string {
       /* ignore invalid referer */
     }
   }
-  return "http://127.0.0.1:5500";
+
+  // 3. І тільки якщо браузер нічого не передав, беремо константу з налаштувань або дефолт
+  if (configuredSiteUrl) return configuredSiteUrl.replace(/\/$/, "");
+  return "http://localhost:3000"; // Дефолт для розробки Next.js
 }
 
 function jsonResponse(body: Record<string, unknown>, status = 200) {

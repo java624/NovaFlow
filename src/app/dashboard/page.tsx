@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
-import { Tab, StudentProfile, Homework, Lesson } from '@/components/dashboard/types';
+import { Tab, StudentProfile, Homework, Lesson, PaymentHistory } from '@/components/dashboard/types';
 import DashboardSidebar from '@/components/dashboard/DashboardSidebar';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import DashboardTabHome from '@/components/dashboard/DashboardTabHome';
@@ -39,15 +39,18 @@ export default function DashboardPage() {
   const [profileAlert, setProfileAlert] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
 
-// =========================================================================
-  // LOAD PROFILE (ПОВНІСТЮ СИНХРОНІЗОВАНО З БАЗОЮ ДАННЫХ)
+  // Payment history state
+  const [paymentHistory, setPaymentHistory] = useState<PaymentHistory[]>([]);
+  const [paymentHistoryLoading, setPaymentHistoryLoading] = useState(false);
+
+  // =========================================================================
+  // LOAD PROFILE
   // =========================================================================
   const loadProfile = useCallback(async () => {
     try {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       if (authError || !user) { router.push('/login'); return; }
 
-      // 🟢 ВИПРАВЛЕНО: Видалено teacher_name, який викликав помилку 400 (Bad Request)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, full_name, first_name, last_name, lessons_left, avatar_url, learning_language, birth_date, created_at, role')
@@ -60,7 +63,6 @@ export default function DashboardPage() {
         const typedProfile = profileData as StudentProfile;
         if (typedProfile.role === 'teacher') { router.push('/teacher'); return; }
 
-        // Якщо в базі немає окремих імені/прізвища, але є full_name, розбиваємо його для форми
         const nameParts = profileData.full_name ? profileData.full_name.split(' ') : [];
         const fallbackFirst = nameParts[0] || 'Павло';
         const fallbackLast = nameParts.slice(1).join(' ') || '';
@@ -71,9 +73,6 @@ export default function DashboardPage() {
           last_name: profileData.last_name || fallbackLast,
           lessons_left: profileData.lessons_left !== undefined ? profileData.lessons_left : 0
         });
-
-        // Синхронізуємо локальний лічильник уроків з реальними даними з Supabase
-        setLessonCount(profileData.lessons_left !== undefined ? profileData.lessons_left : 0);
 
         setProfileForm({
           first_name: profileData.first_name || fallbackFirst,
@@ -89,25 +88,10 @@ export default function DashboardPage() {
         await loadHomeworks(user.id);
         await loadAllLessons(user.id);
         await loadNextLesson(user.id);
-        
-        // 🟢 Виклик handlePaymentReturn перенесено сюди безпосередньо через window, 
-        // щоб не тягнути функцію в залежності useCallback і не тригерити помилки лінтера
-        if (typeof window !== 'undefined') {
-          const params = new URLSearchParams(window.location.search);
-          if (params.get('payment') === 'success') {
-            setActiveTab('payments');
-            const cleanUrl = new URL(window.location.href);
-            cleanUrl.searchParams.delete('payment');
-            cleanUrl.searchParams.delete('mock');
-            window.history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search);
-            
-            const t = document.createElement('div');
-            t.className = 'fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg text-sm font-medium animate-fadeIn';
-            t.innerText = '✅ Оплата пройшла успішно! Уроки зараховано.';
-            document.body.appendChild(t);
-            setTimeout(() => { t.remove(); }, 4000);
-          }
-        }
+        await loadPaymentHistory(user.id);
+
+        // Handle payment return after all data is loaded
+        handlePaymentReturn();
       }
     } catch (err) {
       console.error('Dashboard load error:', err);
@@ -184,21 +168,46 @@ export default function DashboardPage() {
   }, [supabase]);
 
   // =========================================================================
-  // HANDLE PAYMENT RETURN (оновлює lessons_left після оплати)
+  // LOAD PAYMENT HISTORY
+  // =========================================================================
+  const loadPaymentHistory = useCallback(async (userId: string) => {
+    setPaymentHistoryLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('payments_history')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPaymentHistory(data || []);
+    } catch (err) {
+      console.error('Load payment history error:', err);
+      // Non-fatal: payments table may not exist yet (migration not run)
+      setPaymentHistory([]);
+    } finally {
+      setPaymentHistoryLoading(false);
+    }
+  }, [supabase]);
+
+  // =========================================================================
+  // HANDLE PAYMENT RETURN (after Stripe redirect)
   // =========================================================================
   const handlePaymentReturn = useCallback(async () => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     if (params.get('payment') !== 'success') return;
 
+    // Clean URL immediately
     const cleanUrl = new URL(window.location.href);
     cleanUrl.searchParams.delete('payment');
+    cleanUrl.searchParams.delete('session_id');
     cleanUrl.searchParams.delete('mock');
     window.history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search);
 
     setActiveTab('payments');
 
-    // Оновлюємо баланс уроків з БД
+    // Refresh profile to get updated lessons_left
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: refreshedProfile } = await supabase
@@ -210,9 +219,14 @@ export default function DashboardPage() {
       if (refreshedProfile && profile) {
         setProfile({ ...profile, lessons_left: refreshedProfile.lessons_left });
       }
+
+      // Also refresh payment history
+      await loadPaymentHistory(user.id);
     }
+
+    // Show success toast
     showPaymentSuccessToast();
-  }, [supabase, profile]);
+  }, [supabase, profile, loadPaymentHistory]);
 
   function showPaymentSuccessToast() {
     const t = document.createElement('div');
@@ -228,21 +242,19 @@ export default function DashboardPage() {
   useEffect(() => {
     loadProfile();
   }, [loadProfile]);
+
   // =========================================================================
-  // ІНІЦІАЛІЗАЦІЯ КАЛЕНДАРЯ ДЛЯ ВКЛАДКИ ЗАНЯТТЯ
+  // ІНІЦІАЛІЗАЦІЯ КАЛЕНДАРЯ
   // =========================================================================
   useEffect(() => {
     if (activeTab !== 'lessons' || allLessons.length === 0) return;
 
-    // Створюємо динамічний таймаут, щоб Next.js встиг зарендерити <div id="student-calendar-element">
     const timer = setTimeout(() => {
       const el = document.getElementById('student-calendar-element');
       if (!el) return;
 
-      // Очищаємо старий вміст, щоб календар не дублювався при кожному кліку
       el.innerHTML = '';
 
-      // Створюємо простий і красивий HTML-список занять, якщо FullCalendar не підключено глобально
       const listContainer = document.createElement('div');
       listContainer.className = 'space-y-3 mt-4';
 
@@ -465,6 +477,8 @@ export default function DashboardPage() {
                   showCoursePicker={showCoursePicker}
                   lessonCount={lessonCount}
                   purchasing={purchasing}
+                  paymentHistory={paymentHistory}
+                  paymentHistoryLoading={paymentHistoryLoading}
                   onSetSelectedCourseName={setSelectedCourseName}
                   onSetShowCoursePicker={setShowCoursePicker}
                   onSetLessonCount={setLessonCount}
@@ -494,7 +508,7 @@ export default function DashboardPage() {
               {activeTab === 'materials' && (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                   <div className="text-6xl mb-4">📂</div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-2">Матеріали скоро з&apos;являться</h2>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">Матеріали скоро з'являться</h2>
                   <p className="text-sm text-gray-500 max-w-md">
                     Твій викладач незабаром додасть навчальні матеріали, презентації та корисні файли.
                     Слідкуй за оновленнями!
@@ -526,5 +540,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-

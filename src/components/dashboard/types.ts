@@ -33,3 +33,20 @@ export interface Lesson {
   start_time: string;
   end_time?: string;
 }
+
+export interface PaymentHistory {
+  id: string;
+  user_id: string;
+  stripe_session_id: string | null;
+  stripe_payment_intent_id: string | null;
+  plan_name: string;
+  learning_language: string;
+  lessons_purchased: number;
+  amount_paid_cents: number;
+  currency: string;
+  status: 'pending' | 'completed' | 'refunded' | 'failed' | 'cancelled';
+  receipt_number: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  completed_at: string | null;
+}

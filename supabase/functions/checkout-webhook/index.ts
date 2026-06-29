@@ -11,10 +11,16 @@ interface StripeWebhookEvent {
   type: string;
   data: {
     object: {
+      id: string;
       metadata?: {
         user_id?: string;
         lessons_count?: string;
+        plan_name?: string;
+        learning_language?: string;
       };
+      payment_intent?: string;
+      amount_total?: number;
+      currency?: string;
     };
   };
 }
@@ -52,8 +58,14 @@ Deno.serve(async (req: Request) => {
   }
 
   const session = event.data.object;
+  const sessionId = session.id;
   const userId = session.metadata?.user_id;
   const lessonsCount = Number(session.metadata?.lessons_count ?? 0);
+  const planName = session.metadata?.plan_name ?? "Unknown Plan";
+  const learningLanguage = session.metadata?.learning_language ?? "english";
+  const paymentIntentId = session.payment_intent ?? "";
+  const amountPaidCents = session.amount_total ?? 0;
+  const currency = session.currency ?? "usd";
 
   if (!userId || lessonsCount < 1) {
     return jsonResponse({ error: "Invalid session metadata" }, 400);
@@ -68,6 +80,27 @@ Deno.serve(async (req: Request) => {
 
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+  // =========================================================================
+  // IDEMPOTENCY CHECK: Check if this session was already processed
+  // =========================================================================
+  const { data: existingPayment } = await supabase
+    .from("payments_history")
+    .select("id, status")
+    .eq("stripe_session_id", sessionId)
+    .maybeSingle();
+
+  if (existingPayment) {
+    if (existingPayment.status === "completed") {
+      console.log(`Webhook: Session ${sessionId} already processed, skipping`);
+      return jsonResponse({ received: true, duplicate: true });
+    }
+    // If status is 'pending', update it to completed
+    console.log(`Webhook: Updating pending session ${sessionId} to completed`);
+  }
+
+  // =========================================================================
+  // UPDATE LESSONS BALANCE
+  // =========================================================================
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("lessons_left")
@@ -89,6 +122,40 @@ Deno.serve(async (req: Request) => {
     console.error("Webhook update failed:", updateError.message);
     return jsonResponse({ error: "Failed to update lessons balance" }, 500);
   }
+
+  // =========================================================================
+  // UPSERT PAYMENT RECORD (handles both new and pending records)
+  // =========================================================================
+  const now = new Date().toISOString();
+  const { error: paymentRecordError } = await supabase
+    .from("payments_history")
+    .upsert({
+      stripe_session_id: sessionId,
+      user_id: userId,
+      stripe_payment_intent_id: paymentIntentId,
+      plan_name: planName,
+      learning_language: learningLanguage,
+      lessons_purchased: lessonsCount,
+      amount_paid_cents: amountPaidCents,
+      currency: currency,
+      status: "completed",
+      completed_at: now,
+      metadata: {
+        stripe_event_id: event.id,
+        lessons_count: lessonsCount,
+        webhook_processed_at: now,
+      },
+    }, {
+      onConflict: "stripe_session_id",
+      ignoreDuplicates: false,
+    });
+
+  if (paymentRecordError) {
+    console.error("Webhook payment record failed:", paymentRecordError.message);
+    // Non-fatal: lessons were already added
+  }
+
+  console.log(`Webhook: Successfully processed payment for user ${userId}: +${lessonsCount} lessons`);
 
   return jsonResponse({ received: true });
 });
