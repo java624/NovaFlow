@@ -357,17 +357,28 @@ export default function DashboardPage() {
     if (!profile) return;
     setPurchasing(true);
     try {
-      const { data, error } = await supabase.functions.invoke('checkout', {
-        body: {
-          planName, lang,
-          price,
-          lessonsCount,
-          userId: profile.id,
-          userEmail: '',
-          origin: window.location.origin,
-        },
-      });
-      if (error) throw new Error(error.message);
+      // price is per-lesson; compute total
+      const totalAmount = Number(price) * lessonsCount;
+
+      const response = await fetch(
+        'https://vagrglarsxjtnsusyonv.supabase.co/functions/v1/wfp-create',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: profile.id,
+            amount: totalAmount,
+            lessonsCount,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP ${response.status}`);
+      }
+
       const url = (data as { url?: string })?.url;
       if (url) {
         setShowCheckoutOverlay(true);
@@ -380,7 +391,7 @@ export default function DashboardPage() {
     } finally {
       setPurchasing(false);
     }
-  }, [profile, supabase]);
+  }, [profile]);
 
   const selectHomework = useCallback((hw: Homework) => {
     setActiveHomework(hw);

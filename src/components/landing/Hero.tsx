@@ -198,6 +198,104 @@ export default function Hero() {
           width: 78%;
         }
 
+        /* Gradient headline treatment */
+        .hero-title {
+          background: linear-gradient(100deg, #1e1b2e 0%, #6d28d9 32%, #a855f7 50%, #6d28d9 68%, #1e1b2e 100%);
+          background-size: 250% 100%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          color: transparent;
+          filter: drop-shadow(0 2px 24px rgba(168, 85, 247, 0.18));
+          animation: hero-title-shine 7s ease-in-out infinite;
+        }
+
+        @keyframes hero-title-shine {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+
+        /* CTA button shine */
+        .hero-cta {
+          background-size: 200% 200%;
+          animation: hero-cta-shine 3.5s linear infinite;
+        }
+
+        @keyframes hero-cta-shine {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
+        }
+
+        /* Bullet stagger reveal */
+        .hero-bullet {
+          opacity: 0;
+          animation: hero-bullet-in 0.6s ease-out forwards;
+        }
+
+        @keyframes hero-bullet-in {
+          from { opacity: 0; transform: translateX(-12px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Wave divider: seamless looping drift + rising bubbles */
+        .wave-divider {
+          height: 110px;
+        }
+
+        .wave-layer {
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+        }
+
+        .wave-layer-front {
+          animation-name: wave-drift;
+          animation-duration: 16s;
+        }
+
+        .wave-layer-back {
+          animation-name: wave-drift-reverse;
+          animation-duration: 22s;
+        }
+
+        @keyframes wave-drift {
+          from { transform: translateX(0); }
+          to { transform: translateX(-50%); }
+        }
+
+        @keyframes wave-drift-reverse {
+          from { transform: translateX(-50%); }
+          to { transform: translateX(0); }
+        }
+
+        .wave-bubble {
+          position: absolute;
+          bottom: 6px;
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(168, 85, 247, 0.45));
+          box-shadow: 0 0 6px rgba(168, 85, 247, 0.3);
+          animation: wave-bubble-rise 6s ease-in infinite;
+        }
+
+        .wave-bubble-1 { left: 12%; width: 7px; height: 7px; animation-delay: 0s; animation-duration: 5.5s; }
+        .wave-bubble-2 { left: 30%; width: 10px; height: 10px; animation-delay: 1.4s; animation-duration: 7s; }
+        .wave-bubble-3 { left: 52%; width: 6px; height: 6px; animation-delay: 2.6s; animation-duration: 5s; }
+        .wave-bubble-4 { left: 71%; width: 9px; height: 9px; animation-delay: 0.8s; animation-duration: 6.5s; }
+        .wave-bubble-5 { left: 88%; width: 7px; height: 7px; animation-delay: 3.2s; animation-duration: 6s; }
+
+        @keyframes wave-bubble-rise {
+          0% { transform: translateY(0) scale(0.8); opacity: 0; }
+          15% { opacity: 0.85; }
+          80% { opacity: 0.5; }
+          100% { transform: translateY(-90px) scale(1.1); opacity: 0; }
+        }
+
+        @media (max-width: 600px) {
+          .wave-divider { height: 50px; }
+          .wave-bubble { display: none; }
+        }
+
         /* MEDIA QUERIES */
         @media (max-width: 992px) {
           .hero-illustration {
@@ -261,6 +359,11 @@ export default function Hero() {
           }
         }
 
+        @keyframes mobile-glow-pulse {
+          0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
+          50% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.15); }
+        }
+
         @media (max-width: 600px) {
           .hero-illustration {
             height: auto;
@@ -271,6 +374,18 @@ export default function Hero() {
 
           .floating-star {
             display: none !important;
+          }
+
+          /* Soft ambient glow behind the mobile card row for extra depth */
+          .illustration-bg-arcs::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 280px;
+            height: 280px;
+            background: radial-gradient(circle, rgba(168, 85, 247, 0.16) 0%, rgba(168, 85, 247, 0) 70%);
+            animation: mobile-glow-pulse 4s ease-in-out infinite;
           }
 
           .floating-cards-container {
@@ -293,9 +408,13 @@ export default function Hero() {
             height: 150px !important;
             border-radius: 14px;
             padding: 10px;
-            box-shadow: 0 10px 25px rgba(94, 7, 126, 0.08);
+            box-shadow: 0 12px 26px var(--card-shadow-color, rgba(94, 7, 126, 0.14));
             /* Bounce entrance staggered */
             animation: mobile-card-bounce-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+          }
+
+          .lang-card:active {
+            transform: scale(0.95) !important;
           }
 
           .lang-card.uk-card {
@@ -334,25 +453,44 @@ export default function Hero() {
             animation: mobile-flag-pulse 2.8s ease-in-out infinite !important;
           }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+          .hero-illustration,
+          .floating-star,
+          .lang-card,
+          .card-flag-circle,
+          .hero-title,
+          .hero-cta,
+          .hero-bullet,
+          .wave-layer,
+          .wave-bubble,
+          .illustration-bg-arcs::after {
+            animation: none !important;
+          }
+        }
       `}} />
 
       <section id="hero" className="relative min-h-screen pt-20 md:pt-24 overflow-hidden bg-gradient-to-b from-white via-purple-50/30 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[calc(100vh-8rem)] py-12">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center min-h-[calc(100vh-8rem)] py-10 sm:py-12">
             {/* Left Content */}
-            <div className="relative z-10">
+            <div className="relative z-10 text-center lg:text-left flex flex-col items-center lg:items-start min-w-0 w-full max-w-full">
               <h1 
-                className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight tracking-tight"
+                className="hero-title text-4xl sm:text-5xl lg:text-7xl font-extrabold leading-[1.1] sm:leading-[1.05] tracking-tight break-words hyphens-auto w-full max-w-full"
                 dangerouslySetInnerHTML={{ __html: t('hero_title') }}
               />
 
-              <ul className="mt-8 sm:mt-10 space-y-3.5">
-                {bulletPoints.map((point) => (
-                  <li key={point.key} className="flex items-start gap-3">
-                    <span className="flex-shrink-0 w-6 h-6 mt-0.5 rounded-full bg-gradient-to-br from-purple-600 to-purple-400 flex items-center justify-center">
+              <ul className="mt-8 sm:mt-10 space-y-4 sm:space-y-3.5 w-full max-w-sm sm:max-w-md lg:max-w-none">
+                {bulletPoints.map((point, idx) => (
+                  <li
+                    key={point.key}
+                    className="hero-bullet flex items-start gap-3 text-left"
+                    style={{ animationDelay: `${0.15 + idx * 0.1}s` }}
+                  >
+                    <span className="flex-shrink-0 w-7 h-7 sm:w-6 sm:h-6 mt-0.5 rounded-full bg-gradient-to-br from-purple-600 to-purple-400 flex items-center justify-center shadow-sm shadow-purple-300/50">
                       <svg
                         viewBox="0 0 24 24"
-                        className="w-3.5 h-3.5 text-white"
+                        className="w-4 h-4 sm:w-3.5 sm:h-3.5 text-white"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="3"
@@ -362,14 +500,14 @@ export default function Hero() {
                         <polyline points="20 6 9 17 4 12" />
                       </svg>
                     </span>
-                    <span className="text-base sm:text-lg text-gray-700">
+                    <span className="text-[15px] sm:text-lg text-gray-700">
                       {t(point.key)}
                     </span>
                   </li>
                 ))}
               </ul>
 
-              <button className="mt-10 inline-flex items-center gap-2 px-8 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 group">
+              <button className="hero-cta mt-10 w-full sm:w-auto justify-center inline-flex items-center gap-2 px-8 py-4 sm:py-3.5 text-base font-semibold text-white bg-gradient-to-r from-purple-600 via-fuchsia-500 to-purple-600 hover:shadow-purple-400/40 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 group active:scale-95">
                 <span>{t('hero_cta')}</span>
                 <svg
                   width="20"
@@ -516,16 +654,37 @@ export default function Hero() {
         </div>
 
         {/* Wave Divider */}
-        <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none">
+        <div className="wave-divider absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none">
+          {/* Floating bubbles rising through the wave for a bit of playful life */}
+          <span className="wave-bubble wave-bubble-1" />
+          <span className="wave-bubble wave-bubble-2" />
+          <span className="wave-bubble wave-bubble-3" />
+          <span className="wave-bubble wave-bubble-4" />
+          <span className="wave-bubble wave-bubble-5" />
+
+          {/* Back layer: softer, larger, slower drift for depth */}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 2400 200"
+            preserveAspectRatio="none"
+            className="wave-layer wave-layer-back absolute bottom-0 left-0 block w-[200%] h-full"
+          >
+            <path
+              d="M0,110 C200,50 400,50 600,110 C800,170 1000,170 1200,110 C1400,50 1600,50 1800,110 C2000,170 2200,170 2400,110 L2400,200 L0,200 Z"
+              className="fill-purple-100/60"
+            />
+          </svg>
+
+          {/* Front layer: smooth seamless looping wave */}
           <svg
             data-name="Layer 1"
             xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 1200 120"
+            viewBox="0 0 2400 200"
             preserveAspectRatio="none"
-            className="relative block w-full h-[60px] sm:h-[80px] md:h-[100px] lg:h-[120px]"
+            className="wave-layer wave-layer-front relative block w-[200%] h-full"
           >
             <path
-              d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z"
+              d="M0,130 C200,180 400,180 600,130 C800,80 1000,80 1200,130 C1400,180 1600,180 1800,130 C2000,80 2200,80 2400,130 L2400,200 L0,200 Z"
               className="fill-purple-50"
             />
           </svg>
