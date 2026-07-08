@@ -8,7 +8,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
-// Функція для генерації НАЙПРАВИЛЬНІШОГО HMAC-MD5
 function generateHmacMd5(data: string, key: string): string {
   return crypto.createHmac("md5", key).update(data, "utf8").digest("hex");
 }
@@ -21,59 +20,68 @@ Deno.serve(async (req: Request) => {
   try {
     const body = await req.json()
     const userId = body.userId || body.user_id
-    const lessonsCount = body.lessonsCount || body.lessons_count
-    let amount = body.amount || body.totalAmount
+    const lessonsCount = Number(body.lessonsCount || body.lessons_count)
+    const amount = Number(body.amount || body.totalAmount)
+    const planName = body.planName || "Lessons Package"
+    const lang = body.lang || "english"
 
     if (!userId || !amount || !lessonsCount) {
       throw new Error("Missing required fields")
-    }
-
-    if (amount < 200) {
-      amount = Math.round(amount * 40)
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? ""
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // Generate UUID for the payment record
+    const paymentId = crypto.randomUUID()
+    const orderReference = `wfp_${paymentId}_${Date.now()}`
+    
+    // Insert pending payment into payments_history
     const { data: payment, error: pError } = await supabase
-      .from("payments")
+      .from("payments_history")
       .insert([{
+        id: paymentId,
         user_id: userId,
-        amount: Number(amount),
+        stripe_session_id: orderReference, // using this to store orderReference
+        plan_name: planName,
+        learning_language: lang,
+        lessons_purchased: lessonsCount,
+        amount_paid_cents: Math.round(amount * 100), // amount is in USD, store as cents
+        currency: "usd",
         status: "pending",
-        lessons_added: Number(lessonsCount),
       }])
       .select().single()
 
     if (pError) throw new Error(`DB Error: ${pError.message}`)
 
+    // Test mode credentials
     const merchantAccount = "test_merch_n1"
-    const secretKey = "flk3409refn3094f1029f43lpathae:alpha34"
+    const secretKey = "flk3409refn54t54t*FNJRET" // Correct test mode secret key
     
     const rawOrigin = req.headers.get("origin") ?? "http://localhost:3000"
     const merchantDomainName = rawOrigin.replace(/^https?:\/\//, "").split(":")[0]
 
-    const orderReference = `${payment.id}_${Date.now()}`
     const orderDate = Math.floor(Date.now() / 1000)
-    const productName = "Lessons"
+    const productName = `${lessonsCount} Lessons (${planName})`
 
-    // Рядок підпису для CREATE_INVOICE СУТO з даних ТОВАРУ (БЕЗ секретного ключа в самому рядку!)
+    // Convert amount from USD to UAH for WayForPay (1 USD = 40 UAH)
+    const amountUah = Math.round(amount * 40)
+
+    // Signature COMPONENTS for CREATE_INVOICE
     const signatureComponents = [
       merchantAccount,
       merchantDomainName,
       orderReference,
       orderDate,
-      amount,
+      amountUah,
       "UAH",
       productName,
       1,
-      amount
+      amountUah
     ]
     
     const signatureString = signatureComponents.join(";")
-    
-    // Генеруємо підпис через HMAC-MD5, використовуючи secretKey як ключ
     const merchantSignature = generateHmacMd5(signatureString, secretKey)
 
     console.log("Built Signature String:", signatureString)
@@ -88,13 +96,13 @@ Deno.serve(async (req: Request) => {
       apiVersion: 1,
       orderReference,
       orderDate,
-      amount: Number(amount),
+      amount: amountUah,
       currency: "UAH",
       productName: [productName],
-      productPrice: [Number(amount)],
+      productPrice: [amountUah],
       productCount: [1],
       serviceUrl: `${supabaseUrl}/functions/v1/wfp-webhook`,
-      returnUrl: `${rawOrigin}/dashboard`
+      returnUrl: `${rawOrigin}/dashboard?payment=success&session_id=${orderReference}`
     }
 
     const wfpResponse = await fetch("https://api.wayforpay.com/api", {
@@ -116,6 +124,7 @@ Deno.serve(async (req: Request) => {
     })
 
   } catch (error) {
+    console.error("wfp-create error:", error)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,

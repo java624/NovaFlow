@@ -138,6 +138,8 @@ export function useDashboardActions({
             userId: profile.id,
             amount: totalAmount,
             lessonsCount,
+            planName,
+            lang,
           }),
         }
       );
