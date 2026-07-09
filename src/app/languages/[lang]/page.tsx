@@ -23,7 +23,7 @@ export default function LanguageCoursePage() {
   const { language, t } = useLanguage();
   const config = languageConfigs[langKey];
 
-  const coursePrefix = langKey === 'english' ? 'en' : langKey === 'german' ? 'de' : 'ua';
+  const coursePrefix = langKey === 'english' ? 'en' : langKey === 'german' ? 'de' : 'uk';
 
   const heroBadge = t(`course_${coursePrefix}_badge`) || config.heroBadge;
   const heroTitle = t(`course_${coursePrefix}_hero_title`) || config.heroTitle;
