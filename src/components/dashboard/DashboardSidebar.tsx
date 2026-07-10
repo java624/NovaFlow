@@ -36,7 +36,7 @@ export default function DashboardSidebar({
       )}
 
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-40 w-64 h-screen bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 left-0 z-40 w-64 h-screen bg-white border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         } flex flex-col`}
       >
@@ -52,7 +52,7 @@ export default function DashboardSidebar({
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 min-h-0 px-3 py-4 pb-20 space-y-0.5 overflow-y-auto">
           {SIDEBAR_TABS.map((tab) => {
             const isLocked = tab.locked && !hasLessons;
             return (
@@ -83,8 +83,8 @@ export default function DashboardSidebar({
           })}
         </nav>
 
-        {/* Logout */}
-        <div className="p-3 border-t border-gray-100">
+        {/* Logout — absolutely pinned to the bottom of the fixed sidebar */}
+        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-gray-100 bg-white">
           <button
             onClick={onLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-xl transition-all"

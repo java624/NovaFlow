@@ -137,7 +137,7 @@ export default function DashboardPage() {
         />
 
         {/* Main Content */}
-        <main className="flex-1 min-h-screen lg:pl-0">
+        <main className="flex-1 min-h-screen lg:pl-64">
           <div className="pt-14 lg:pt-0">
             <DashboardHeader
               profile={profile}

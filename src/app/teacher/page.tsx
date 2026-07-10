@@ -259,7 +259,7 @@ export default function TeacherDashboardPage() {
         />
 
         {/* Main Content */}
-        <main className="flex-1 min-h-screen lg:pl-0">
+        <main className="flex-1 min-h-screen lg:pl-64">
           <div className="pt-14 lg:pt-0">
             {/* Header */}
             <header className="bg-white/95 backdrop-blur-sm border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-4 sticky top-0 z-20">
