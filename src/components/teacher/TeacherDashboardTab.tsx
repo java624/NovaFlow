@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Lesson, StudentProfile } from './types';
 
 interface TeacherDashboardTabProps {
@@ -25,16 +25,35 @@ export default function TeacherDashboardTab({
   const generalCalendarRef = useRef<HTMLDivElement>(null);
   const genCalendarInstanceRef = useRef<{ destroy: () => void } | null>(null);
 
-  // General calendar
+  // ── Mobile breakpoint tracker ─────────────────────────────────────────────
+  const [isMobile, setIsMobile] = useState<boolean>(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    setIsMobile(mq.matches);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  // General calendar — re-initializes on lessons or mobile-breakpoint change
   useEffect(() => {
     if (!generalCalendarRef.current || allLessons.length === 0) return;
     let mounted = true;
+
+    // Destroy previous instance before recreating for new view
+    if (genCalendarInstanceRef.current) {
+      genCalendarInstanceRef.current.destroy();
+      genCalendarInstanceRef.current = null;
+    }
+
     (async () => {
       try {
         const { Calendar } = await import('@fullcalendar/core');
         const tGrid = (await import('@fullcalendar/timegrid')).default;
         const iPlugin = (await import('@fullcalendar/interaction')).default;
-        if (!mounted || !generalCalendarRef.current || genCalendarInstanceRef.current) return;
+        if (!mounted || !generalCalendarRef.current) return;
         const events = allLessons.map((l) => ({
           id: l.id,
           title: l.profiles?.full_name
@@ -53,7 +72,8 @@ export default function TeacherDashboardTab({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const cal = new (Calendar as any)(generalCalendarRef.current, {
           plugins: [tGrid, iPlugin],
-          initialView: 'timeGridWeek',
+          // Single-day view on mobile for readability
+          initialView: isMobile ? 'timeGridDay' : 'timeGridWeek',
           locale: 'uk',
           firstDay: 1,
           slotMinTime: '08:00:00',
@@ -63,6 +83,9 @@ export default function TeacherDashboardTab({
           selectable: false,
           height: 'auto',
           events,
+          headerToolbar: isMobile
+            ? { left: 'prev,next', center: 'title', right: 'timeGridDay,timeGridWeek' }
+            : { left: 'prev,next today', center: 'title', right: 'timeGridWeek,timeGridDay' },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           eventClick: (info: any) => {
             const sid = info.event.extendedProps.studentId;
@@ -86,7 +109,7 @@ export default function TeacherDashboardTab({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allLessons]);
+  }, [allLessons, isMobile]);
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -146,7 +169,15 @@ export default function TeacherDashboardTab({
           <h2 className="text-lg font-bold text-gray-900">📅 Загальний розклад викладача</h2>
           <p className="text-sm text-gray-500 mt-1">Тут відображаються заняття усіх ваших учнів.</p>
         </div>
-        <div ref={generalCalendarRef} id="general-calendar-element" className="min-h-[350px]" />
+        {/* Overflow wrapper keeps the calendar scrollable on narrow screens */}
+        <div className="w-full overflow-x-auto">
+          <div
+            ref={generalCalendarRef}
+            id="general-calendar-element"
+            className="min-h-[350px] min-w-0"
+            style={isMobile ? undefined : { minWidth: '640px' }}
+          />
+        </div>
       </div>
 
       <style jsx global>{`
@@ -155,6 +186,36 @@ export default function TeacherDashboardTab({
           to { opacity: 1; transform: translateY(0); }
         }
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+
+        /* FullCalendar responsive toolbar overrides */
+        @media (max-width: 767px) {
+          .fc .fc-toolbar {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+          }
+          .fc .fc-toolbar-chunk {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+          }
+          .fc .fc-button {
+            font-size: 0.75rem !important;
+            padding: 0.3rem 0.6rem !important;
+          }
+          .fc .fc-toolbar-title {
+            font-size: 0.95rem !important;
+            text-align: center;
+          }
+          .fc .fc-timegrid-slot-label {
+            font-size: 0.7rem !important;
+          }
+          .fc .fc-event-title {
+            font-size: 0.7rem !important;
+          }
+        }
       `}</style>
     </div>
   );

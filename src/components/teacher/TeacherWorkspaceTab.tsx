@@ -37,6 +37,18 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
 
   const studentId = selectedStudent.id;
 
+  // ── Mobile breakpoint tracker ─────────────────────────────────────────────
+  const [isMobile, setIsMobile] = useState<boolean>(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    setIsMobile(mq.matches);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   // Load data
   const loadStudentLessons = useCallback(async () => {
     const { data } = await supabase.from('lessons').select('*').eq('student_id', studentId);
@@ -53,16 +65,23 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
     loadHomeworks();
   }, [loadStudentLessons, loadHomeworks]);
 
-  // Student Calendar
+  // Student Calendar — re-initializes on lessons or mobile-breakpoint change
   useEffect(() => {
     if (!studentCalendarRef.current) return;
     let mounted = true;
+
+    // Destroy previous instance before recreating for new view
+    if (stuCalendarInstanceRef.current) {
+      stuCalendarInstanceRef.current.destroy();
+      stuCalendarInstanceRef.current = null;
+    }
+
     (async () => {
       try {
         const { Calendar } = await import('@fullcalendar/core');
         const tGrid = (await import('@fullcalendar/timegrid')).default;
         const iPlugin = (await import('@fullcalendar/interaction')).default;
-        if (!mounted || !studentCalendarRef.current || stuCalendarInstanceRef.current) return;
+        if (!mounted || !studentCalendarRef.current) return;
         const events = studentLessons.map((l) => ({
           id: l.id, title: l.title || `Урок: ${selectedStudent.full_name}`,
           start: l.start_time, end: l.end_time,
@@ -70,9 +89,15 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
         }));
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const cal = new (Calendar as any)(studentCalendarRef.current, {
-          plugins: [tGrid, iPlugin], initialView: 'timeGridWeek', locale: 'uk',
+          plugins: [tGrid, iPlugin],
+          // Single-day view on mobile for readability
+          initialView: isMobile ? 'timeGridDay' : 'timeGridWeek',
+          locale: 'uk',
           firstDay: 1, slotMinTime: '08:00:00', slotMaxTime: '22:00:00', allDaySlot: false,
           editable: false, selectable: true, height: 'auto', events,
+          headerToolbar: isMobile
+            ? { left: 'prev,next', center: 'title', right: 'timeGridDay,timeGridWeek' }
+            : { left: 'prev,next today', center: 'title', right: 'timeGridWeek,timeGridDay' },
           select: async (info: { startStr: string; endStr: string }) => {
             if (confirm(`Запланувати урок для ${selectedStudent.full_name}?`)) {
               const { data: nl } = await supabase.from('lessons').insert([{
@@ -114,7 +139,7 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
     })();
     return () => { mounted = false; if (stuCalendarInstanceRef.current) { stuCalendarInstanceRef.current.destroy(); stuCalendarInstanceRef.current = null; } };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [studentLessons]);
+  }, [studentLessons, isMobile]);
 
   const handleHomeworkSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,7 +229,15 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
               ➕ Додати урок
             </button>
           </div>
-          <div ref={studentCalendarRef} id="student-calendar-element" className="min-h-[350px]" />
+          {/* Overflow wrapper keeps the calendar scrollable on narrow screens */}
+          <div className="w-full overflow-x-auto">
+            <div
+              ref={studentCalendarRef}
+              id="student-calendar-element"
+              className="min-h-[350px] min-w-0"
+              style={isMobile ? undefined : { minWidth: '640px' }}
+            />
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -331,6 +364,36 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
       <style jsx global>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+
+        /* FullCalendar responsive toolbar overrides */
+        @media (max-width: 767px) {
+          .fc .fc-toolbar {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+          }
+          .fc .fc-toolbar-chunk {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+          }
+          .fc .fc-button {
+            font-size: 0.75rem !important;
+            padding: 0.3rem 0.6rem !important;
+          }
+          .fc .fc-toolbar-title {
+            font-size: 0.95rem !important;
+            text-align: center;
+          }
+          .fc .fc-timegrid-slot-label {
+            font-size: 0.7rem !important;
+          }
+          .fc .fc-event-title {
+            font-size: 0.7rem !important;
+          }
+        }
       `}</style>
     </div>
   );
