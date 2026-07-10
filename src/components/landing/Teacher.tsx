@@ -40,29 +40,17 @@ export default function Teacher() {
           animation: teacherStatPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
 
-        .teacher-quote-mark {
-          position: absolute;
-          top: -0.35em;
-          left: -0.15em;
-          font-size: 4.5rem;
-          line-height: 1;
-          color: rgba(168, 85, 247, 0.15);
-          font-family: Georgia, serif;
-          pointer-events: none;
-          user-select: none;
-        }
-
         .teacher-photo-wrap {
           position: relative;
         }
 
-        /* Gradient-ring "frame" around the photo, via padding trick */
+        /* Тонка, приглушена рамка-градієнт навколо фото (замість яскравого неонового кільця) */
         .teacher-photo-ring {
           position: relative;
           z-index: 1;
-          padding: 4px;
+          padding: 3px;
           border-radius: 1.75rem;
-          background: linear-gradient(135deg, #A855F7, #EC4899 50%, #7C3AED 100%);
+          background: linear-gradient(160deg, rgba(168, 85, 247, 0.55), rgba(124, 58, 237, 0.25) 55%, rgba(168, 85, 247, 0.4));
         }
 
         .teacher-photo-inner {
@@ -71,22 +59,7 @@ export default function Teacher() {
           background: white;
         }
 
-        /* Small accent dot cluster, sits outside the frame, doesn't overlap it */
-        .teacher-dot-grid {
-          position: absolute;
-          bottom: -20px;
-          right: -20px;
-          width: 64px;
-          height: 64px;
-          background-image: radial-gradient(rgba(168, 85, 247, 0.3) 1.6px, transparent 1.6px);
-          background-size: 12px 12px;
-          z-index: 0;
-          pointer-events: none;
-        }
-
-        @media (max-width: 640px) {
-          .teacher-dot-grid { width: 44px; height: 44px; bottom: -12px; right: -12px; }
-        }
+        .teacher-highlight-box {
           transition: transform 0.35s ease, box-shadow 0.35s ease;
         }
         .teacher-highlight-box:hover {
@@ -108,17 +81,14 @@ export default function Teacher() {
         <div className="grid lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16 items-center">
           {/* Photo Column */}
           <div ref={photoRef} className="reveal-left relative flex justify-center">
-            <div className="relative group teacher-photo-float teacher-photo-wrap w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96">
-              {/* Soft ambient glow */}
-              <div className="absolute -inset-3 bg-gradient-to-r from-purple-400 via-fuchsia-400 to-purple-400 rounded-[2rem] opacity-20 group-hover:opacity-35 blur-2xl transition-all duration-700 animate-pulse-glow" />
+            <div className="relative group teacher-photo-float teacher-photo-wrap w-56 h-72 sm:w-72 sm:h-[23rem] md:w-80 md:h-[26rem]">
+              {/* Soft ambient glow behind the photo */}
+              <div className="absolute -inset-4 bg-gradient-to-br from-purple-300/40 via-fuchsia-200/25 to-transparent rounded-[2rem] blur-2xl opacity-60 group-hover:opacity-80 transition-opacity duration-700" />
 
-              {/* Small accent dot cluster, bottom-right */}
-              <div className="teacher-dot-grid" />
-
-              {/* Gradient-ring frame */}
+              {/* Slim gradient frame */}
               <div className="teacher-photo-ring w-full h-full shadow-xl shadow-purple-900/15">
                 <div className="teacher-photo-inner relative w-full h-full">
-                  <div className="absolute inset-0 bg-gradient-to-t from-purple-900/30 to-transparent z-10" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-purple-900/25 to-transparent z-10" />
                   <Image
                     src="/img/2022_-_Centre_Stage_EN1_4500_(52471602047)_(cropped).jpg"
                     alt="Kyrylo - NovaFlow Founder"
@@ -159,14 +129,10 @@ export default function Teacher() {
               <p className="teacher-fade-p" style={{ animationDelay: '0.45s' }}>{t('teacher_p5')}</p>
               
               <blockquote 
-                className="teacher-fade-p relative text-lg sm:text-xl font-bold text-gray-900 leading-relaxed pt-2 pl-4 border-l-4 border-purple-300 break-words"
+                className="teacher-fade-p text-lg sm:text-xl font-bold text-gray-900 leading-relaxed pt-2 pl-4 border-l-4 border-purple-300 break-words"
                 style={{ animationDelay: '0.55s' }}
               >
-                <span className="teacher-quote-mark">&ldquo;</span>
-                <span
-                  className="relative"
-                  dangerouslySetInnerHTML={{ __html: t('teacher_quote') }}
-                />
+                <span dangerouslySetInnerHTML={{ __html: t('teacher_quote') }} />
               </blockquote>
               
               <p className="teacher-fade-p text-lg font-semibold text-purple-600 animate-gentle-float inline-block" style={{ animationDelay: '0.65s' }}>

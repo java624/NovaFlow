@@ -125,23 +125,73 @@ export default function LanguageCoursePage() {
       <LanguageHeader />
       <main>
         {/* ========== HERO ========== */}
-        <section id="hero" className="relative pt-20 md:pt-24 overflow-hidden bg-gradient-to-b from-white via-purple-50/30 to-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <section id="hero" className="relative pt-20 md:pt-24 pb-20 sm:pb-28 overflow-hidden bg-gradient-to-b from-white via-purple-50/30 to-white">
+          <style dangerouslySetInnerHTML={{ __html: `
+            @keyframes heroFadeUp {
+              from { opacity: 0; transform: translateY(16px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            .hero-fade-up {
+              opacity: 0;
+              animation: heroFadeUp 0.7s ease-out forwards;
+            }
+
+            /* Будь-який акцентний тег (span/strong/em) всередині заголовка
+               автоматично отримує фірмовий фіолетовий градієнт і легке мерехтіння */
+            @keyframes heroAccentShift {
+              0%, 100% { background-position: 0% 50%; }
+              50% { background-position: 100% 50%; }
+            }
+            .hero-title-accent :is(span, strong, em) {
+              background: linear-gradient(90deg, #7C3AED, #A855F7, #7C3AED);
+              background-size: 200% auto;
+              -webkit-background-clip: text;
+              background-clip: text;
+              color: transparent;
+              font-style: normal;
+              animation: heroAccentShift 6s ease-in-out infinite;
+            }
+
+            @keyframes heroWaveBob {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(5px); }
+            }
+            .hero-wave-bob {
+              animation: heroWaveBob 5s ease-in-out infinite;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+              .hero-fade-up,
+              .hero-title-accent :is(span, strong, em),
+              .hero-wave-bob {
+                animation: none !important;
+              }
+            }
+          `}} />
+
+          {/* Ambient background glow, узгоджено з рештою сайту */}
+          <div className="absolute -top-24 -left-24 w-72 h-72 sm:w-96 sm:h-96 bg-purple-300/20 blur-[100px] rounded-full pointer-events-none" />
+          <div className="absolute top-1/3 -right-24 w-72 h-72 sm:w-96 sm:h-96 bg-fuchsia-300/15 blur-[100px] rounded-full pointer-events-none" />
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[70vh] py-12 lg:py-20">
               <div className="relative z-10">
-                <span className="inline-block text-sm font-semibold text-purple-600 bg-purple-50 px-4 py-1.5 rounded-full mb-5">
+                <span className="hero-fade-up inline-flex items-center gap-2 text-sm font-semibold text-purple-600 bg-purple-50 border border-purple-100 px-4 py-1.5 rounded-full mb-5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
                   {heroBadge}
                 </span>
                 <h1
-                  className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight tracking-tight"
+                  className="hero-title-accent hero-fade-up text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 leading-tight tracking-tight"
+                  style={{ animationDelay: '0.1s' }}
                   dangerouslySetInnerHTML={{ __html: heroTitle }}
                 />
-                <p className="mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed max-w-xl">
+                <p className="hero-fade-up mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed max-w-xl" style={{ animationDelay: '0.2s' }}>
                   {heroDesc}
                 </p>
                 <button
                   onClick={() => setShowQuiz(true)}
-                  className="mt-8 inline-flex items-center gap-2 px-8 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 group"
+                  className="hero-fade-up mt-8 inline-flex items-center gap-2 px-8 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-full shadow-lg hover:shadow-xl hover:shadow-purple-500/25 transition-all duration-200 group"
+                  style={{ animationDelay: '0.3s' }}
                 >
                   <span>{t('pricing_btn_start')}</span>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-200 group-hover:translate-x-1">
@@ -176,9 +226,9 @@ export default function LanguageCoursePage() {
             </div>
           </div>
 
-          {/* Wave Divider */}
-          <div className="absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none">
-            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative block w-full h-[60px] sm:h-[80px] md:h-[100px] animate-wave-flow">
+          {/* Wave Divider — трохи нижче, з легким "диханням" та фірмовим кольором */}
+          <div className="hero-wave-bob absolute bottom-0 left-0 right-0 w-full overflow-hidden leading-none">
+            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none" className="relative block w-full h-[70px] sm:h-[90px] md:h-[110px] animate-wave-flow">
               <defs>
                 <linearGradient id="wave-gradient-lang" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="#7C3AED" />
@@ -338,129 +388,7 @@ export default function LanguageCoursePage() {
         </section>
       </main>
 
-      {/* ========== QUIZ MODAL ========== */}
-      {showQuiz && (
-        <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => resetQuiz()}>
-          <div className="bg-white rounded-3xl p-8 sm:p-10 shadow-2xl w-full max-w-lg relative" onClick={(e) => e.stopPropagation()}>
-            <button onClick={resetQuiz} className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors">
-              <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-
-            {quizStep === 1 && (
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t('quiz_title_1')}</h3>
-                <div className="w-full bg-gray-100 rounded-full h-2 mb-6">
-                  <div className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full" style={{ width: '25%' }} />
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { val: t('quiz_opt_1a'), key: t('quiz_opt_1a') },
-                    { val: t('quiz_opt_1b'), key: t('quiz_opt_1b') },
-                    { val: t('quiz_opt_1c'), key: t('quiz_opt_1c') },
-                  ].map((opt) => (
-                    <button key={opt.val} onClick={() => handleQuizSelect(1, opt.val)}
-                      className="w-full flex items-center justify-between px-5 py-3.5 text-base font-medium text-gray-700 bg-gray-50 hover:bg-purple-50 hover:text-purple-700 rounded-xl border border-gray-100 hover:border-purple-200 transition-all group">
-                      <span>{opt.val}</span>
-                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-gray-400 group-hover:text-purple-600 transition-colors">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {quizStep === 2 && (
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t('quiz_title_2')}</h3>
-                <div className="w-full bg-gray-100 rounded-full h-2 mb-6">
-                  <div className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full" style={{ width: '50%' }} />
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { val: t('quiz_opt_2a'), label: t('quiz_opt_2a') },
-                    { val: t('quiz_opt_2b'), label: t('quiz_opt_2b') },
-                    { val: t('quiz_opt_2c'), label: t('quiz_opt_2c') },
-                  ].map((opt) => (
-                    <button key={opt.val} onClick={() => handleQuizSelect(2, opt.val)}
-                      className="w-full flex items-center justify-between px-5 py-3.5 text-base font-medium text-gray-700 bg-gray-50 hover:bg-purple-50 hover:text-purple-700 rounded-xl border border-gray-100 hover:border-purple-200 transition-all group">
-                      <span>{opt.label}</span>
-                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-gray-400 group-hover:text-purple-600 transition-colors">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {quizStep === 3 && (
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t('quiz_title_3')}</h3>
-                <div className="w-full bg-gray-100 rounded-full h-2 mb-6">
-                  <div className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full" style={{ width: '75%' }} />
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { val: t('quiz_opt_3a'), label: t('quiz_opt_3a') },
-                    { val: t('quiz_opt_3b'), label: t('quiz_opt_3b') },
-                    { val: t('quiz_opt_3c'), label: t('quiz_opt_3c') },
-                  ].map((opt) => (
-                    <button key={opt.val} onClick={() => handleQuizSelect(3, opt.val)}
-                      className="w-full flex items-center justify-between px-5 py-3.5 text-base font-medium text-gray-700 bg-gray-50 hover:bg-purple-50 hover:text-purple-700 rounded-xl border border-gray-100 hover:border-purple-200 transition-all group">
-                      <span>{opt.label}</span>
-                      <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-gray-400 group-hover:text-purple-600 transition-colors">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {quizStep === 4 && (
-              <div className="text-center">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t('quiz_result_title')}</h3>
-                <div className="w-full bg-gray-100 rounded-full h-2 mb-6">
-                  <div className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full" style={{ width: '100%' }} />
-                </div>
-                <div className="inline-block text-sm font-semibold text-purple-600 bg-purple-50 px-5 py-2 rounded-full mb-4">
-                  {quizBadge}
-                </div>
-                <p className="text-gray-600 text-base leading-relaxed mb-6">
-                  {language === 'uk' ? (
-                    <>
-                      На основі ваших відповідей ми підібрали оптимальний шлях: <strong>{courseName}</strong> для{' '}
-                      <strong>{quizAnswers.step2 || 'розвитку кар\'єри'}</strong> приділяючи{' '}
-                      <strong>{quizAnswers.step3 || '30 хвилин'}</strong> щодня. Ви можете забронювати перше розмовне заняття прямо зараз.
-                    </>
-                  ) : language === 'de' ? (
-                    <>
-                      Basierend auf Ihren Angaben haben wir einen optimierten Pfad ausgewählt: <strong>{courseName}</strong> für{' '}
-                      <strong>{quizAnswers.step2 || 'Karriere'}</strong> mit{' '}
-                      <strong>{quizAnswers.step3 || '30 Min.'}</strong> täglich. Sie können Ihre erste Sprechsitzung sofort buchen.
-                    </>
-                  ) : (
-                    <>
-                      Based on your inputs, we have selected an optimized path: <strong>{courseName}</strong> for{' '}
-                      <strong>{quizAnswers.step2 || 'Career'}</strong> dedicating{' '}
-                      <strong>{quizAnswers.step3 || '30 mins'}</strong> daily. You can lock in your first speaking session immediately.
-                    </>
-                  )}
-                </p>
-                <button
-                  onClick={() => { resetQuiz(); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }); }}
-                  className="inline-flex items-center gap-2 px-8 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-full shadow-lg hover:shadow-xl transition-all duration-200"
-                >
-                  {t('quiz_btn_book')}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+      
 
       <Footer navItems={[
         { label: t('nav_home'), href: '/' },
