@@ -1,6 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /dashboard
+Disallow: /teacher
 Disallow: /login
 
-Sitemap: https://novaflowschool.com/sitemap.xml
+Sitemap: https://novaflow-school.com/sitemap.xml

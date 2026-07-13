@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://novaflowschool.com'),
+  metadataBase: new URL('https://novaflow-school.com'),
   title: "NovaFlow — Language School",
   description:
     "Build your language flow. Change your life. Personalized learning paths, flexible schedules, real-world speaking practice.",
@@ -19,13 +19,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "NovaFlow — Language School",
     description: "Build your language flow. Change your life. Personalized learning paths, flexible schedules, real-world speaking practice.",
-    url: "https://novaflowschool.com",
+    url: "https://novaflow-school.com",
     siteName: "NovaFlow Language School",
     images: [
       {
         url: "/img/og-image.png",
         width: 1200,
-        height: 1200,
+        height: 630,
         alt: "NovaFlow Language School - Build your language flow",
       },
     ],
@@ -39,12 +39,12 @@ export const metadata: Metadata = {
     images: ["/img/og-image.png"],
   },
   alternates: {
-    canonical: "https://novaflowschool.com",
+    canonical: "https://novaflow-school.com",
     languages: {
-      "x-default": "https://novaflowschool.com",
-      "en": "https://novaflowschool.com",
-      "uk": "https://novaflowschool.com/languages/uk",
-      "de": "https://novaflowschool.com/languages/de",
+      "x-default": "https://novaflow-school.com",
+      "en": "https://novaflow-school.com",
+      "uk": "https://novaflow-school.com/languages/uk",
+      "de": "https://novaflow-school.com/languages/de",
     },
   },
 };

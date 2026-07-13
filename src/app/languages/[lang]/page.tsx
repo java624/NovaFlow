@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, FormEvent, useRef } from 'react';
+import emailjs from '@emailjs/browser';
 import { useParams } from 'next/navigation';
 import LanguageHeader from '@/components/landing/LanguageHeader';
 import Footer from '@/components/landing/Footer';
@@ -99,6 +100,27 @@ export default function LanguageCoursePage() {
   const [showQuiz, setShowQuiz] = useState(false);
   const [quizStep, setQuizStep] = useState(1);
   const [quizAnswers, setQuizAnswers] = useState<Record<string, string>>({});
+
+  // ─── Booking form state ────────────────────────────────────────────────────
+  const bookingFormRef = useRef<HTMLFormElement>(null);
+  const [formStatus, setFormStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+
+  const handleBookingSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFormStatus('sending');
+    try {
+      await emailjs.sendForm(
+        'service_orowegp',
+        'template_pmzcrmp',
+        bookingFormRef.current!,
+        'Q9kpKOwIznWpVx0tA'
+      );
+      setFormStatus('success');
+      bookingFormRef.current?.reset();
+    } catch {
+      setFormStatus('error');
+    }
+  };
 
   const handleQuizSelect = (step: number, value: string) => {
     setQuizAnswers((prev) => ({ ...prev, [`step${step}`]: value }));
@@ -329,59 +351,84 @@ export default function LanguageCoursePage() {
               </div>
 
               <div className="bg-white rounded-2xl p-8 sm:p-10 shadow-sm border border-gray-100">
-                <form className="space-y-5">
-                  <div className="grid sm:grid-cols-2 gap-4">
+                {formStatus === 'success' ? (
+                  <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+                    <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900">{t('form_success_title') || 'Request Sent!'}</h3>
+                    <p className="text-gray-500 text-sm max-w-xs">{t('form_success_desc') || "We'll get back to you within 24 hours."}</p>
+                    <button onClick={() => setFormStatus('idle')} className="mt-2 text-sm text-purple-600 hover:underline">{t('form_send_another') || 'Send another request'}</button>
+                  </div>
+                ) : (
+                  <form ref={bookingFormRef} className="space-y-5" onSubmit={handleBookingSubmit}>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_name')}</label>
+                        <input type="text" name="user_name" placeholder={t('placeholder_name')} required
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_email')}</label>
+                        <input type="email" name="user_email" placeholder={t('placeholder_email')} required
+                          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" />
+                      </div>
+                    </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_name')}</label>
-                      <input type="text" placeholder={t('placeholder_name')} required
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_phone')}</label>
+                      <input type="tel" name="user_phone" placeholder={t('placeholder_phone')}
                         className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_email')}</label>
-                      <input type="email" placeholder={t('placeholder_email')} required
-                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" />
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_lang')}</label>
+                        <select name="language" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" required defaultValue="">
+                          <option value="" disabled>{t('select_lang_placeholder')}</option>
+                          <option value="English">English</option>
+                          <option value="German">German</option>
+                          <option value="Ukrainian">Ukrainian</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_level')}</label>
+                        <select name="level" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" required defaultValue="">
+                          <option value="" disabled>{t('select_level_placeholder')}</option>
+                          <option value="Absolute Beginner (A0)">{t('option_level_0')}</option>
+                          <option value="Elementary (A1-A2)">{t('option_level_1')}</option>
+                          <option value="Intermediate (B1-B2)">{t('option_level_2')}</option>
+                          <option value="Advanced (C1-C2)">{t('option_level_3')}</option>
+                        </select>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_phone')}</label>
-                    <input type="tel" placeholder={t('placeholder_phone')}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" />
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_lang')}</label>
-                      <select className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" required defaultValue="">
-                        <option value="" disabled>{t('select_lang_placeholder')}</option>
-                        <option value="English">English</option>
-                        <option value="German">German</option>
-                        <option value="Ukrainian">Ukrainian</option>
-                      </select>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_msg')}</label>
+                      <textarea name="message" placeholder={t('placeholder_msg')} rows={4} required
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all resize-none" />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_level')}</label>
-                      <select className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" required defaultValue="">
-                        <option value="" disabled>{t('select_level_placeholder')}</option>
-                        <option value="Absolute Beginner (A0)">{t('option_level_0')}</option>
-                        <option value="Elementary (A1-A2)">{t('option_level_1')}</option>
-                        <option value="Intermediate (B1-B2)">{t('option_level_2')}</option>
-                        <option value="Advanced (C1-C2)">{t('option_level_3')}</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('form_label_msg')}</label>
-                    <textarea placeholder={t('placeholder_msg')} rows={4} required
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all resize-none" />
-                  </div>
-                  <button type="submit"
-                    className="w-full inline-flex items-center justify-center gap-2 px-8 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 group">
-                    <span>{t('form_btn')}</span>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-200 group-hover:translate-x-1">
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                      <polyline points="12 5 19 12 12 19" />
-                    </svg>
-                  </button>
-                </form>
+                    {formStatus === 'error' && (
+                      <p className="text-sm text-red-500">{t('form_error') || 'Something went wrong. Please try again.'}</p>
+                    )}
+                    <button type="submit" disabled={formStatus === 'sending'}
+                      className="w-full inline-flex items-center justify-center gap-2 px-8 py-3.5 text-base font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-xl shadow-md hover:shadow-lg transition-all duration-200 group disabled:opacity-60 disabled:cursor-not-allowed">
+                      {formStatus === 'sending' ? (
+                        <svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                          <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+                        </svg>
+                      ) : (
+                        <>
+                          <span>{t('form_btn')}</span>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="transition-transform duration-200 group-hover:translate-x-1">
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                            <polyline points="12 5 19 12 12 19" />
+                          </svg>
+                        </>
+                      )}
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
           </div>

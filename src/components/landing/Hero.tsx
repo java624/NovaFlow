@@ -507,7 +507,10 @@ export default function Hero() {
                 ))}
               </ul>
 
-              <button className="hero-cta mt-10 w-full sm:w-auto justify-center inline-flex items-center gap-2 px-8 py-4 sm:py-3.5 text-base font-semibold text-white bg-gradient-to-r from-purple-600 via-fuchsia-500 to-purple-600 hover:shadow-purple-400/40 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 group active:scale-95">
+              <a
+                href="#contact"
+                className="hero-cta mt-10 w-full sm:w-auto justify-center inline-flex items-center gap-2 px-8 py-4 sm:py-3.5 text-base font-semibold text-white bg-gradient-to-r from-purple-600 via-fuchsia-500 to-purple-600 hover:shadow-purple-400/40 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 group active:scale-95"
+              >
                 <span>{t('hero_cta')}</span>
                 <svg
                   width="20"
@@ -523,7 +526,7 @@ export default function Hero() {
                   <line x1="5" y1="12" x2="19" y2="12" />
                   <polyline points="12 5 19 12 12 19" />
                 </svg>
-              </button>
+              </a>
             </div>
 
             {/* Right Illustration */}

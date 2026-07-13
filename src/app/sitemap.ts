@@ -1,15 +1,15 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://novaflowschool.com';
+  
+  const baseUrl = 'https://novaflow-school.com';
 
+  
   const routes = [
     '',
-    '/privacy',
-    '/terms',
+    '/privacy-policy',   
+    '/terms',            
     '/contact-support',
-    '/login',
-    '/teacher',
     '/languages/en',
     '/languages/uk',
     '/languages/de',
