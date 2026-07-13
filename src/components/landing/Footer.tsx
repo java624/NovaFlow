@@ -117,10 +117,10 @@ export default function Footer({ navItems }: FooterProps = {}) {
               </summary>
               <ul className="space-y-3 mt-4 pl-1">
                 {[
-                  { labelKey: 'footer_terms', href: '#' },
-                  { labelKey: 'footer_privacy', href: '#' },
-                  { labelKey: 'footer_cookies', href: '#' },
-                  { labelKey: 'footer_sitemap', href: '#' }
+                  { labelKey: 'footer_terms', href: '/terms' },
+                  { labelKey: 'footer_privacy', href: '/privacy' },
+                  { labelKey: 'footer_contact', href: '/contact-support' },
+                  { labelKey: 'footer_cookies', href: '/privacy#cookies' },
                 ].map((item) => (
                   <li key={item.labelKey}>
                     <a href={item.href} className="text-sm text-gray-400 hover:text-white transition-colors duration-200 block py-1">
@@ -138,10 +138,10 @@ export default function Footer({ navItems }: FooterProps = {}) {
               </h4>
               <ul className="space-y-3">
                 {[
-                  { labelKey: 'footer_terms', href: '#' },
-                  { labelKey: 'footer_privacy', href: '#' },
-                  { labelKey: 'footer_cookies', href: '#' },
-                  { labelKey: 'footer_sitemap', href: '#' }
+                  { labelKey: 'footer_terms', href: '/terms' },
+                  { labelKey: 'footer_privacy', href: '/privacy' },
+                  { labelKey: 'footer_contact', href: '/contact-support' },
+                  { labelKey: 'footer_cookies', href: '/privacy#cookies' },
                 ].map((item) => (
                   <li key={item.labelKey}>
                     <a href={item.href} className="text-sm text-gray-400 hover:text-white transition-all duration-200 hover:translate-x-1 inline-block">
@@ -187,9 +187,9 @@ export default function Footer({ navItems }: FooterProps = {}) {
             {t('footer_copy')}
           </p>
           <ul className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2">
-            <li><a href="#" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_privacy')}</a></li>
-            <li><a href="#" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_terms')}</a></li>
-            <li><a href="#" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_contact')}</a></li>
+            <li><a href="/privacy" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_privacy')}</a></li>
+            <li><a href="/terms" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_terms')}</a></li>
+            <li><a href="/contact-support" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_contact')}</a></li>
           </ul>
         </div>
       </div>
