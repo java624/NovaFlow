@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { useLanguage } from '@/context/LanguageContext';
 import { useScrollReveal } from '@/components/hooks/useScrollReveal';
 
@@ -123,9 +124,9 @@ export default function Footer({ navItems }: FooterProps = {}) {
                   { labelKey: 'footer_cookies', href: '/privacy#cookies' },
                 ].map((item) => (
                   <li key={item.labelKey}>
-                    <a href={item.href} className="text-sm text-gray-400 hover:text-white transition-colors duration-200 block py-1">
+                    <Link href={item.href} className="text-sm text-gray-400 hover:text-white transition-colors duration-200 block py-1">
                       {t(item.labelKey)}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -144,9 +145,9 @@ export default function Footer({ navItems }: FooterProps = {}) {
                   { labelKey: 'footer_cookies', href: '/privacy#cookies' },
                 ].map((item) => (
                   <li key={item.labelKey}>
-                    <a href={item.href} className="text-sm text-gray-400 hover:text-white transition-all duration-200 hover:translate-x-1 inline-block">
+                    <Link href={item.href} className="text-sm text-gray-400 hover:text-white transition-all duration-200 hover:translate-x-1 inline-block">
                       {t(item.labelKey)}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -187,9 +188,9 @@ export default function Footer({ navItems }: FooterProps = {}) {
             {t('footer_copy')}
           </p>
           <ul className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2">
-            <li><a href="/privacy" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_privacy')}</a></li>
-            <li><a href="/terms" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_terms')}</a></li>
-            <li><a href="/contact-support" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_contact')}</a></li>
+            <li><Link href="/privacy" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_privacy')}</Link></li>
+            <li><Link href="/terms" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_terms')}</Link></li>
+            <li><Link href="/contact-support" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_contact')}</Link></li>
           </ul>
         </div>
       </div>
