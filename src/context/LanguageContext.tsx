@@ -263,8 +263,45 @@ const landingTranslations: Record<Language, Record<string, string>> = {
     feat_ua_beginners_4: "Everyday Conversations",
     feat_ua_comm_1: "Speaking Practice",
     feat_ua_comm_2: "Modern Vocabulary",
-    feat_ua_comm_3: "Listening Activities",
-    feat_ua_comm_4: "Pronunciation Improvement"
+    feat_ua_comm_4: "Pronunciation Improvement",
+
+    // Navigation addition
+    nav_platform: "Cabinet Demo",
+
+    // Platform section
+    platform_tag: "Interactive Platform",
+    platform_title: "Your Personal <span class=\"purple-gradient-text\">Interactive</span> Space",
+    platform_desc: "Forget about third-party apps, scattered links, and lost documents. Book lessons, join interactive classes, do homework, and track your progress in one unified portal.",
+    platform_tab_student: "Student Space",
+    platform_tab_teacher: "Teacher Space",
+    platform_student_f1_title: "Interactive Scheduling",
+    platform_student_f1_desc: "Book or reschedule lessons with a single tap. See your lesson balance and get automatic push notifications and calendar invites.",
+    platform_student_f2_title: "Virtual Classroom",
+    platform_student_f2_desc: "No external apps needed. Join live classes directly in your browser with built-in video call, interactive whiteboard, and real-time chat.",
+    platform_student_f3_title: "Smart Homework & Vocab",
+    platform_student_f3_desc: "Complete speaking, writing, and grammar exercises. Save new words to your personal dictionary with audio pronunciation.",
+    platform_student_f4_title: "Speaking Progress Analytics",
+    platform_student_f4_desc: "Monitor your vocabulary expansion, grammar level mastery, and speaking frequency via visual graphs updated after every class.",
+    platform_teacher_f1_title: "Unified Student Profiles",
+    platform_teacher_f1_desc: "Access language targets, homework history, grades, lesson balance, and personal feedback for all students in one screen.",
+    platform_teacher_f2_title: "Smart Calendar Builder",
+    platform_teacher_f2_desc: "Set your weekly working hours, manage active classes, easily handle reschedules, and prevent any double-bookings.",
+    platform_teacher_f3_title: "Interactive Materials Assigner",
+    platform_teacher_f3_desc: "Choose from pre-made grammar templates or create custom homework, vocabulary lists, and reading files for each student.",
+    platform_teacher_f4_title: "Direct Feedback Center",
+    platform_teacher_f4_desc: "Grade homework, record audio feedback notes, write constructive comments, and communicate directly with students.",
+    platform_badge_live: "LIVE LESSON",
+    platform_mock_teacher_msg: "Great job today! Let's practice conditional sentences for the next homework.",
+    platform_mock_student_msg: "Sure! Ready for it.",
+    platform_mock_hw_title: "Homework #4 - Conditionals",
+    platform_mock_hw_question: "If it rains tomorrow, we...",
+    platform_mock_hw_opt1: "...will stay at home.",
+    platform_mock_hw_opt2: "...stayed at home.",
+    platform_mock_hw_status: "Correct! +10 Points",
+    platform_mock_balance: "Lesson Balance: 8 left",
+    platform_mock_next_lesson: "Next Lesson: Today at 19:00",
+    platform_mock_vocab_title: "Vocabulary Builder",
+    platform_cta_button: "Try Interactive Demo"
   },
   uk: {
     // Navigation
@@ -517,7 +554,45 @@ const landingTranslations: Record<Language, Record<string, string>> = {
     feat_ua_comm_1: "Практика розмовного мовлення",
     feat_ua_comm_2: "Сучасний словниковий запас",
     feat_ua_comm_3: "Вправи на слух",
-    feat_ua_comm_4: "Покращення вимови"
+    feat_ua_comm_4: "Покращення вимови",
+
+    // Navigation addition
+    nav_platform: "Демо Кабінету",
+
+    // Platform section
+    platform_tag: "Цифрова Платформа",
+    platform_title: "Ваш персональний <span class=\"purple-gradient-text\">інтерактивний</span> кабінет",
+    platform_desc: "Забудьте про купу месенджерів, загублені посилання та розкидані файли. Записуйтеся на уроки, навчайтеся у віртуальному класі, виконуйте завдання та відстежуйте свій прогрес в одному кабінеті.",
+    platform_tab_student: "Кабінет Учня",
+    platform_tab_teacher: "Кабінет Вчителя",
+    platform_student_f1_title: "Інтерактивний розклад",
+    platform_student_f1_desc: "Бронюйте або переносьте уроки в один клік. Слідкуйте за балансом занять та отримуйте автоматичні сповіщення на пошту та в календар.",
+    platform_student_f2_title: "Віртуальний клас",
+    platform_student_f2_desc: "Жодних Zoom чи Skype. Приєднуйтесь до уроку прямо в браузері з вбудованим відеозв'язком, інтерактивною дошкою та текстовим чатом.",
+    platform_student_f3_title: "Розумні завдання та словник",
+    platform_student_f3_desc: "Виконуйте завдання на письмо, аудіювання та граматику. Додавайте нові слова до власного словничка з аудіо-вимовою.",
+    platform_student_f4_title: "Детальна аналітика та трекер",
+    platform_student_f4_desc: "Стежте за зростанням словникового запасу, рівнем граматики та розмовної практики за допомогою наочних графіків після кожного уроку.",
+    platform_teacher_f1_title: "Профілі та аналітика учнів",
+    platform_teacher_f1_desc: "Бачте цілі навчання, історію виконаних завдань, оцінки, баланс уроків та коментарі для кожного учня на одному екрані.",
+    platform_teacher_f2_title: "Розумний менеджер розкладу",
+    platform_teacher_f2_desc: "Налаштовуйте свій робочий час, керуйте майбутніми уроками, легко погоджуйте перенесення та уникайте накладок у розкладі.",
+    platform_teacher_f3_title: "Конструктор уроків та ДЗ",
+    platform_teacher_f3_desc: "Обирайте готові шаблони або створюйте індивідуальні домашні завдання, словники та матеріали під запит конкретного учня.",
+    platform_teacher_f4_title: "Коментарі та перевірка ДЗ",
+    platform_teacher_f4_desc: "Перевіряйте домашню роботу, додавайте голосові нотатки, пишіть детальні коментарі та спілкуйтеся з учнями напряму.",
+    platform_badge_live: "ЖИВИЙ УРОК",
+    platform_mock_teacher_msg: "Чудова робота сьогодні! Наступного разу попрактикуємо умовні речення.",
+    platform_mock_student_msg: "Звісно! Буду готова.",
+    platform_mock_hw_title: "Домашнє завдання №4 - Conditionals",
+    platform_mock_hw_question: "If it rains tomorrow, we...",
+    platform_mock_hw_opt1: "...will stay at home.",
+    platform_mock_hw_opt2: "...stayed at home.",
+    platform_mock_hw_status: "Правильно! +10 балів",
+    platform_mock_balance: "Баланс занять: залишилось 8",
+    platform_mock_next_lesson: "Наступний урок: Сьогодні о 19:00",
+    platform_mock_vocab_title: "Словниковий запас",
+    platform_cta_button: "Спробувати кабінет"
   },
   de: {
     // Navigation
@@ -770,7 +845,45 @@ const landingTranslations: Record<Language, Record<string, string>> = {
     feat_ua_comm_1: "Sprechpraxis",
     feat_ua_comm_2: "Moderner Wortschatz",
     feat_ua_comm_3: "Hörübungen",
-    feat_ua_comm_4: "Ausspracheverbesserung"
+    feat_ua_comm_4: "Ausspracheverbesserung",
+
+    // Navigation addition
+    nav_platform: "Kabinett-Demo",
+
+    // Platform section
+    platform_tag: "Digitale Plattform",
+    platform_title: "Ihr persönlicher <span class=\"purple-gradient-text\">interaktiver</span> Bereich",
+    platform_desc: "Vergessen Sie unzählige Messenger, verlorene Links und verstreute Dateien. Buchen Sie Unterricht, lernen Sie im virtuellen Klassenzimmer, erledigen Sie Aufgaben und verfolgen Sie Ihren Fortschritt in einem Portal.",
+    platform_tab_student: "Schülerbereich",
+    platform_tab_teacher: "Lehrerbereich",
+    platform_student_f1_title: "Interaktive Planung",
+    platform_student_f1_desc: "Buchen oder verschieben Sie Stunden mit einem Klick. Behalten Sie Ihr Stunden-Guthaben im Blick und erhalten Sie automatische Benachrichtigungen.",
+    platform_student_f2_title: "Virtuelles Klassenzimmer",
+    platform_student_f2_desc: "Kein Zoom oder Skype erforderlich. Nehmen Sie direkt im Browser am Unterricht teil – mit integriertem Videoanruf, interaktivem Whiteboard und Chat.",
+    platform_student_f3_title: "Smarte Aufgaben & Vokabeln",
+    platform_student_f3_desc: "Erledigen Sie Schreib-, Hör- und Grammatikaufgaben. Fügen Sie neue Wörter mit Audio-Aussprache zu Ihrem persönlichen Wörterbuch hinzu.",
+    platform_student_f4_title: "Detaillierte Fortschrittsanalyse",
+    platform_student_f4_desc: "Verfolgen Sie Ihren Wortschatz, Ihre Grammatikkenntnisse und Ihre Sprechpraxis mit übersichtlichen Grafiken nach jedem Unterricht.",
+    platform_teacher_f1_title: "Einheitliche Schülerprofile",
+    platform_teacher_f1_desc: "Sehen Sie Lernziele, Aufgabenverlauf, Noten, Stunden-Guthaben und Feedback für jeden Schüler auf einen Blick.",
+    platform_teacher_f2_title: "Smarter Kalender-Manager",
+    platform_teacher_f2_desc: "Richten Sie Ihre Arbeitszeiten ein, verwalten Sie anstehende Stunden, stimmen Sie Verschiebungen ab und vermeiden Sie Terminüberschneidungen.",
+    platform_teacher_f3_title: "Lehrplan- und Aufgabendesigner",
+    platform_teacher_f3_desc: "Wählen Sie aus Vorlagen oder erstellen Sie individuelle Hausaufgaben, Vokabellisten und Materialien für jeden Schüler.",
+    platform_teacher_f4_title: "Feedback-Center & Korrektur",
+    platform_teacher_f4_desc: "Korrigieren Sie Hausaufgaben, fügen Sie Sprachnotizen hinzu, schreiben Sie detailliertes Feedback und kommunizieren Sie direkt.",
+    platform_badge_live: "LIVE-UNTERRICHT",
+    platform_mock_teacher_msg: "Gute Arbeit heute! Nächstes Mal üben wir die Konditionalsätze.",
+    platform_mock_student_msg: "Klar! Ich bin bereit.",
+    platform_mock_hw_title: "Hausaufgabe #4 - Konditionalsätze",
+    platform_mock_hw_question: "If it rains tomorrow, we...",
+    platform_mock_hw_opt1: "...will stay at home.",
+    platform_mock_hw_opt2: "...stayed at home.",
+    platform_mock_hw_status: "Richtig! +10 Punkte",
+    platform_mock_balance: "Guthaben: 8 Stunden übrig",
+    platform_mock_next_lesson: "Nächste Stunde: Heute um 19:00",
+    platform_mock_vocab_title: "Wortschatz-Trainer",
+    platform_cta_button: "Kabinett testen"
   }
 };
 

@@ -7,6 +7,7 @@ import { useLanguage } from '@/context/LanguageContext';
 const navItems = [
   { href: '#hero', labelKey: 'nav_home', label: 'Home' },
   { href: '#about', labelKey: 'nav_about', label: 'About us' },
+  { href: '#platform', labelKey: 'nav_platform', label: 'Cabinet Demo' },
   { href: '#languages', labelKey: 'nav_languages', label: 'Languages' },
   { href: '#reviews', labelKey: 'nav_reviews', label: 'Reviews' },
   { href: '#contact', labelKey: 'nav_contact', label: 'Contact' },

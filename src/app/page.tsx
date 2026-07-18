@@ -1,6 +1,7 @@
 import Header from "@/components/landing/Header";
 import Hero from "@/components/landing/Hero";
 import Features from "@/components/landing/Features";
+import PlatformShowcase from "@/components/landing/PlatformShowcase";
 import Teacher from "@/components/landing/Teacher";
 import Certifications from "@/components/landing/Certifications";
 import Languages from "@/components/landing/Languages";
@@ -16,6 +17,7 @@ export default function Home() {
       <main>
         <Hero />
         <Features />
+        <PlatformShowcase />
         <Teacher />
         <Certifications />
         <Languages />
