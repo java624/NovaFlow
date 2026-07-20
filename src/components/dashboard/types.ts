@@ -14,6 +14,7 @@ export interface StudentProfile {
   birth_date?: string;
   created_at?: string;
   role?: string;
+  telegram_chat_id?: string | null;
 }
 
 export interface Homework {

@@ -1,7 +1,9 @@
 'use client';
 
+import { SupabaseClient } from '@supabase/supabase-js';
 import { StudentProfile } from './types';
 import { getAvatarUrl } from './DashboardHeader';
+import TelegramConnectCard from './TelegramConnectCard';
 
 interface ProfileTabProps {
   profile: StudentProfile | null;
@@ -10,9 +12,12 @@ interface ProfileTabProps {
   onFormChange: (field: string, value: string) => void;
   onSave: (e: React.FormEvent) => void;
   onAvatarUpload: (file: File) => void;
+  supabase: SupabaseClient;
+  onProfileUpdate: (updated: Partial<StudentProfile>) => void;
 }
 export default function ProfileTab({
   profile, profileForm, profileAlert, onFormChange, onSave, onAvatarUpload,
+  supabase, onProfileUpdate,
 }: ProfileTabProps) {
   const avatarUrl = getAvatarUrl(profile);
 
@@ -106,6 +111,13 @@ export default function ProfileTab({
           </button>
         </form>
       </div>
+
+      {/* Telegram Connect */}
+      <TelegramConnectCard
+        profile={profile}
+        supabase={supabase}
+        onProfileUpdate={onProfileUpdate}
+      />
     </div>
   );
 }

@@ -192,7 +192,7 @@ export function useDashboardData() {
 
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, full_name, first_name, last_name, lessons_left, avatar_url, learning_language, birth_date, created_at, role')
+        .select('id, full_name, first_name, last_name, lessons_left, avatar_url, learning_language, birth_date, created_at, role, telegram_chat_id')
         .eq('id', user.id)
         .maybeSingle();
 

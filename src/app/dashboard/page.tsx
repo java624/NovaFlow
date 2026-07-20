@@ -196,6 +196,8 @@ export default function DashboardPage() {
                   onFormChange={(field, value) => setProfileForm(prev => ({ ...prev, [field]: value }))}
                   onSave={saveProfile}
                   onAvatarUpload={uploadAvatar}
+                  supabase={supabase}
+                  onProfileUpdate={(updated) => setProfile(prev => prev ? { ...prev, ...updated } : prev)}
                 />
               )}
 
