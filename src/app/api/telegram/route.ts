@@ -1,4 +1,4 @@
-import { Bot, webhookCallback } from "grammy";
+import { Bot, webhookCallback, InlineKeyboard } from "grammy";
 import { createClient } from "@supabase/supabase-js";
 
 export const dynamic = "force-dynamic";
@@ -18,11 +18,36 @@ function getBot() {
     }
     bot = new Bot(token);
 
+    // Допоміжна функція для надсилання головного меню в залежності від ролі
+    const sendMainMenu = async (ctx: any, role: string, name: string) => {
+      if (role === "teacher") {
+        const keyboard = new InlineKeyboard()
+          .text("📅 Заплановані уроки", "teacher_schedule")
+          .row()
+          .text("🔄 Оновити статус", "refresh_status");
+
+        await ctx.reply(
+          `👨‍🏫 *Кабінет вчителя NovaFlow*\n\nВітаємо, **${name}**! Сюди вам приходитимуть сповіщення про нові уроки та запити на підтвердження проведення.`,
+          { parse_mode: "Markdown", reply_markup: keyboard }
+        );
+      } else {
+        const keyboard = new InlineKeyboard()
+          .text("📚 Мої уроки та Баланс", "my_lessons")
+          .text("💳 Придбати уроки", "pay_info")
+          .row()
+          .text("🔄 Оновити", "refresh_status");
+
+        await ctx.reply(
+          `🎓 *Особовий кабінет учня NovaFlow*\n\nВітаємо, **${name}**! Оберіть потрібний розділ нижче:`,
+          { parse_mode: "Markdown", reply_markup: keyboard }
+        );
+      }
+    }
+
     // 1. Команда /start
     bot.command("start", async (ctx) => {
       const chatId = ctx.chat.id;
 
-      // Перевіряємо, чи цей Telegram вже прив'язаний до якогось акаунта
       const { data: profile } = await supabase
         .from("profiles")
         .select("role, first_name, full_name")
@@ -31,35 +56,8 @@ function getBot() {
 
       if (profile) {
         const name = profile.first_name || profile.full_name || "користувач";
-        
-        if (profile.role === "teacher") {
-          await ctx.reply(
-            `👨‍🏫 *Вітаємо у робочому кабінеті вчителя, ${name}!*\n\nСюди вам приходитимуть сповіщення про завершені уроки для підтвердження.`,
-            {
-              parse_mode: "Markdown",
-              reply_markup: {
-                inline_keyboard: [
-                  [{ text: "📅 Мій розклад", callback_data: "teacher_schedule" }]
-                ]
-              }
-            }
-          );
-        } else {
-          await ctx.reply(
-            `🎉 *Вітаємо, ${name}!*\n\nВаш акаунт підключено. Оберіть потрібну дію в меню нижче:`,
-            {
-              parse_mode: "Markdown",
-              reply_markup: {
-                inline_keyboard: [
-                  [{ text: "📚 Мої уроки", callback_data: "my_lessons" }],
-                  [{ text: "💳 Оплатити", callback_data: "pay" }]
-                ]
-              }
-            }
-          );
-        }
+        await sendMainMenu(ctx, profile.role, name);
       } else {
-        // Якщо акаунт ще не прив'язаний — просимо Email
         await ctx.reply(
           `👋 *Вітаємо у NovaFlow School!*\n\nДля початку роботи, будь ласка, **напишіть сюди ваш Email**, вказаний при реєстрації на сайті.`,
           { parse_mode: "Markdown" }
@@ -67,15 +65,13 @@ function getBot() {
       }
     });
 
-    // 2. Обробка текстових повідомлень (Введення Email)
+    // 2. Обробка введення Email
     bot.on("message:text", async (ctx) => {
       const text = ctx.message.text.trim().toLowerCase();
       const chatId = ctx.chat.id;
 
-      // Ігноруємо команди, які починаються з /
       if (text.startsWith("/")) return;
 
-      // Проста перевірка чи схожий текст на Email
       const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text);
 
       if (!isEmail) {
@@ -83,19 +79,7 @@ function getBot() {
         return;
       }
 
-      // Перевіряємо чи прив'язаний вже цей чат
-      const { data: existingProfile } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("telegram_chat_id", chatId)
-        .single();
-
-      if (existingProfile) {
-        await ctx.reply("Ваш Telegram вже успішно прив'язаний до акаунта!");
-        return;
-      }
-
-      // Шукаємо користувача в Supabase за email
+      // Шукаємо користувача за email
       const { data: userProfile, error } = await supabase
         .from("profiles")
         .select("id, role, first_name, full_name, email")
@@ -104,13 +88,13 @@ function getBot() {
 
       if (error || !userProfile) {
         await ctx.reply(
-          `❌ **Акаунт із поштою \`${text}\` не знайдено.**\n\nПеревірте правильність написання або зареєструйтесь на сайті NovaFlow.`,
+          `❌ **Акаунт із поштою \`${text}\` не знайдено.**\n\nПеревірте правильність або зареєструйтесь на сайті NovaFlow.`,
           { parse_mode: "Markdown" }
         );
         return;
       }
 
-      // Прив'язуємо telegram_chat_id до знайденого профілю
+      // Прив'язуємо telegram_chat_id
       await supabase
         .from("profiles")
         .update({ telegram_chat_id: chatId })
@@ -118,31 +102,137 @@ function getBot() {
 
       const userName = userProfile.first_name || userProfile.full_name || "користувач";
 
-      if (userProfile.role === "teacher") {
-        await ctx.reply(
-          `✅ **Авторизація успішна!**\n\n👨‍🏫 Вітаємо, вчителю **${userName}**! Тепер ви отримуватимете сповіщення про завершені уроки прямо сюди.`,
-          { parse_mode: "Markdown" }
-        );
+      await ctx.reply(`✅ **Авторизація успішна!**`, { parse_mode: "Markdown" });
+      await sendMainMenu(ctx, userProfile.role, userName);
+    });
+
+    // 3. Обробка кнопок для учня
+    bot.callbackQuery("my_lessons", async (ctx) => {
+      await ctx.answerCallbackQuery();
+      if (!ctx.chat) return;
+      const chatId = ctx.chat.id;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id, lessons_left")
+        .eq("telegram_chat_id", chatId)
+        .single();
+
+      if (!profile) return;
+
+      // Отримуємо найближчі scheduled уроки
+      const { data: upcomingLessons } = await supabase
+        .from("lessons")
+        .select("title, start_time, date")
+        .eq("student_id", profile.id)
+        .eq("status", "scheduled")
+        .limit(3);
+
+      let message = `📊 *Ваш баланс:* **${profile.lessons_left ?? 0}** уроків\n\n`;
+
+      if (upcomingLessons && upcomingLessons.length > 0) {
+        message += `📅 *Заплановані уроки:*\n`;
+        upcomingLessons.forEach((l) => {
+          message += `• ${l.title || "Заняття"} — ${l.date || ""} ${l.start_time || ""}\n`;
+        });
       } else {
+        message += `ℹ️ У вас немає незавершених або запланованих занять.`;
+      }
+
+      const keyboard = new InlineKeyboard().text("🔙 Назад в меню", "back_to_menu");
+
+      await ctx.editMessageText(message, { parse_mode: "Markdown", reply_markup: keyboard });
+    });
+
+    bot.callbackQuery("pay_info", async (ctx) => {
+      await ctx.answerCallbackQuery();
+      const keyboard = new InlineKeyboard().text("🔙 Назад в меню", "back_to_menu");
+      await ctx.editMessageText(
+        `💳 *Поповнення балансу*\n\nДля придбання пакету уроків перейдіть у свій особистий кабінет на сайті NovaFlow.`,
+        { parse_mode: "Markdown", reply_markup: keyboard }
+      );
+    });
+
+    // 4. Обробка кнопок для вчителя
+    bot.callbackQuery("teacher_schedule", async (ctx) => {
+      await ctx.answerCallbackQuery();
+      if (!ctx.chat) return;
+      const chatId = ctx.chat.id;
+
+      const { data: teacher } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("telegram_chat_id", chatId)
+        .single();
+
+      if (!teacher) return;
+
+      const { data: lessons } = await supabase
+        .from("lessons")
+        .select("id, title, date, start_time, student_id")
+        .eq("teacher_id", teacher.id)
+        .eq("status", "scheduled");
+
+      if (!lessons || lessons.length === 0) {
+        const keyboard = new InlineKeyboard().text("🔙 Назад", "back_to_menu");
+        await ctx.editMessageText("📅 У вас немає запланованих занять на найближчий час.", { reply_markup: keyboard });
+        return;
+      }
+
+      await ctx.editMessageText("📅 *Ваші заплановані уроки:*", { parse_mode: "Markdown" });
+
+      for (const lesson of lessons) {
+        const keyboard = new InlineKeyboard()
+          .text("✅ Підтвердити проведення", `confirm_lesson:${lesson.id}`)
+          .row()
+          .text("❌ Скасувати", `cancel_lesson:${lesson.id}`);
+
         await ctx.reply(
-          `✅ **Авторизація успішна!**\n\n🎓 Вітаємо, **${userName}**! Ваш акаунт учня прив'язано до Telegram.`,
-          { parse_mode: "Markdown" }
+          `📖 *${lesson.title || "Урок"}*\n📆 Дата: ${lesson.date || "Не вказано"} ${lesson.start_time || ""}`,
+          { parse_mode: "Markdown", reply_markup: keyboard }
         );
       }
     });
 
-    // 3. Обробка кнопок (для учнів та вчителів)
-    bot.callbackQuery("my_lessons", async (ctx) => {
+    // Назад у головне меню
+    bot.callbackQuery("back_to_menu", async (ctx) => {
       await ctx.answerCallbackQuery();
-      await ctx.reply("📚 **Ваші уроки**\n\nПерейдіть до дашборда на сайті, аби переглянути розклад та матеріали.");
+      if (!ctx.chat) return;
+      const chatId = ctx.chat.id;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, first_name, full_name")
+        .eq("telegram_chat_id", chatId)
+        .single();
+
+      if (profile) {
+        const name = profile.first_name || profile.full_name || "користувач";
+        await ctx.deleteMessage();
+        await sendMainMenu(ctx, profile.role, name);
+      }
     });
 
-    bot.callbackQuery("pay", async (ctx) => {
-      await ctx.answerCallbackQuery();
-      await ctx.reply("💳 **Оплата**\n\nЗапланувати та здійснити оплату можна у розділі Payments на сайті.");
+    // Оновити меню
+    bot.callbackQuery("refresh_status", async (ctx) => {
+      await ctx.answerCallbackQuery("Оновлено!");
+      if (!ctx.chat) return;
+      const chatId = ctx.chat.id;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, first_name, full_name")
+        .eq("telegram_chat_id", chatId)
+        .single();
+
+      if (profile) {
+        const name = profile.first_name || profile.full_name || "користувач";
+        await ctx.deleteMessage();
+        await sendMainMenu(ctx, profile.role, name);
+      }
     });
 
-    // 4. Підтвердження уроку вчителем
+    // 5. Логіка підтвердження уроку вчителем
     bot.callbackQuery(/^confirm_lesson:(.+)$/, async (ctx) => {
       const lessonId = ctx.match[1];
 
@@ -157,11 +247,13 @@ function getBot() {
         return;
       }
 
+      // Змінюємо статус уроку на completed
       await supabase
         .from("lessons")
         .update({ status: "completed" })
         .eq("id", lessonId);
 
+      // Списуємо 1 урок у учня
       const { data: student } = await supabase
         .from("profiles")
         .select("lessons_left, telegram_chat_id")
@@ -176,22 +268,23 @@ function getBot() {
         .update({ lessons_left: newBalance })
         .eq("id", lesson.student_id);
 
-      await ctx.answerCallbackQuery({ text: "Урок успішно проведено!" });
+      await ctx.answerCallbackQuery({ text: "Урок підтверджено!" });
       await ctx.editMessageText(
-        `✅ **Урок "${lesson.title}" підтверджено!**\n1 урок списано з балансу учня. Залишок: **${newBalance}**.`,
+        `✅ **Урок "${lesson.title || "Заняття"}" успішно підтверджено!**\n1 урок списано. Новий баланс учня: **${newBalance}**.`,
         { parse_mode: "Markdown" }
       );
 
+      // Сповіщення учню у Telegram, якщо його чат прив'язаний
       if (student?.telegram_chat_id) {
-        await bot.api.sendMessage(
+        await bot!.api.sendMessage(
           student.telegram_chat_id,
-          `🎓 *Урок проведено!*\n\nВаш урок **"${lesson.title}"** підтверджено вчителем.\nЗалишок ваших уроків: **${newBalance}**.`,
+          `🎓 *Урок проведено!*\n\nВчитель підтвердив проведення уроку **"${lesson.title || "Заняття"}"**.\nЗалишок ваших уроків: **${newBalance}**.`,
           { parse_mode: "Markdown" }
         );
       }
     });
 
-    // 5. Скасування уроку вчителем
+    // 6. Скасування уроку
     bot.callbackQuery(/^cancel_lesson:(.+)$/, async (ctx) => {
       const lessonId = ctx.match[1];
 
@@ -200,8 +293,8 @@ function getBot() {
         .update({ status: "cancelled" })
         .eq("id", lessonId);
 
-      await ctx.answerCallbackQuery({ text: "Урок скасовано." });
-      await ctx.editMessageText("❌ **Урок відмічено як скасований.** Баланс учня не змінювався.");
+      await ctx.answerCallbackQuery({ text: "Урок скасовано" });
+      await ctx.editMessageText("❌ **Урок скасовано.** Баланс учня залишився без змін.");
     });
   }
   return bot;
