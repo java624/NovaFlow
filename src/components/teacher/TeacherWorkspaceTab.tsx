@@ -60,12 +60,39 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
     if (data) setHomeworks(data);
   }, [supabase, studentId]);
 
+  const [isCalendarFullscreen, setIsCalendarFullscreen] = useState(false);
+  const lastDateRef = useRef<string | null>(null);
+  const lastViewRef = useRef<string | null>(null);
+
+  // Realtime subscription for this student's workspace data
   useEffect(() => {
     loadStudentLessons();
     loadHomeworks();
-  }, [loadStudentLessons, loadHomeworks]);
 
-  // Student Calendar — re-initializes on lessons or mobile-breakpoint change
+    const channel = supabase
+      .channel(`teacher-workspace-${studentId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'lessons', filter: `student_id=eq.${studentId}` },
+        () => {
+          loadStudentLessons();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'homeworks', filter: `student_id=eq.${studentId}` },
+        () => {
+          loadHomeworks();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [studentId, loadStudentLessons, loadHomeworks, supabase]);
+
+  // Student Calendar — re-initializes on lessons, mobile-breakpoint, or fullscreen change
   useEffect(() => {
     if (!studentCalendarRef.current) return;
     let mounted = true;
@@ -91,13 +118,18 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
         const cal = new (Calendar as any)(studentCalendarRef.current, {
           plugins: [tGrid, iPlugin],
           // Single-day view on mobile for readability
-          initialView: isMobile ? 'timeGridDay' : 'timeGridWeek',
+          initialView: lastViewRef.current || (isMobile ? 'timeGridDay' : 'timeGridWeek'),
+          initialDate: lastDateRef.current ? new Date(lastDateRef.current) : undefined,
           locale: 'uk',
           firstDay: 1, slotMinTime: '08:00:00', slotMaxTime: '22:00:00', allDaySlot: false,
-          editable: false, selectable: true, height: 'auto', events,
+          editable: false, selectable: true, height: isCalendarFullscreen ? 'parent' : 'auto', events,
           headerToolbar: isMobile
             ? { left: 'prev,next', center: 'title', right: 'timeGridDay,timeGridWeek' }
             : { left: 'prev,next today', center: 'title', right: 'timeGridWeek,timeGridDay' },
+          datesSet: (dateInfo: any) => {
+            lastDateRef.current = dateInfo.view.calendar.getDate().toISOString();
+            lastViewRef.current = dateInfo.view.type;
+          },
           select: async (info: { startStr: string; endStr: string }) => {
             if (confirm(`Запланувати урок для ${selectedStudent.full_name}?`)) {
               const { data: nl } = await supabase.from('lessons').insert([{
@@ -106,7 +138,6 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
               }]).select().single();
               if (nl) {
                 setStudentLessons((prev) => [...prev, nl]);
-                if (stuCalendarInstanceRef.current) { stuCalendarInstanceRef.current.destroy(); stuCalendarInstanceRef.current = null; }
                 alert('Урок додано!');
               } else alert('Помилка бази даних');
             }
@@ -139,7 +170,7 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
     })();
     return () => { mounted = false; if (stuCalendarInstanceRef.current) { stuCalendarInstanceRef.current.destroy(); stuCalendarInstanceRef.current = null; } };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [studentLessons, isMobile]);
+  }, [studentLessons, isMobile, isCalendarFullscreen]);
 
   const handleHomeworkSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -221,21 +252,30 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
 
       {/* Calendar + HW Form */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+        <div className={isCalendarFullscreen ? "fixed inset-0 z-50 bg-white p-6 flex flex-col" : "bg-white rounded-2xl p-6 shadow-sm border border-gray-100"}>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-900">📅 Розклад</h2>
-            <button onClick={() => alert("Виділіть час у сітці календаря!")}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 rounded-xl">
-              ➕ Додати урок
-            </button>
+            <h2 className="text-lg font-bold text-gray-900">📅 Розклад {isCalendarFullscreen && `— ${selectedStudent.full_name}`}</h2>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setIsCalendarFullscreen(!isCalendarFullscreen)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all"
+              >
+                {isCalendarFullscreen ? '🔽 Згорнути' : '⛶ Повний екран'}
+              </button>
+              <button onClick={() => alert("Виділіть час у сітці календаря!")}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 rounded-xl">
+                ➕ Додати урок
+              </button>
+            </div>
           </div>
           {/* Overflow wrapper keeps the calendar scrollable on narrow screens */}
-          <div className="w-full overflow-x-auto">
+          <div className={`w-full ${isCalendarFullscreen ? "flex-1 overflow-y-auto" : "overflow-x-auto"}`}>
             <div
               ref={studentCalendarRef}
               id="student-calendar-element"
-              className="min-h-[350px] min-w-0"
-              style={isMobile ? undefined : { minWidth: '640px' }}
+              className={isCalendarFullscreen ? "h-full min-w-0" : "min-h-[350px] min-w-0"}
+              style={isMobile || isCalendarFullscreen ? undefined : { minWidth: '640px' }}
             />
           </div>
         </div>

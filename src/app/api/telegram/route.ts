@@ -167,11 +167,20 @@ function getBot() {
 
       if (!teacher) return;
 
+      // Отримуємо уроки разом із даними учня
       const { data: lessons } = await supabase
         .from("lessons")
-        .select("id, title, date, start_time, student_id")
+        .select(`
+          id, 
+          title, 
+          date, 
+          start_time, 
+          student_id,
+          student:profiles!lessons_student_id_fkey(first_name, full_name)
+        `)
         .eq("teacher_id", teacher.id)
-        .eq("status", "scheduled");
+        .neq("status", "completed")
+        .order("start_time", { ascending: true });
 
       if (!lessons || lessons.length === 0) {
         const keyboard = new InlineKeyboard().text("🔙 Назад", "back_to_menu");
@@ -182,13 +191,26 @@ function getBot() {
       await ctx.editMessageText("📅 *Ваші заплановані уроки:*", { parse_mode: "Markdown" });
 
       for (const lesson of lessons) {
+        // Форматування дати та часу
+        let dateStr = lesson.date;
+        let timeStr = lesson.start_time;
+
+        if (lesson.start_time && lesson.start_time.includes("T")) {
+          const d = new Date(lesson.start_time);
+          dateStr = d.toLocaleDateString("uk-UA");
+          timeStr = d.toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
+        }
+
+        // @ts-ignore
+        const studentName = lesson.student?.first_name || lesson.student?.full_name || "Учень";
+
         const keyboard = new InlineKeyboard()
           .text("✅ Підтвердити проведення", `confirm_lesson:${lesson.id}`)
           .row()
           .text("❌ Скасувати", `cancel_lesson:${lesson.id}`);
 
         await ctx.reply(
-          `📖 *${lesson.title || "Урок"}*\n📆 Дата: ${lesson.date || "Не вказано"} ${lesson.start_time || ""}`,
+          `📖 *${lesson.title || "Урок"}*\n🎓 Учень: **${studentName}**\n📆 Дата: ${dateStr || "Не вказано"} ${timeStr || ""}`,
           { parse_mode: "Markdown", reply_markup: keyboard }
         );
       }

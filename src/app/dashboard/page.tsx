@@ -97,6 +97,33 @@ export default function DashboardPage() {
     loadProfile(setActiveTab);
   }, [loadProfile, setActiveTab]);
 
+  // Realtime subscription for student dashboard changes
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    const channel = supabase
+      .channel(`student-dashboard-realtime-${profile.id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'homeworks', filter: `student_id=eq.${profile.id}` },
+        () => {
+          loadHomeworks(profile.id);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'lessons', filter: `student_id=eq.${profile.id}` },
+        () => {
+          loadProfile();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.id, supabase, loadHomeworks, loadProfile]);
+
   // =========================================================================
   // RENDER
   // =========================================================================

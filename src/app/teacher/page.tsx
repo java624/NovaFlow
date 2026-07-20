@@ -171,6 +171,35 @@ export default function TeacherDashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Realtime subscription to keep stats, calendar, and students lists synchronized
+  useEffect(() => {
+    if (!profile) return;
+
+    const channel = supabase
+      .channel('teacher-dashboard-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'lessons' },
+        () => {
+          loadAllLessons();
+          loadDashboardStats();
+          loadStudents();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'homeworks' },
+        () => {
+          loadStudents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile, supabase, loadAllLessons, loadDashboardStats, loadStudents]);
+
   // =========================================================================
   // HANDLERS
   // =========================================================================
