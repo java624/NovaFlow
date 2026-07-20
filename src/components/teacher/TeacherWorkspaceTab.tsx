@@ -132,9 +132,13 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
           },
           select: async (info: { startStr: string; endStr: string }) => {
             if (confirm(`Запланувати урок для ${selectedStudent.full_name}?`)) {
+              const { data: { user: currentUser } } = await supabase.auth.getUser();
+              const teacherId = currentUser?.id || null;
+
               const { data: nl } = await supabase.from('lessons').insert([{
                 title: `Урок: ${selectedStudent.full_name}`, start_time: info.startStr,
                 end_time: info.endStr, student_id: studentId,
+                teacher_id: teacherId,
               }]).select().single();
               if (nl) {
                 setStudentLessons((prev) => [...prev, nl]);
