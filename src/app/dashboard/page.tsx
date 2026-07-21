@@ -117,6 +117,13 @@ export default function DashboardPage() {
           loadProfile();
         }
       )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${profile.id}` },
+        () => {
+          loadProfile();
+        }
+      )
       .subscribe();
 
     return () => {

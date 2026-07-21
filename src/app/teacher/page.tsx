@@ -106,7 +106,11 @@ export default function TeacherDashboardPage() {
   }, [supabase]);
 
   const loadAllLessons = useCallback(async () => {
-    const { data } = await supabase.from('lessons').select('*, profiles:student_id ( full_name )').order('start_time', { ascending: true });
+    const { data } = await supabase
+      .from('lessons')
+      .select('*, profiles:student_id ( full_name )')
+      .not('status', 'in', '("completed","cancelled")')
+      .order('start_time', { ascending: true });
     if (data) setAllLessons(data as unknown as Lesson[]);
   }, [supabase]);
 
@@ -134,7 +138,10 @@ export default function TeacherDashboardPage() {
     try {
       const { count: sc } = await supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('role', 'student');
       if (sc !== null) setActiveStudentsCount(sc);
-      const { data: raw } = await supabase.from('lessons').select('*, profiles:student_id ( full_name )');
+      const { data: raw } = await supabase
+        .from('lessons')
+        .select('*, profiles:student_id ( full_name )')
+        .not('status', 'in', '("completed","cancelled")');
       if (!raw) return;
       const now = new Date();
       const dow = now.getDay() || 7;
@@ -184,6 +191,14 @@ export default function TeacherDashboardPage() {
           loadAllLessons();
           loadDashboardStats();
           loadStudents();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          loadStudents();
+          loadDashboardStats();
         }
       )
       .on(

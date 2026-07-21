@@ -109,7 +109,7 @@ export default function TelegramMiniApp() {
            teacher:profiles!lessons_teacher_id_fkey ( full_name, first_name )`
         )
         .eq('student_id', typedProfile.id)
-        .neq('status', 'completed')
+        .not('status', 'in', '("completed","cancelled")')
         .gte('start_time', now)
         .order('start_time', { ascending: true });
 

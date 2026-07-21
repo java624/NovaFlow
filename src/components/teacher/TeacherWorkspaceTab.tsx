@@ -51,7 +51,12 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
 
   // Load data
   const loadStudentLessons = useCallback(async () => {
-    const { data } = await supabase.from('lessons').select('*').eq('student_id', studentId);
+    const { data } = await supabase
+      .from('lessons')
+      .select('*')
+      .eq('student_id', studentId)
+      .not('status', 'in', '("completed","cancelled")')
+      .order('start_time', { ascending: true });
     if (data) setStudentLessons(data);
   }, [supabase, studentId]);
 
@@ -76,6 +81,14 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
         { event: '*', schema: 'public', table: 'lessons', filter: `student_id=eq.${studentId}` },
         () => {
           loadStudentLessons();
+          onStudentsChange();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles', filter: `id=eq.${studentId}` },
+        () => {
+          onStudentsChange();
         }
       )
       .on(
@@ -90,7 +103,7 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [studentId, loadStudentLessons, loadHomeworks, supabase]);
+  }, [studentId, loadStudentLessons, loadHomeworks, onStudentsChange, supabase]);
 
   // Student Calendar — re-initializes on lessons, mobile-breakpoint, or fullscreen change
   useEffect(() => {
@@ -138,7 +151,7 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
               const { data: nl } = await supabase.from('lessons').insert([{
                 title: `Урок: ${selectedStudent.full_name}`, start_time: info.startStr,
                 end_time: info.endStr, student_id: studentId,
-                teacher_id: teacherId,
+                teacher_id: teacherId, status: 'scheduled',
               }]).select().single();
               if (nl) {
                 setStudentLessons((prev) => [...prev, nl]);
@@ -148,23 +161,63 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           eventClick: async (info: any) => {
-            const action = prompt('1 - Проведено (списати)\n2 - Видалити');
+            const action = prompt('1 - Проведено (списати)\n2 - Скасувати');
             if (action === '1') {
+              // Перевіряємо актуальний статус уроку в БД перед будь-яким списуванням
+              const { data: lesson, error: fetchError } = await supabase
+                .from('lessons')
+                .select('id, status, student_id')
+                .eq('id', info.event.id)
+                .maybeSingle();
+
+              if (fetchError || !lesson) {
+                alert('Помилка: урок не знайдено в базі даних');
+                return;
+              }
+
+              if (lesson.status?.toLowerCase() === 'completed') {
+                alert('⚠️ Цей урок ВЖЕ має статус "completed" (проведений). Повторне списування балансу заборонено!');
+                return;
+              }
+
+              if (lesson.status?.toLowerCase() === 'cancelled') {
+                alert('⚠️ Цей урок вже скасований!');
+                return;
+              }
+
+              // Оновлюємо статус уроку на completed в БД
+              const { error: lessonUpdateError } = await supabase
+                .from('lessons')
+                .update({ status: 'completed' })
+                .eq('id', info.event.id);
+
+              if (lessonUpdateError) {
+                alert('Помилка при оновленні статусу уроку: ' + lessonUpdateError.message);
+                return;
+              }
+
+              // Списуємо 1 урок у балансу учня
               const { data: p } = await supabase.from('profiles').select('lessons_left').eq('id', studentId).single();
               const nb = Math.max(0, (p?.lessons_left || 0) - 1);
               const { error: ue } = await supabase.from('profiles').update({ lessons_left: nb }).eq('id', studentId);
               if (!ue) {
-                await supabase.from('lessons').delete().eq('id', info.event.id);
                 info.event.remove();
                 setStudentLessons((prev) => prev.filter((l) => l.id !== info.event.id));
-                alert(`Урок проведено! Баланс: ${nb}`);
+                alert(`✅ Урок успішно проведено! Новий баланс: ${nb}`);
                 onStudentsChange();
-              } else alert('Помилка: ' + ue.message);
-            } else if (action === '2' && confirm('Видалити без списання?')) {
-              await supabase.from('lessons').delete().eq('id', info.event.id);
-              info.event.remove();
-              setStudentLessons((prev) => prev.filter((l) => l.id !== info.event.id));
-              alert('Скасовано.');
+              } else alert('Помилка списування балансу: ' + ue.message);
+            } else if (action === '2' && confirm('Скасувати урок?')) {
+              const { error: cancelError } = await supabase
+                .from('lessons')
+                .update({ status: 'cancelled' })
+                .eq('id', info.event.id);
+
+              if (!cancelError) {
+                info.event.remove();
+                setStudentLessons((prev) => prev.filter((l) => l.id !== info.event.id));
+                alert('Урок скасовано.');
+                onStudentsChange();
+              } else alert('Помилка: ' + cancelError.message);
             }
           },
         });

@@ -85,6 +85,7 @@ export function useDashboardData() {
         .from('lessons')
         .select('*')
         .eq('student_id', studentId)
+        .not('status', 'in', '("completed","cancelled")')
         .order('start_time', { ascending: true });
       if (error) throw error;
       setAllLessons(data || []);
@@ -100,6 +101,7 @@ export function useDashboardData() {
         .from('lessons')
         .select('*')
         .eq('student_id', studentId)
+        .not('status', 'in', '("completed","cancelled")')
         .gte('start_time', now)
         .order('start_time', { ascending: true })
         .limit(1);

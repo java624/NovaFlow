@@ -2,7 +2,7 @@ import { Bot, InlineKeyboard } from "grammy";
 import { supabase } from "../supabase";
 
 export function registerTeacherHandlers(bot: Bot) {
-  // 1. Розклад занять для вчителя
+  // 1. Розклад занять для вчителя (Майбутні + Минулі незавершені)
   bot.callbackQuery("teacher_schedule", async (ctx) => {
     await ctx.answerCallbackQuery();
     if (!ctx.chat) return;
@@ -19,7 +19,7 @@ export function registerTeacherHandlers(bot: Bot) {
       return;
     }
 
-    // Отримуємо уроки (без колонки 'date', виключаємо завершені та скасовані)
+    // Отримуємо всі уроки зі статусом, відмінним від completed та cancelled
     const { data: lessons, error: lessonsError } = await supabase
       .from("lessons")
       .select(`
@@ -40,19 +40,24 @@ export function registerTeacherHandlers(bot: Bot) {
 
     if (!lessons || lessons.length === 0) {
       const keyboard = new InlineKeyboard().text("🔙 Назад в меню", "back_to_menu");
-      await ctx.editMessageText("📅 У вас немає запланованих занять на найближчий час.", { reply_markup: keyboard });
+      await ctx.editMessageText("📅 У вас немає незавершених або запланованих занять.", { reply_markup: keyboard });
       return;
     }
 
-    await ctx.editMessageText("📅 *Ваші заплановані уроки:*", { parse_mode: "Markdown" });
+    await ctx.editMessageText("📅 *Ваш розклад та незавершені уроки:*", { parse_mode: "Markdown" });
+
+    const now = new Date();
 
     for (const lesson of lessons) {
-      // Форматування дати та часу за Києвом
       let formattedDateTime = "Час не вказано";
+      let isPast = false;
 
       if (lesson.start_time) {
         const d = new Date(lesson.start_time);
         if (!isNaN(d.getTime())) {
+          if (d < now) {
+            isPast = true; // Урок мав відбутися в минулому
+          }
           const dateStr = d.toLocaleDateString("uk-UA", {
             timeZone: "Europe/Kyiv",
             day: "2-digit",
@@ -75,11 +80,17 @@ export function registerTeacherHandlers(bot: Bot) {
         .row()
         .text("❌ Скасувати", `cancel_lesson:${lesson.id}`);
 
+      const statusTag = isPast ? "⚠️ *[ПОТРЕБУЄ ПІДТВЕРДЖЕННЯ]*\n" : "";
+
       await ctx.reply(
-        `📖 *${lesson.title || "Урок"}*\n🎓 Учень: **${studentName}**\n📆 Дата та час: _${formattedDateTime}_`,
+        `${statusTag}📖 *${lesson.title || "Урок"}*\n🎓 Учень: **${studentName}**\n📆 Дата та час: _${formattedDateTime}_`,
         { parse_mode: "Markdown", reply_markup: keyboard }
       );
     }
+
+    // Наприкінці виводимо окрему кнопку для повернення в головне меню
+    const backKeyboard = new InlineKeyboard().text("🔙 Назад в головне меню", "back_to_menu");
+    await ctx.reply("⬇️ Скористайтеся кнопкою нижче, щоб повернутися назад:", { reply_markup: backKeyboard });
   });
 
   // 2. Статистика для викладача
@@ -96,7 +107,6 @@ export function registerTeacherHandlers(bot: Bot) {
 
     if (!teacher) return;
 
-    // Отримуємо всі уроки цього вчителя
     const { data: lessons } = await supabase
       .from("lessons")
       .select("status, student_id")
@@ -132,7 +142,6 @@ export function registerTeacherHandlers(bot: Bot) {
 
     if (!teacher) return;
 
-    // Отримуємо унікальних student_id для цього вчителя
     const { data: teacherLessons } = await supabase
       .from("lessons")
       .select("student_id")
@@ -147,7 +156,6 @@ export function registerTeacherHandlers(bot: Bot) {
       return;
     }
 
-    // Шукаємо домашні завдання зі статусом 'completed' (надіслані на перевірку)
     const { data: homeworks } = await supabase
       .from("homeworks")
       .select(`
@@ -163,7 +171,6 @@ export function registerTeacherHandlers(bot: Bot) {
     let message = `📋 *ДЗ, які очікують на вашу перевірку (макс. 5):*\n\n`;
 
     if (homeworks && homeworks.length > 0) {
-      // Отримуємо імена учнів
       const { data: students } = await supabase
         .from("profiles")
         .select("id, full_name, first_name")
@@ -205,18 +212,21 @@ export function registerTeacherHandlers(bot: Bot) {
       .eq("id", lessonId)
       .single();
 
-    if (!lesson || lesson.status?.toLowerCase() === "completed") {
-      await ctx.answerCallbackQuery({ text: "Цей урок вже підтверджено або не знайдено!" });
+    // Захист від повторного підтвердження
+    if (!lesson || lesson.status?.toLowerCase() === "completed" || lesson.status?.toLowerCase() === "cancelled") {
+      await ctx.answerCallbackQuery({ text: "Цей урок вже був підтверджений або скасований!" });
+      const keyboard = new InlineKeyboard().text("🔙 Назад в меню", "back_to_menu");
+      await ctx.editMessageText("ℹ️ Цей урок вже підтверджено, скасовано або списано.", { reply_markup: keyboard });
       return;
     }
 
-    // Змінюємо статус уроку на completed
+    // 1. Змінюємо статус уроку на completed в БД
     await supabase
       .from("lessons")
       .update({ status: "completed" })
       .eq("id", lessonId);
 
-    // Списуємо 1 урок у учня
+    // 2. Списуємо 1 урок у балансу учня
     const { data: student } = await supabase
       .from("profiles")
       .select("lessons_left, telegram_chat_id")
@@ -231,10 +241,13 @@ export function registerTeacherHandlers(bot: Bot) {
       .update({ lessons_left: newBalance })
       .eq("id", lesson.student_id);
 
-    await ctx.answerCallbackQuery({ text: "Урок підтверджено!" });
+    await ctx.answerCallbackQuery({ text: "Урок успішно підтверджено!" });
+    
+    const backKeyboard = new InlineKeyboard().text("🔙 Назад в меню", "back_to_menu");
+
     await ctx.editMessageText(
       `✅ **Урок "${lesson.title || "Заняття"}" успішно підтверджено!**\n1 урок списано. Новий баланс учня: **${newBalance}**.`,
-      { parse_mode: "Markdown" }
+      { parse_mode: "Markdown", reply_markup: backKeyboard }
     );
 
     // Сповіщення учню у Telegram
@@ -257,6 +270,7 @@ export function registerTeacherHandlers(bot: Bot) {
       .eq("id", lessonId);
 
     await ctx.answerCallbackQuery({ text: "Урок скасовано" });
-    await ctx.editMessageText("❌ **Урок скасовано.** Баланс учня залишився без змін.");
+    const backKeyboard = new InlineKeyboard().text("🔙 Назад в меню", "back_to_menu");
+    await ctx.editMessageText("❌ **Урок скасовано.** Баланс учня залишився без змін.", { reply_markup: backKeyboard });
   });
 }
