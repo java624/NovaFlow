@@ -14,7 +14,7 @@ const bot = new Bot(process.env.TELEGRAM_BOT_TOKEN!);
 export async function GET() {
   try {
     const now = new Date();
-    // Визначення часового вікна: від 45 до 75 хвилин від поточного моменту (близько 1 години)
+    // Визначення часового вікна: від 45 до 75 хвилин від поточного моменту
     const windowStart = new Date(now.getTime() + 45 * 60 * 1000).toISOString();
     const windowEnd = new Date(now.getTime() + 75 * 60 * 1000).toISOString();
 
@@ -50,8 +50,9 @@ export async function GET() {
       // @ts-ignore
       const teacherChatId = lesson.teacher?.telegram_chat_id;
 
-      // Форматування часу
+      // 🕒 Встановлюємо правильний часовий пояс України (Europe/Kyiv)
       const lessonTime = new Date(lesson.start_time).toLocaleTimeString("uk-UA", {
+        timeZone: "Europe/Kyiv",
         hour: "2-digit",
         minute: "2-digit",
       });

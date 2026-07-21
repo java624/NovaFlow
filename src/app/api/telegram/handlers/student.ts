@@ -16,20 +16,46 @@ export function registerStudentHandlers(bot: Bot) {
 
     if (!profile) return;
 
-    // Отримуємо найближчі scheduled уроки
+    // Отримуємо найближчі уроки без суворого прив'язування до регістру слова Scheduled/scheduled
     const { data: upcomingLessons } = await supabase
       .from("lessons")
-      .select("title, start_time, date")
+      .select("title, start_time, date, status")
       .eq("student_id", profile.id)
-      .eq("status", "scheduled")
-      .limit(3);
+      .ilike("status", "scheduled") // ilike ігнорує регістр (Scheduled / scheduled)
+      .order("start_time", { ascending: true })
+      .limit(5);
 
     let message = `📊 *Ваш баланс:* **${profile.lessons_left ?? 0}** уроків\n\n`;
 
     if (upcomingLessons && upcomingLessons.length > 0) {
-      message += `📅 *Заплановані уроки:*\n`;
+      message += `📅 *Заплановані уроки:*\n\n`;
       upcomingLessons.forEach((l) => {
-        message += `• ${l.title || "Заняття"} — ${l.date || ""} ${l.start_time || ""}\n`;
+        let formattedDateTime = "";
+
+        // Якщо в start_time є повноцінна дата й час
+        if (l.start_time) {
+          const d = new Date(l.start_time);
+          if (!isNaN(d.getTime())) {
+            const dateStr = d.toLocaleDateString("uk-UA", {
+              timeZone: "Europe/Kyiv",
+              day: "2-digit",
+              month: "2-digit",
+            });
+            const timeStr = d.toLocaleTimeString("uk-UA", {
+              timeZone: "Europe/Kyiv",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+            formattedDateTime = `${dateStr} о ${timeStr}`;
+          }
+        }
+
+        // Якщо дата і час розбиті на окремі поля
+        if (!formattedDateTime) {
+          formattedDateTime = `${l.date || ""} ${l.start_time || ""}`.trim();
+        }
+
+        message += `• **${l.title || "Заняття"}** — _${formattedDateTime}_\n`;
       });
     } else {
       message += `ℹ️ У вас немає незавершених або запланованих занять.`;
@@ -75,7 +101,7 @@ export function registerStudentHandlers(bot: Bot) {
         let deadlineStr = hw.deadline;
         if (hw.deadline) {
           const d = new Date(hw.deadline);
-          deadlineStr = `${d.toLocaleDateString("uk-UA")} ${d.toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" })}`;
+          deadlineStr = `${d.toLocaleDateString("uk-UA", { timeZone: "Europe/Kyiv" })} ${d.toLocaleTimeString("uk-UA", { timeZone: "Europe/Kyiv", hour: "2-digit", minute: "2-digit" })}`;
         }
 
         message += `📌 *${hw.title}*\n`;
