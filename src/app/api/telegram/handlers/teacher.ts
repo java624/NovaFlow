@@ -2,37 +2,44 @@ import { Bot, InlineKeyboard } from "grammy";
 import { supabase } from "../supabase";
 
 export function registerTeacherHandlers(bot: Bot) {
-  // 4. Обробка кнопок для вчителя
+  // 1. Розклад занять для вчителя
   bot.callbackQuery("teacher_schedule", async (ctx) => {
     await ctx.answerCallbackQuery();
     if (!ctx.chat) return;
     const chatId = ctx.chat.id;
 
-    const { data: teacher } = await supabase
+    const { data: teacher, error: teacherError } = await supabase
       .from("profiles")
       .select("id")
       .eq("telegram_chat_id", chatId)
       .single();
 
-    if (!teacher) return;
+    if (teacherError || !teacher) {
+      await ctx.editMessageText("❌ Ваш профіль викладача не знайдено.");
+      return;
+    }
 
-    // Отримуємо уроки разом із даними учня
-    const { data: lessons } = await supabase
+    // Отримуємо уроки (без колонки 'date', виключаємо завершені та скасовані)
+    const { data: lessons, error: lessonsError } = await supabase
       .from("lessons")
       .select(`
         id, 
         title, 
-        date, 
         start_time, 
         student_id,
         student:profiles!lessons_student_id_fkey(first_name, full_name)
       `)
       .eq("teacher_id", teacher.id)
-      .neq("status", "completed")
+      .not("status", "ilike", "completed")
+      .not("status", "ilike", "cancelled")
       .order("start_time", { ascending: true });
 
+    if (lessonsError) {
+      console.error("Помилка отримання уроків викладача:", lessonsError);
+    }
+
     if (!lessons || lessons.length === 0) {
-      const keyboard = new InlineKeyboard().text("🔙 Назад", "back_to_menu");
+      const keyboard = new InlineKeyboard().text("🔙 Назад в меню", "back_to_menu");
       await ctx.editMessageText("📅 У вас немає запланованих занять на найближчий час.", { reply_markup: keyboard });
       return;
     }
@@ -40,14 +47,24 @@ export function registerTeacherHandlers(bot: Bot) {
     await ctx.editMessageText("📅 *Ваші заплановані уроки:*", { parse_mode: "Markdown" });
 
     for (const lesson of lessons) {
-      // Форматування дати та часу
-      let dateStr = lesson.date;
-      let timeStr = lesson.start_time;
+      // Форматування дати та часу за Києвом
+      let formattedDateTime = "Час не вказано";
 
-      if (lesson.start_time && lesson.start_time.includes("T")) {
+      if (lesson.start_time) {
         const d = new Date(lesson.start_time);
-        dateStr = d.toLocaleDateString("uk-UA");
-        timeStr = d.toLocaleTimeString("uk-UA", { hour: "2-digit", minute: "2-digit" });
+        if (!isNaN(d.getTime())) {
+          const dateStr = d.toLocaleDateString("uk-UA", {
+            timeZone: "Europe/Kyiv",
+            day: "2-digit",
+            month: "2-digit",
+          });
+          const timeStr = d.toLocaleTimeString("uk-UA", {
+            timeZone: "Europe/Kyiv",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+          formattedDateTime = `${dateStr} о ${timeStr}`;
+        }
       }
 
       // @ts-ignore
@@ -59,12 +76,13 @@ export function registerTeacherHandlers(bot: Bot) {
         .text("❌ Скасувати", `cancel_lesson:${lesson.id}`);
 
       await ctx.reply(
-        `📖 *${lesson.title || "Урок"}*\n🎓 Учень: **${studentName}**\n📆 Дата: ${dateStr || "Не вказано"} ${timeStr || ""}`,
+        `📖 *${lesson.title || "Урок"}*\n🎓 Учень: **${studentName}**\n📆 Дата та час: _${formattedDateTime}_`,
         { parse_mode: "Markdown", reply_markup: keyboard }
       );
     }
   });
 
+  // 2. Статистика для викладача
   bot.callbackQuery("teacher_stats", async (ctx) => {
     await ctx.answerCallbackQuery();
     if (!ctx.chat) return;
@@ -85,8 +103,8 @@ export function registerTeacherHandlers(bot: Bot) {
       .eq("teacher_id", teacher.id);
 
     const totalLessons = lessons?.length || 0;
-    const completedLessons = lessons?.filter((l) => l.status === "completed").length || 0;
-    const scheduledLessons = lessons?.filter((l) => l.status === "scheduled").length || 0;
+    const completedLessons = lessons?.filter((l) => l.status?.toLowerCase() === "completed").length || 0;
+    const scheduledLessons = lessons?.filter((l) => l.status?.toLowerCase() === "scheduled").length || 0;
     const activeStudents = new Set(lessons?.map((l) => l.student_id)).size;
 
     const message = `📊 *Статистика кабінету викладача:*\n\n` +
@@ -100,6 +118,7 @@ export function registerTeacherHandlers(bot: Bot) {
     await ctx.editMessageText(message, { parse_mode: "Markdown", reply_markup: keyboard });
   });
 
+  // 3. Перевірка домашніх завдань
   bot.callbackQuery("teacher_homework_check", async (ctx) => {
     await ctx.answerCallbackQuery();
     if (!ctx.chat) return;
@@ -113,7 +132,7 @@ export function registerTeacherHandlers(bot: Bot) {
 
     if (!teacher) return;
 
-    // Спочатку отримуємо унікальних student_id для цього вчителя з уроків
+    // Отримуємо унікальних student_id для цього вчителя
     const { data: teacherLessons } = await supabase
       .from("lessons")
       .select("student_id")
@@ -123,7 +142,7 @@ export function registerTeacherHandlers(bot: Bot) {
     const studentIds = allStudentIds.filter((id, index) => id && allStudentIds.indexOf(id) === index) as string[];
 
     if (studentIds.length === 0) {
-      const keyboard = new InlineKeyboard().text("🔙 Назад", "back_to_menu");
+      const keyboard = new InlineKeyboard().text("🔙 Назад в меню", "back_to_menu");
       await ctx.editMessageText("ℹ️ У вас немає активних учнів або проведених занять.", { reply_markup: keyboard });
       return;
     }
@@ -154,10 +173,12 @@ export function registerTeacherHandlers(bot: Bot) {
 
       homeworks.forEach((hw) => {
         const studentName = studentMap.get(hw.student_id) || "Учень";
-        let deadlineStr = hw.deadline;
+        let deadlineStr = "";
         if (hw.deadline) {
           const d = new Date(hw.deadline);
-          deadlineStr = d.toLocaleDateString("uk-UA");
+          if (!isNaN(d.getTime())) {
+            deadlineStr = `${d.toLocaleDateString("uk-UA", { timeZone: "Europe/Kyiv" })} ${d.toLocaleTimeString("uk-UA", { timeZone: "Europe/Kyiv", hour: "2-digit", minute: "2-digit" })}`;
+          }
         }
 
         message += `• *${hw.title}*\n`;
@@ -174,7 +195,7 @@ export function registerTeacherHandlers(bot: Bot) {
     await ctx.editMessageText(message, { parse_mode: "Markdown", reply_markup: keyboard });
   });
 
-  // 5. Логіка підтвердження уроку вчителем
+  // 4. Підтвердження проведення уроку
   bot.callbackQuery(/^confirm_lesson:(.+)$/, async (ctx) => {
     const lessonId = ctx.match[1];
 
@@ -184,7 +205,7 @@ export function registerTeacherHandlers(bot: Bot) {
       .eq("id", lessonId)
       .single();
 
-    if (!lesson || lesson.status === "completed") {
+    if (!lesson || lesson.status?.toLowerCase() === "completed") {
       await ctx.answerCallbackQuery({ text: "Цей урок вже підтверджено або не знайдено!" });
       return;
     }
@@ -216,17 +237,17 @@ export function registerTeacherHandlers(bot: Bot) {
       { parse_mode: "Markdown" }
     );
 
-    // Сповіщення учню у Telegram, якщо його чат прив'язаний
+    // Сповіщення учню у Telegram
     if (student?.telegram_chat_id) {
       await ctx.api.sendMessage(
         student.telegram_chat_id,
         `🎓 *Урок проведено!*\n\nВчитель підтвердив проведення уроку **"${lesson.title || "Заняття"}"**.\nЗалишок ваших уроків: **${newBalance}**.`,
         { parse_mode: "Markdown" }
-      );
+      ).catch(() => {});
     }
   });
 
-  // 6. Скасування уроку
+  // 5. Скасування уроку
   bot.callbackQuery(/^cancel_lesson:(.+)$/, async (ctx) => {
     const lessonId = ctx.match[1];
 
