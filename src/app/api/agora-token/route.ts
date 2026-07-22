@@ -16,14 +16,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID;
+    const appId = process.env.NEXT_PUBLIC_AGORA_APP_ID || process.env.AGORA_APP_ID;
     const appCertificate = process.env.AGORA_APP_CERTIFICATE?.trim();
 
     if (!appId) {
       console.error('[Agora Token] Missing NEXT_PUBLIC_AGORA_APP_ID in env');
       return NextResponse.json(
-        { error: 'Server configuration error: NEXT_PUBLIC_AGORA_APP_ID missing' },
-        { status: 500 }
+        { error: 'Вкажіть змінні середовища NEXT_PUBLIC_AGORA_APP_ID та AGORA_APP_CERTIFICATE у налаштуваннях Netlify (Site settings -> Environment variables)' },
+        { status: 200 }
       );
     }
 

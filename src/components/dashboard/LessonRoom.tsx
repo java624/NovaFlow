@@ -97,9 +97,14 @@ function RoomInner({ channelName, onLeave, userName }: LessonRoomProps) {
           `/api/agora-token?channelName=${encodeURIComponent(safeChannel)}&uid=${uid}`
         );
         if (!res.ok) {
-          throw new Error(`Token server returned status ${res.status}`);
+          throw new Error(
+            `Помилка сервера токенів (статус ${res.status}). Переконайтеся, що змінні середовища додано у налаштуваннях Netlify (Environment variables).`
+          );
         }
         const data = await res.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
         if (!isMounted) return;
 
         const fetchedToken = data.rtcToken || null;
