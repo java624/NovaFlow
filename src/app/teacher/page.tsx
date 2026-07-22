@@ -9,7 +9,10 @@ import TeacherDashboardTab from '@/components/teacher/TeacherDashboardTab';
 import TeacherStudentsTab from '@/components/teacher/TeacherStudentsTab';
 import TeacherWorkspaceTab from '@/components/teacher/TeacherWorkspaceTab';
 import TeacherCommentsTab from '@/components/teacher/TeacherCommentsTab';
+import dynamic from 'next/dynamic';
 import StudentProfileModal from '@/components/teacher/StudentProfileModal';
+
+const LessonRoom = dynamic(() => import('@/components/dashboard/LessonRoom'), { ssr: false });
 
 export default function TeacherDashboardPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -30,6 +33,7 @@ export default function TeacherDashboardPage() {
   const [allLessons, setAllLessons] = useState<Lesson[]>([]);
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [profileStudent, setProfileStudent] = useState<StudentProfile | null>(null);
+  const [activeLessonChannel, setActiveLessonChannel] = useState<string | null>(null);
 
 // =========================================================================
   // VERIFY TEACHER SESSION  
@@ -238,6 +242,14 @@ export default function TeacherDashboardPage() {
     setActiveTab('workspace');
   }, []);
 
+  const handleEnterLesson = useCallback((channelName: string) => {
+    setActiveLessonChannel(channelName);
+  }, []);
+
+  const handleLeaveLesson = useCallback(() => {
+    setActiveLessonChannel(null);
+  }, []);
+
   const openProfileModal = useCallback(() => {
     if (selectedStudent) {
       setProfileStudent(selectedStudent);
@@ -264,6 +276,17 @@ export default function TeacherDashboardPage() {
 
   const getAvatarUrl = (s: StudentProfile) =>
     s.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(s.full_name || s.first_name || 'Учень')}&background=5e077e&color=fff&size=80`;
+
+  // If lesson room is active, render it fullscreen
+  if (activeLessonChannel) {
+    return (
+      <LessonRoom
+        channelName={activeLessonChannel}
+        onLeave={handleLeaveLesson}
+        userName={profile?.full_name || 'Викладач'}
+      />
+    );
+  }
 
   if (loading) {
     return (
@@ -331,6 +354,7 @@ export default function TeacherDashboardPage() {
                   allLessons={allLessons}
                   students={students}
                   onStudentClick={openStudentWorkspace}
+                  onEnterLesson={handleEnterLesson}
                 />
               )}
 
@@ -345,6 +369,7 @@ export default function TeacherDashboardPage() {
                 <TeacherWorkspaceTab
                   selectedStudent={selectedStudent}
                   onStudentsChange={loadStudents}
+                  onEnterLesson={handleEnterLesson}
                 />
               )}
 

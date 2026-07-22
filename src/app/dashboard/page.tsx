@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Tab, Homework } from '@/components/dashboard/types';
 import { useDashboardData } from '@/components/dashboard/hooks/useDashboardData';
 import { useDashboardActions } from '@/components/dashboard/hooks/useDashboardActions';
@@ -13,7 +13,10 @@ import PaymentsTab from '@/components/dashboard/PaymentsTab';
 import ProfileTab from '@/components/dashboard/ProfileTab';
 import LessonsTab from '@/components/dashboard/LessonsTab';
 import MaterialsTab from '@/components/dashboard/MaterialsTab';
+import dynamic from 'next/dynamic';
 import CheckoutOverlay from '@/components/dashboard/CheckoutOverlay';
+
+const LessonRoom = dynamic(() => import('@/components/dashboard/LessonRoom'), { ssr: false });
 
 export default function DashboardPage() {
   // =========================================================================
@@ -26,6 +29,7 @@ export default function DashboardPage() {
   const [reviewedHomework, setReviewedHomework] = useState<Homework | null>(null);
   const [lessonCount, setLessonCount] = useState(10);
   const [showCoursePicker, setShowCoursePicker] = useState(false);
+  const [activeLessonChannel, setActiveLessonChannel] = useState<string | null>(null);
 
   // =========================================================================
   // DATA HOOK
@@ -86,6 +90,17 @@ export default function DashboardPage() {
   });
 
   // =========================================================================
+  // LESSON ROOM HANDLER
+  // =========================================================================
+  const handleEnterLesson = useCallback((channelName: string) => {
+    setActiveLessonChannel(channelName);
+  }, []);
+
+  const handleLeaveLesson = useCallback(() => {
+    setActiveLessonChannel(null);
+  }, []);
+
+  // =========================================================================
   // CALENDAR INIT
   // =========================================================================
   useCalendarInit(activeTab, allLessons);
@@ -134,6 +149,17 @@ export default function DashboardPage() {
   // =========================================================================
   // RENDER
   // =========================================================================
+  // If lesson room is active, render it fullscreen
+  if (activeLessonChannel) {
+    return (
+      <LessonRoom
+        channelName={activeLessonChannel}
+        onLeave={handleLeaveLesson}
+        userName={profile?.full_name || profile?.first_name || 'Студент'}
+      />
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -188,6 +214,7 @@ export default function DashboardPage() {
                   nextLesson={nextLesson}
                   allLessons={allLessons}
                   onSwitchTab={switchTab}
+                  onEnterLesson={handleEnterLesson}
                 />
               )}
 
@@ -235,7 +262,12 @@ export default function DashboardPage() {
                 />
               )}
 
-              {activeTab === 'lessons' && <LessonsTab />}
+              {activeTab === 'lessons' && (
+                <LessonsTab
+                  allLessons={allLessons}
+                  onEnterLesson={handleEnterLesson}
+                />
+              )}
 
               {activeTab === 'materials' && <MaterialsTab />}
             </div>

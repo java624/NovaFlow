@@ -16,6 +16,7 @@ interface DashboardTabHomeProps {
   nextLesson: Lesson | null;
   allLessons: Lesson[];
   onSwitchTab: (tab: Tab) => void;
+  onEnterLesson: (channelName: string) => void;
 }
 
 
@@ -41,7 +42,7 @@ function TrialBanner({ onSwitchTab }: { onSwitchTab: (tab: Tab) => void }) {
   );
 }
 
-function NextLessonCard({ nextLesson }: { nextLesson: Lesson | null }) {
+function NextLessonCard({ nextLesson, onEnterLesson }: { nextLesson: Lesson | null; onEnterLesson: (channelName: string) => void }) {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-green-100 border-t-4 border-t-green-500 hover:shadow-md transition-shadow">
       <div className="p-6">
@@ -57,14 +58,12 @@ function NextLessonCard({ nextLesson }: { nextLesson: Lesson | null }) {
               })}
             </h2>
             <p className="text-sm text-gray-500 mt-1 mb-4">👨‍🏫 Викладач: Кирило</p>
-            <a
-              href="https://zoom.us"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={() => onEnterLesson(nextLesson.id)}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-colors shadow-sm"
             >
-              📹 Join Lesson
-            </a>
+              📹 Увійти на урок
+            </button>
           </>
         ) : (
           <>
@@ -123,6 +122,7 @@ export default function DashboardTabHome({
   nextLesson,
   allLessons,
   onSwitchTab,
+  onEnterLesson,
 }: DashboardTabHomeProps) {
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -150,7 +150,7 @@ export default function DashboardTabHome({
         {/* Paid Content Group */}
         {hasLessons && (
           <div className="lg:col-span-2 space-y-4">
-            <NextLessonCard nextLesson={nextLesson} />
+            <NextLessonCard nextLesson={nextLesson} onEnterLesson={onEnterLesson} />
             <ActiveHomeworkCard activeHomework={activeHomework} onSwitchTab={onSwitchTab} />
           </div>
         )}

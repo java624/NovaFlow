@@ -8,9 +8,10 @@ import TeacherReviewCanvas from '@/components/dashboard/TeacherReviewCanvas';
 interface TeacherWorkspaceTabProps {
   selectedStudent: StudentProfile;
   onStudentsChange: () => void;
+  onEnterLesson: (channelName: string) => void;
 }
 
-export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange }: TeacherWorkspaceTabProps) {
+export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange, onEnterLesson }: TeacherWorkspaceTabProps) {
   const supabase = createClient();
   const [studentLessons, setStudentLessons] = useState<Lesson[]>([]);
   const [homeworks, setHomeworks] = useState<Homework[]>([]);
@@ -300,11 +301,43 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange 
             </h2>
             <p className="text-sm text-gray-500 mt-1">Поточний сеанс керування</p>
           </div>
-          <div className="bg-purple-50 rounded-xl px-4 py-2 text-center">
-            <span className="text-xs text-gray-500 block">Баланс</span>
-            <span className="text-xl font-bold text-purple-700">{selectedStudent.lessons_left || 0}</span>
+          <div className="flex items-center gap-3">
+            <div className="bg-purple-50 rounded-xl px-4 py-2 text-center">
+              <span className="text-xs text-gray-500 block">Баланс</span>
+              <span className="text-xl font-bold text-purple-700">{selectedStudent.lessons_left || 0}</span>
+            </div>
           </div>
         </div>
+
+        {/* Active lessons list with "Увійти на урок" buttons */}
+        {studentLessons.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-100 space-y-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Заплановані уроки</p>
+            {studentLessons.map((lesson) => (
+              <div
+                key={lesson.id}
+                className="flex items-center justify-between bg-gray-50 rounded-lg px-4 py-2.5"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-900">
+                    🕐 {new Date(lesson.start_time).toLocaleString('uk-UA', {
+                      day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+                    })}
+                  </span>
+                  {lesson.title && (
+                    <span className="text-xs text-gray-400 ml-1">— {lesson.title}</span>
+                  )}
+                </div>
+                <button
+                  onClick={() => onEnterLesson(lesson.id)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-green-500 hover:bg-green-600 rounded-lg transition-colors"
+                >
+                  📹 Увійти
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Calendar + HW Form */}

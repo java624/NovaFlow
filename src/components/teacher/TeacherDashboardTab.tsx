@@ -11,6 +11,7 @@ interface TeacherDashboardTabProps {
   allLessons: Lesson[];
   students: StudentProfile[];
   onStudentClick: (student: StudentProfile) => void;
+  onEnterLesson: (channelName: string) => void;
 }
 
 export default function TeacherDashboardTab({
@@ -21,6 +22,7 @@ export default function TeacherDashboardTab({
   allLessons,
   students,
   onStudentClick,
+  onEnterLesson,
 }: TeacherDashboardTabProps) {
   const generalCalendarRef = useRef<HTMLDivElement>(null);
   const genCalendarInstanceRef = useRef<{ destroy: () => void } | null>(null);
@@ -121,19 +123,27 @@ export default function TeacherDashboardTab({
               <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               Наступний урок
             </span>
-            {nextLesson ? (
-              <>
-                <h2 className="text-lg font-bold text-gray-900">
-                  {nextLesson.profiles?.full_name || 'Учень'}
-                </h2>
-                <p className="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
-                  <span>🕐</span> {countdownText}
-                </p>
-                <p className="text-xs text-gray-400 mt-2">
-                  Тема: {nextLesson.title || 'Очікування уроку'}
-                </p>
-              </>
-            ) : (
+              {nextLesson ? (
+                <>
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {nextLesson.profiles?.full_name || 'Учень'}
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
+                    <span>🕐</span> {countdownText}
+                  </p>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Тема: {nextLesson.title || 'Очікування уроку'}
+                  </p>
+                  <div className="mt-4">
+                    <button
+                      onClick={() => onEnterLesson(nextLesson.id)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-green-500 hover:bg-green-600 rounded-xl transition-colors shadow-sm"
+                    >
+                      📹 Увійти на урок
+                    </button>
+                  </div>
+                </>
+              ) : (
               <>
                 <h2 className="text-lg font-bold text-gray-600">Немає майбутніх уроків</h2>
                 <p className="text-sm text-gray-500 mt-1">{countdownText}</p>
