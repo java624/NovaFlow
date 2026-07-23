@@ -9,6 +9,8 @@ interface LessonRoomHeaderProps {
   remoteUsersCount: number;
   layoutMode: 'grid' | 'focus';
   onToggleLayoutMode: () => void;
+  // NEW: shows a small "Вчитель" badge next to the room name when true.
+  isTeacher?: boolean;
 }
 
 export default function LessonRoomHeader({
@@ -18,6 +20,7 @@ export default function LessonRoomHeader({
   remoteUsersCount,
   layoutMode,
   onToggleLayoutMode,
+  isTeacher,
 }: LessonRoomHeaderProps) {
   return (
     <header className="h-16 px-6 flex items-center justify-between backdrop-blur-xl bg-zinc-900/60 border-b border-white/10 z-30 shrink-0 shadow-lg shadow-black/40">
@@ -47,6 +50,11 @@ export default function LessonRoomHeader({
               />
               {isConnected ? 'В ефірі' : 'Підключення...'}
             </span>
+            {isTeacher && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium border bg-indigo-500/10 border-indigo-500/30 text-indigo-300">
+                👑 Вчитель
+              </span>
+            )}
           </div>
         </div>
       </div>

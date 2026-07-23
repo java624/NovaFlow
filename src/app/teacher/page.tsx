@@ -284,6 +284,7 @@ export default function TeacherDashboardPage() {
         channelName={activeLessonChannel}
         onLeave={handleLeaveLesson}
         userName={profile?.full_name || 'Викладач'}
+        userRole="teacher"
       />
     );
   }

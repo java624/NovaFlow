@@ -156,6 +156,7 @@ export default function DashboardPage() {
         channelName={activeLessonChannel}
         onLeave={handleLeaveLesson}
         userName={profile?.full_name || profile?.first_name || 'Студент'}
+        userRole="student"
       />
     );
   }

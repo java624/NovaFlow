@@ -18,6 +18,19 @@ interface LessonRoomFloatingControlsProps {
   isSettingsOpen: boolean;
   onOpenSettings: () => void;
   onLeave: () => void;
+  // NEW: opinion/poll panel
+  isPollOpen: boolean;
+  onTogglePoll: () => void;
+  /** Shows a small pulsing dot when a poll is live and this user hasn't opened the panel yet. */
+  hasActivePoll?: boolean;
+  // NEW: participants / moderation panel
+  isParticipantsOpen: boolean;
+  onToggleParticipants: () => void;
+  participantsCount?: number;
+  // NEW: unlocks nothing in this component directly, but kept so the teacher
+  // can see their own role reflected consistently if we want to style things
+  // differently for them later (e.g. a distinct color for the Kick-capable state).
+  isTeacher?: boolean;
 }
 
 export default function LessonRoomFloatingControls({
@@ -35,6 +48,13 @@ export default function LessonRoomFloatingControls({
   isSettingsOpen,
   onOpenSettings,
   onLeave,
+  isPollOpen,
+  onTogglePoll,
+  hasActivePoll,
+  isParticipantsOpen,
+  onToggleParticipants,
+  participantsCount,
+  isTeacher,
 }: LessonRoomFloatingControlsProps) {
   return (
     <footer className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-2 sm:gap-3 px-5 py-3 rounded-full backdrop-blur-2xl bg-zinc-900/85 border border-white/15 shadow-2xl shadow-black/80">
@@ -121,6 +141,42 @@ export default function LessonRoomFloatingControls({
         {unreadCount > 0 && !isChatOpen && (
           <span className="absolute -top-1 -right-1 bg-rose-500 text-white font-bold text-[10px] w-4 h-4 rounded-full flex items-center justify-center shadow-lg">
             {unreadCount}
+          </span>
+        )}
+      </div>
+
+      {/* NEW: Poll toggle */}
+      <div className="relative">
+        <ControlButton
+          active={isPollOpen}
+          onClick={onTogglePoll}
+          tooltip="Опитування"
+          activeClass="bg-indigo-600 text-white hover:bg-indigo-500"
+          inactiveClass="bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white"
+          icon={<span className="text-base">📊</span>}
+        />
+        {hasActivePoll && !isPollOpen && (
+          <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-zinc-900 animate-pulse" />
+        )}
+      </div>
+
+      {/* NEW: Participants / moderation toggle */}
+      <div className="relative">
+        <ControlButton
+          active={isParticipantsOpen}
+          onClick={onToggleParticipants}
+          tooltip={isTeacher ? 'Учасники та модерація' : 'Учасники'}
+          activeClass="bg-indigo-600 text-white hover:bg-indigo-500"
+          inactiveClass="bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white"
+          icon={
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          }
+        />
+        {typeof participantsCount === 'number' && (
+          <span className="absolute -bottom-1 -right-1 bg-zinc-700 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-lg border border-zinc-900">
+            {participantsCount}
           </span>
         )}
       </div>

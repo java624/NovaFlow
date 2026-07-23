@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { RemoteUser, ICameraVideoTrack, ILocalVideoTrack, IAgoraRTCRemoteUser } from 'agora-rtc-react';
+import { ParticipantProfile } from './types';
 
 interface LessonRoomVideoAreaProps {
   layoutMode: 'grid' | 'focus';
@@ -17,6 +18,40 @@ interface LessonRoomVideoAreaProps {
   uid: number;
   micMuted: boolean;
   handRaised: boolean;
+  // NEW: uid -> {name, role} directory so remote tiles show real names
+  // (and a teacher badge) instead of the generic "Співрозмовник" label.
+  // Optional — falls back to old behavior if not provided.
+  participantProfiles?: Record<string, ParticipantProfile>;
+}
+
+const SCREEN_UID_OFFSET = 1_000_000_000;
+
+export function isScreenShareUser(uid: number | string): boolean {
+  const numericUid = Number(uid);
+  return Number.isFinite(numericUid) && numericUid >= SCREEN_UID_OFFSET;
+}
+
+function getRemoteLabel(
+  user: IAgoraRTCRemoteUser,
+  profiles?: Record<string, ParticipantProfile>
+): { name: string; isTeacher: boolean; isScreenShare: boolean } {
+  const isScreenShare = isScreenShareUser(user.uid);
+  const profile = profiles?.[String(user.uid)];
+  return {
+    name: isScreenShare ? 'Демонстрація екрана' : profile?.name || `Учасник ${user.uid}`,
+    isTeacher: !isScreenShare && profile?.role === 'teacher',
+    isScreenShare,
+  };
+}
+
+// NEW: pick a sensible grid template as the number of tiles grows, so the
+// layout still works with a teacher + a full class rather than just 2 people.
+function getGridColsClass(tileCount: number): string {
+  if (tileCount <= 1) return 'grid-cols-1';
+  if (tileCount === 2) return 'grid-cols-1 sm:grid-cols-2';
+  if (tileCount <= 4) return 'grid-cols-2';
+  if (tileCount <= 6) return 'grid-cols-2 sm:grid-cols-3';
+  return 'grid-cols-3 sm:grid-cols-4';
 }
 
 export default function LessonRoomVideoArea({
@@ -33,8 +68,16 @@ export default function LessonRoomVideoArea({
   uid,
   micMuted,
   handRaised,
+  participantProfiles,
 }: LessonRoomVideoAreaProps) {
-  const remoteUser = remoteUsers.length > 0 ? remoteUsers[0] : null;
+  // A remote UID >= 1,000,000,000 belongs to a dedicated screen-share client.
+  // It always wins focus mode, independently of the current audio speaker.
+  const featuredRemoteUser =
+    remoteUsers.find((user) => isScreenShareUser(user.uid)) ||
+    remoteUsers.find((user) => user.uid === activeSpeakerUid) ||
+    remoteUsers[0] ||
+    null;
+  const otherRemoteUsers = remoteUsers.filter((user) => user.uid !== featuredRemoteUser?.uid);
 
   return (
     <div className="flex-1 relative overflow-hidden p-3 sm:p-5 flex">
@@ -42,7 +85,7 @@ export default function LessonRoomVideoArea({
         {layoutMode === 'focus' ? (
           /* ========================================================= FOCUS LAYOUT ========================================================= */
           <div className="w-full h-full relative rounded-3xl overflow-hidden backdrop-blur-xl bg-zinc-900/60 border border-white/10 shadow-2xl flex items-center justify-center">
-            {/* Featured Main Video: Screen Share or Remote User or Empty State */}
+            {/* Featured Main Video: Screen Share or Active Speaker / First Remote User or Empty State */}
             {screenSharing && screenTrack ? (
               <div className="w-full h-full relative bg-zinc-950">
                 <LocalVideoRenderer track={screenTrack} />
@@ -53,19 +96,35 @@ export default function LessonRoomVideoArea({
                   Ваша демонстрація екрана
                 </div>
               </div>
-            ) : remoteUser ? (
+            ) : featuredRemoteUser ? (
               <div
                 className={`w-full h-full relative transition-all duration-300 ${
-                  activeSpeakerUid === remoteUser.uid
+                  activeSpeakerUid === featuredRemoteUser.uid
                     ? 'border-2 border-indigo-500 shadow-2xl shadow-indigo-500/20'
                     : ''
                 }`}
               >
-                <RemoteUser user={remoteUser} playVideo playAudio />
-                <div className="absolute bottom-4 left-4 bg-zinc-900/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl text-xs font-medium text-white flex items-center gap-2 shadow-lg">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                  <span>Співрозмовник</span>
-                </div>
+                <RemoteUser user={featuredRemoteUser} playVideo playAudio />
+                {(() => {
+                  const { name, isTeacher, isScreenShare } = getRemoteLabel(featuredRemoteUser, participantProfiles);
+                  return (
+                    <div className="absolute bottom-4 left-4 bg-zinc-900/80 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl text-xs font-medium text-white flex items-center gap-2 shadow-lg">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                      <span>{name}</span>
+                      {isScreenShare && (
+                        <span className="text-[10px] uppercase tracking-wide bg-indigo-500/30 text-indigo-200 rounded-md px-1.5 py-0.5">
+                          Екран
+                        </span>
+                      )}
+                      {isTeacher && (
+                        <span className="text-[10px] uppercase tracking-wide bg-indigo-500/30 text-indigo-200 rounded-md px-1.5 py-0.5">
+                          Вчитель
+                        </span>
+                      )}
+                      {!isScreenShare && !featuredRemoteUser.hasAudio && <span className="text-rose-400">🔇</span>}
+                    </div>
+                  );
+                })()}
               </div>
             ) : (
               <div className="w-full h-full flex items-center justify-center p-6 text-center">
@@ -123,10 +182,37 @@ export default function LessonRoomVideoArea({
                 {userName || 'Ви'} (Ви)
               </div>
             </div>
+
+            {/* NEW: thumbnail strip for any additional remote participants beyond
+                the featured one — otherwise a 3rd+ person in the room was
+                previously invisible in focus mode. */}
+            {otherRemoteUsers.length > 0 && (
+              <div className="absolute top-4 left-4 right-4 sm:right-auto flex gap-2 overflow-x-auto z-20 pb-1">
+                {otherRemoteUsers.map((ru) => {
+                  const { name, isTeacher, isScreenShare } = getRemoteLabel(ru, participantProfiles);
+                  return (
+                    <div
+                      key={String(ru.uid)}
+                      className={`relative w-24 h-16 sm:w-28 sm:h-20 shrink-0 rounded-xl overflow-hidden border-2 bg-zinc-900 shadow-lg ${
+                        activeSpeakerUid === ru.uid ? 'border-indigo-500' : 'border-white/15'
+                      }`}
+                    >
+                      <RemoteUser user={ru} playVideo playAudio />
+                      <div className="absolute bottom-0 left-0 right-0 px-1.5 py-0.5 bg-zinc-950/70 backdrop-blur-md text-[9px] text-zinc-200 truncate flex items-center gap-1">
+                        {!isScreenShare && !ru.hasAudio && <span className="text-rose-400">🔇</span>}
+                        <span className="truncate">{name}</span>
+                        {isScreenShare && <span className="text-indigo-300 shrink-0">🖥️</span>}
+                        {isTeacher && <span className="text-indigo-300 shrink-0">👑</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         ) : (
           /* ========================================================= GRID LAYOUT ========================================================= */
-          <div className="w-full h-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className={`w-full h-full grid ${getGridColsClass(remoteUsers.length + 1)} gap-4 auto-rows-fr`}>
             {/* Local User Card */}
             <div
               className={`relative rounded-3xl overflow-hidden backdrop-blur-xl bg-zinc-900/60 border transition-all duration-300 shadow-2xl flex items-center justify-center ${
@@ -156,30 +242,50 @@ export default function LessonRoomVideoArea({
               </div>
             </div>
 
-            {/* Remote User Card or Empty State */}
-            <div
-              className={`relative rounded-3xl overflow-hidden backdrop-blur-xl bg-zinc-900/60 border transition-all duration-300 shadow-2xl flex items-center justify-center ${
-                remoteUser && activeSpeakerUid === remoteUser.uid
-                  ? 'border-2 border-indigo-500 shadow-indigo-500/25 ring-2 ring-indigo-500/30'
-                  : 'border-white/10'
-              }`}
-            >
-              {remoteUser ? (
-                <div className="w-full h-full relative">
-                  <RemoteUser user={remoteUser} playVideo playAudio />
-                  <div className="absolute bottom-4 left-4 bg-zinc-900/80 backdrop-blur-md border border-white/10 px-3 py-1 rounded-xl text-xs font-medium text-white">
-                    Співрозмовник
+            {/* NEW: one card per remote participant (previously only remoteUsers[0]
+                was ever rendered here, so a 3rd/4th person in the room had no tile). */}
+            {remoteUsers.length > 0 ? (
+              remoteUsers.map((ru) => {
+                const { name, isTeacher, isScreenShare } = getRemoteLabel(ru, participantProfiles);
+                return (
+                  <div
+                    key={String(ru.uid)}
+                    className={`relative rounded-3xl overflow-hidden backdrop-blur-xl bg-zinc-900/60 border transition-all duration-300 shadow-2xl flex items-center justify-center ${
+                      activeSpeakerUid === ru.uid
+                        ? 'border-2 border-indigo-500 shadow-indigo-500/25 ring-2 ring-indigo-500/30'
+                        : 'border-white/10'
+                    }`}
+                  >
+                    <div className="w-full h-full relative">
+                      <RemoteUser user={ru} playVideo playAudio />
+                      <div className="absolute bottom-4 left-4 bg-zinc-900/80 backdrop-blur-md border border-white/10 px-3 py-1 rounded-xl text-xs font-medium text-white flex items-center gap-2">
+                        <span>{name}</span>
+                        {isScreenShare && (
+                          <span className="text-[10px] uppercase tracking-wide bg-indigo-500/30 text-indigo-200 rounded-md px-1.5 py-0.5">
+                            Екран
+                          </span>
+                        )}
+                        {isTeacher && (
+                          <span className="text-[10px] uppercase tracking-wide bg-indigo-500/30 text-indigo-200 rounded-md px-1.5 py-0.5">
+                            Вчитель
+                          </span>
+                        )}
+                        {!isScreenShare && !ru.hasAudio && <span className="text-rose-400">🔇</span>}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ) : (
+                );
+              })
+            ) : (
+              <div className="relative rounded-3xl overflow-hidden backdrop-blur-xl bg-zinc-900/60 border border-white/10 shadow-2xl flex items-center justify-center">
                 <div className="flex flex-col items-center justify-center text-center p-6">
                   <div className="w-16 h-16 rounded-2xl bg-zinc-800 border border-white/10 flex items-center justify-center text-zinc-400 text-2xl mb-3">
                     👤
                   </div>
-                  <p className="text-sm font-medium text-zinc-300">Очікування другого учасника</p>
+                  <p className="text-sm font-medium text-zinc-300">Очікування учасників</p>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -194,7 +300,9 @@ export function LocalVideoRenderer({ track }: { track: ILocalVideoTrack }) {
     if (!track || !containerRef.current) return;
     track.play(containerRef.current);
     return () => {
-      track.stop();
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
     };
   }, [track]);
 
