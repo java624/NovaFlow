@@ -154,6 +154,7 @@ const landingTranslations: Record<Language, Record<string, string>> = {
     footer_contact: "Contact Support",
     footer_terms: "Terms of Use",
     footer_privacy: "Privacy Policy",
+    footer_refund: "Refund Policy",
     footer_cookies: "Cookies Setting",
     footer_sitemap: "Sitemap",
 
@@ -444,6 +445,7 @@ const landingTranslations: Record<Language, Record<string, string>> = {
     footer_contact: "Служба підтримки",
     footer_terms: "Умови використання",
     footer_privacy: "Політика конфіденційності",
+    footer_refund: "Політика повернення",
     footer_cookies: "Налаштування файлів cookies",
     footer_sitemap: "Карта сайту",
 
@@ -735,6 +737,7 @@ const landingTranslations: Record<Language, Record<string, string>> = {
     footer_contact: "Support kontaktieren",
     footer_terms: "Nutzungsbedingungen",
     footer_privacy: "Datenschutzerklärung",
+    footer_refund: "Rückerstattungsrichtlinie",
     footer_cookies: "Cookie-Einstellungen",
     footer_sitemap: "Sitemap",
 

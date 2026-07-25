@@ -120,6 +120,7 @@ export default function Footer({ navItems }: FooterProps = {}) {
                 {[
                   { labelKey: 'footer_terms', href: '/terms' },
                   { labelKey: 'footer_privacy', href: '/privacy' },
+                  { labelKey: 'footer_refund', href: '/refund-policy' },
                   { labelKey: 'footer_contact', href: '/contact-support' },
                   { labelKey: 'footer_cookies', href: '/privacy#cookies' },
                 ].map((item) => (
@@ -141,6 +142,7 @@ export default function Footer({ navItems }: FooterProps = {}) {
                 {[
                   { labelKey: 'footer_terms', href: '/terms' },
                   { labelKey: 'footer_privacy', href: '/privacy' },
+                  { labelKey: 'footer_refund', href: '/refund-policy' },
                   { labelKey: 'footer_contact', href: '/contact-support' },
                   { labelKey: 'footer_cookies', href: '/privacy#cookies' },
                 ].map((item) => (
@@ -190,6 +192,7 @@ export default function Footer({ navItems }: FooterProps = {}) {
           <ul className="flex flex-wrap justify-center items-center gap-x-6 gap-y-2">
             <li><Link href="/privacy" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_privacy')}</Link></li>
             <li><Link href="/terms" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_terms')}</Link></li>
+            <li><Link href="/refund-policy" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_refund')}</Link></li>
             <li><Link href="/contact-support" className="text-xs text-gray-500 hover:text-purple-400 transition-colors">{t('footer_contact')}</Link></li>
           </ul>
         </div>
