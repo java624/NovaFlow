@@ -23,21 +23,21 @@ export default function LessonRoomHeader({
   isTeacher,
 }: LessonRoomHeaderProps) {
   return (
-    <header className="h-16 px-6 flex items-center justify-between backdrop-blur-xl bg-zinc-900/60 border-b border-white/10 z-30 shrink-0 shadow-lg shadow-black/40">
+    <header className="h-12 sm:h-16 px-3 sm:px-6 flex items-center justify-between backdrop-blur-xl bg-zinc-900/60 border-b border-white/10 z-30 shrink-0 shadow-lg shadow-black/40">
       {/* Left: Brand & Connection Status */}
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-400 p-0.5 shadow-lg shadow-indigo-500/20">
-          <div className="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center font-black text-xs tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+        <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-400 p-0.5 shadow-lg shadow-indigo-500/20 shrink-0">
+          <div className="w-full h-full bg-zinc-950 rounded-[10px] flex items-center justify-center font-black text-[10px] sm:text-xs tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">
             NF
           </div>
         </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm tracking-wide text-zinc-100">
-              Урок: <span className="text-indigo-400 font-medium">{safeChannel}</span>
+        <div className="min-w-0">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <span className="font-semibold text-[11px] sm:text-sm tracking-wide text-zinc-100 truncate max-w-[80px] sm:max-w-none">
+              <span className="text-indigo-400 font-medium">{safeChannel}</span>
             </span>
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
+              className={`hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
                 isConnected
                   ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
                   : 'bg-amber-500/10 border-amber-500/30 text-amber-400'
@@ -51,7 +51,7 @@ export default function LessonRoomHeader({
               {isConnected ? 'В ефірі' : 'Підключення...'}
             </span>
             {isTeacher && (
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium border bg-indigo-500/10 border-indigo-500/30 text-indigo-300">
+              <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium border bg-indigo-500/10 border-indigo-500/30 text-indigo-300">
                 👑 Вчитель
               </span>
             )}
@@ -60,7 +60,7 @@ export default function LessonRoomHeader({
       </div>
 
       {/* Right: Room Stats, Network Quality & Layout Switcher */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1 sm:gap-3">
         {/* Signal Indicator */}
         <NetworkSignalBadge quality={networkQuality} />
 
@@ -72,18 +72,29 @@ export default function LessonRoomHeader({
           <span>{remoteUsersCount + 1} у кімнаті</span>
         </div>
 
+        {/* Fullscreen Toggle (mobile visible) */}
+        <button
+          onClick={() => { if (document.fullscreenElement) { document.exitFullscreen(); } else { document.documentElement.requestFullscreen(); } }}
+          className="p-1.5 sm:p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-zinc-300 hover:text-white transition-all"
+          title="На весь екран"
+        >
+          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+          </svg>
+        </button>
+
         {/* Layout Mode Switcher */}
         <button
           onClick={onToggleLayoutMode}
-          className="p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-zinc-300 hover:text-white transition-all"
+          className="p-1.5 sm:p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-zinc-300 hover:text-white transition-all"
           title={layoutMode === 'focus' ? 'Переключити на Сітку' : 'Переключити на Фокус'}
         >
           {layoutMode === 'focus' ? (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
             </svg>
           ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
             </svg>
           )}

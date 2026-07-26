@@ -266,7 +266,14 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
 
         // Video track
         try {
-          const videoTrack = await AgoraRTC.createCameraVideoTrack();
+          const videoTrack = await AgoraRTC.createCameraVideoTrack({
+            encoderConfig: {
+              width: 640,
+              height: 360,
+              frameRate: 15,
+              bitrateMax: 300,
+            },
+          });
           if (!isMounted) {
             videoTrack.close();
             return;
@@ -669,7 +676,14 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
     } else {
       try {
         setCameraError(null);
-        const videoTrack = await AgoraRTC.createCameraVideoTrack();
+        const videoTrack = await AgoraRTC.createCameraVideoTrack({
+          encoderConfig: {
+            width: 640,
+            height: 360,
+            frameRate: 15,
+            bitrateMax: 300,
+          },
+        });
         camTrackRef.current = videoTrack;
         setLocalCameraTrack(videoTrack);
         setCameraOff(false);
@@ -700,6 +714,7 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
     const screenUid = uid + SCREEN_UID_OFFSET;
     const screenClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
     screenClientRef.current = screenClient;
+    try { await screenClient.enableDualStream(); } catch (e) { console.warn('[Agora] Screen client dual-stream not supported:', e); }
     try {
       const screenToken = await requestRtcToken(safeChannel, screenUid);
       if (isUnmountedRef.current || screenClientRef.current !== screenClient) return;
@@ -708,7 +723,16 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
         await screenClient.leave();
         return;
       }
-      const screenVideoTrack = await AgoraRTC.createScreenVideoTrack({}, 'disable');
+      const screenVideoTrack = await AgoraRTC.createScreenVideoTrack(
+        {
+          encoderConfig: {
+            frameRate: 5,
+            bitrateMax: 400,
+          },
+          optimizationMode: 'detail',
+        },
+        'disable'
+      );
       if (isUnmountedRef.current || screenClientRef.current !== screenClient) {
         screenVideoTrack.close();
         await screenClient.leave();
@@ -957,7 +981,7 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
     }));
 
   return (
-    <div className="fixed inset-0 z-[100] bg-zinc-950 text-white font-sans flex flex-col overflow-hidden select-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/30 via-zinc-950 to-zinc-950">
+    <div className="fixed inset-0 z-[100] bg-zinc-950 text-white font-sans flex flex-col overflow-hidden select-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/30 via-zinc-950 to-zinc-950 h-[100dvh] overflow-y-hidden overflow-x-hidden">
       {/* Header Bar */}
       <LessonRoomHeader
         safeChannel={safeChannel}
@@ -1152,7 +1176,9 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
 // ------------------------------------------------------------------ Main Exported Component
 export default function LessonRoom(props: LessonRoomProps) {
   const client = useMemo(() => {
-    return AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+    const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+  client.enableDualStream().catch((e) => console.warn('[Agora] Dual-stream not supported:', e));
+  return client;
   }, []);
 
   return (
