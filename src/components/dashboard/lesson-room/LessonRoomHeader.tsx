@@ -11,6 +11,12 @@ interface LessonRoomHeaderProps {
   onToggleLayoutMode: () => void;
   // NEW: shows a small "Вчитель" badge next to the room name when true.
   isTeacher?: boolean;
+  // Recording props
+  isRecording?: boolean;
+  recordingDurationSec?: number;
+  recordingError?: string | null;
+  onStartRecording?: () => Promise<void>;
+  onStopRecording?: () => Promise<Blob | null>;
 }
 
 export default function LessonRoomHeader({
@@ -21,6 +27,11 @@ export default function LessonRoomHeader({
   layoutMode,
   onToggleLayoutMode,
   isTeacher,
+  isRecording,
+  recordingDurationSec,
+  recordingError,
+  onStartRecording,
+  onStopRecording,
 }: LessonRoomHeaderProps) {
   return (
     <header className="h-12 sm:h-16 px-3 sm:px-6 flex items-center justify-between backdrop-blur-xl bg-zinc-900/60 border-b border-white/10 z-30 shrink-0 shadow-lg shadow-black/40">
@@ -61,6 +72,42 @@ export default function LessonRoomHeader({
 
       {/* Right: Room Stats, Network Quality & Layout Switcher */}
       <div className="flex items-center gap-1 sm:gap-3">
+        {/* Recording Button (teacher only) */}
+        {isTeacher && (
+          <div className="relative">
+            {isRecording ? (
+              <button
+                onClick={onStopRecording}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-rose-600/20 border border-rose-500/40 text-rose-400 hover:bg-rose-600/30 transition-all"
+                title="Зупинити запис"
+              >
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                <span className="text-[11px] font-semibold tabular-nums">
+                  {recordingDurationSec !== undefined
+                    ? `${Math.floor(recordingDurationSec / 60)}:${String(recordingDurationSec % 60).padStart(2, '0')}`
+                    : '00:00'}
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">REC</span>
+              </button>
+            ) : (
+              <button
+                onClick={onStartRecording}
+                className="p-1.5 sm:p-2 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-zinc-300 hover:text-white transition-all"
+                title="Запис уроку"
+              >
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="6" />
+                </svg>
+              </button>
+            )}
+            {recordingError && (
+              <div className="absolute top-full right-0 mt-1 bg-rose-900/90 text-rose-200 text-[10px] px-2 py-1 rounded-lg whitespace-nowrap border border-rose-700/50 z-50">
+                {recordingError}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Signal Indicator */}
         <NetworkSignalBadge quality={networkQuality} />
 

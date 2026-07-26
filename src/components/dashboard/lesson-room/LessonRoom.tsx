@@ -28,6 +28,7 @@ import LessonTimer from './LessonTimer';
 import ParticipantsPanel, { ParticipantInfo } from './ParticipantsPanel';
 import VirtualBackgroundControls from './VirtualBackgroundControls';
 import { useVirtualBackground } from './useVirtualBackground';
+import { useLessonRecording } from './useLessonRecording';
 
 const SCREEN_UID_OFFSET = 1_000_000_000;
 const CLASSROOM_DATA_CHANNEL_ID = 7;
@@ -119,6 +120,11 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
   // NEW: per-participant forced-mute (cooperative) flag, only relevant for local mic
   const [isForceMuted, setIsForceMuted] = useState(false);
 
+  // Recording state
+  const [recordingSavedBlob, setRecordingSavedBlob] = useState<Blob | null>(null);
+  const [showRecordingModal, setShowRecordingModal] = useState(false);
+  const recordingBlobRef = useRef<Blob | null>(null);
+
   // Tracks & Refs
   const [localMicrophoneTrack, setLocalMicrophoneTrack] = useState<IMicrophoneAudioTrack | null>(null);
   const [localCameraTrack, setLocalCameraTrack] = useState<ICameraVideoTrack | null>(null);
@@ -135,6 +141,31 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
 
   const client = useRTCClient();
   const remoteUsers = useRemoteUsers();
+
+  // Build remote audio tracks array for recording mixing
+  const remoteAudioTracks = useMemo(() => {
+    return remoteUsers
+      .map((ru) => {
+        try {
+          return (ru as any).audioTrack?.getMediaStreamTrack() as MediaStreamTrack | undefined;
+        } catch {
+          return undefined;
+        }
+      })
+      .filter((t): t is MediaStreamTrack => !!t);
+  }, [remoteUsers]);
+
+  // Recording hook (teacher only)
+  const handleRecordingSave = useCallback((blob: Blob) => {
+    recordingBlobRef.current = blob;
+    setRecordingSavedBlob(blob);
+    setShowRecordingModal(true);
+  }, []);
+
+  const recording = useLessonRecording(
+    isTeacher ? remoteAudioTracks : [],
+    handleRecordingSave
+  );
 
   const uid = useMemo(() => generateUid(userName), [userName]);
   const safeChannel = useMemo(() => String(channelName), [channelName]);
@@ -928,6 +959,10 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
 
   const handleLeave = useCallback(async () => {
     console.log('[Agora] Leaving room explicitly');
+    // Stop recording if active
+    if (recording.isRecording) {
+      await recording.stopRecording();
+    }
     if (micTrackRef.current) {
       micTrackRef.current.close();
       micTrackRef.current = null;
@@ -946,7 +981,7 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
       await client.leave();
     } catch (e) {}
     onLeave();
-  }, [client, onLeave, stopScreenShare]);
+  }, [client, onLeave, stopScreenShare, recording]);
 
   // NEW: build the participant list for the ParticipantsPanel (local + remote)
   const participantList: ParticipantInfo[] = useMemo(() => {
@@ -991,6 +1026,11 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
         layoutMode={layoutMode}
         onToggleLayoutMode={() => setLayoutMode((prev) => (prev === 'focus' ? 'grid' : 'focus'))}
         isTeacher={isTeacher}
+        isRecording={recording.isRecording}
+        recordingDurationSec={recording.durationSec}
+        recordingError={recording.error}
+        onStartRecording={recording.startRecording}
+        onStopRecording={recording.stopRecording}
       />
 
       {/* NEW: Lesson timer, floating top-center under the header */}
@@ -1141,6 +1181,51 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
         selectedMicId={selectedMicId}
         onDeviceChange={handleDeviceChange}
       />
+
+      {/* Recording Saved Modal */}
+      {showRecordingModal && recordingSavedBlob && (
+        <div className="absolute inset-0 z-[300] bg-zinc-950/80 backdrop-blur-xl flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">✅</span>
+              <h3 className="text-lg font-semibold text-white">Запис уроку збережено!</h3>
+            </div>
+            <p className="text-sm text-zinc-300 leading-relaxed">
+              Ви можете завантажити файл на свій пристрій, а потім завантажити його на Google Drive школи
+              та вставити посилання у матеріали уроку.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={() => {
+                  const url = URL.createObjectURL(recordingSavedBlob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  const dateStr = new Date().toISOString().slice(0, 10);
+                  a.download = `NovaFlow_Lesson_${safeChannel}_${dateStr}.webm`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }}
+                className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-medium transition-all text-sm"
+              >
+                ⬇️ Завантажити на пристрій
+              </button>
+              <button
+                onClick={() => {
+                  setShowRecordingModal(false);
+                  setRecordingSavedBlob(null);
+                }}
+                className="flex-1 px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl font-medium transition-all text-sm"
+              >
+                Закрити
+              </button>
+            </div>
+            <p className="text-[11px] text-amber-400/80 flex items-center gap-1.5">
+              <span>⚠️</span>
+              <span>Запис зберігається протягом 10 днів. Будь ласка, завантажте файл на свій пристрій, якщо він вам потрібен.</span>
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Floating Control Bar */}
       <LessonRoomFloatingControls
