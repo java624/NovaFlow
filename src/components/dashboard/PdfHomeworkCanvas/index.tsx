@@ -407,64 +407,28 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
     }
   };
 
-  // ─── 6. Save & Submit Response ─────────────────────────────────────────────
+  // ─── 6. Save & Submit Response as true PDF File ─────────────────────────────
   const handleSave = async () => {
     setIsSaving(true);
 
     try {
       saveCurrentPageState();
-      const pdfCanvas = pdfCanvasRef.current;
-      const drawCanvas = drawCanvasRef.current;
-      if (!pdfCanvas || !drawCanvas) throw new Error('Canvas error');
 
-      // Burn text annotations onto draw canvas before export
-      const drawCtx = drawCanvas.getContext('2d');
-      if (drawCtx) {
-        const pageTexts = textAnnotations[currentPage] || [];
-        pageTexts.forEach((ann) => {
-          if (!ann.text.trim()) return;
-          const xPx = ann.xRatio * drawCanvas.width;
-          const yPx = ann.yRatio * drawCanvas.height;
-
-          const scaleFactor = drawCanvas.width / pageDimensions.width;
-          const renderFontSize = Math.max(14, ann.fontSize * scaleFactor);
-
-          drawCtx.font = `bold ${renderFontSize}px sans-serif`;
-          drawCtx.fillStyle = ann.color;
-          drawCtx.textBaseline = 'top';
-
-          const lines = ann.text.split('\n');
-          lines.forEach((l, idx) => {
-            drawCtx.fillText(l, xPx, yPx + idx * (renderFontSize * 1.25));
-          });
-        });
-      }
-
-      // Create composite canvas of current view
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = pdfCanvas.width;
-      tempCanvas.height = pdfCanvas.height;
-      const tCtx = tempCanvas.getContext('2d');
-      if (!tCtx) throw new Error('Context error');
-
-      tCtx.fillStyle = '#ffffff';
-      tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-      tCtx.drawImage(pdfCanvas, 0, 0);
-      tCtx.drawImage(drawCanvas, 0, 0);
-
-      const blob = await new Promise<Blob | null>((resolve) =>
-        tempCanvas.toBlob(resolve, 'image/png')
+      const { generateAnnotatedPdf } = await import('@/lib/pdf-utils');
+      const pdfBlob = await generateAnnotatedPdf(
+        pdfUrl,
+        pageDrawingsRef.current,
+        textAnnotations
       );
-      if (!blob) throw new Error('Failed to render output image');
 
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
 
-      const fileName = `results/pdf_hw_${homeworkId}_${Date.now()}.png`;
+      const fileName = `results/pdf_hw_${homeworkId}_${Date.now()}.pdf`;
 
       const { error: uploadError } = await supabase.storage
         .from('homework-attachments')
-        .upload(fileName, blob, { contentType: 'image/png', upsert: true });
+        .upload(fileName, pdfBlob, { contentType: 'application/pdf', upsert: true });
 
       if (uploadError) throw uploadError;
 

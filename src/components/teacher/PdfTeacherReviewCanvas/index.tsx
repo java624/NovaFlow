@@ -47,6 +47,8 @@ export default function PdfTeacherReviewCanvas({
   const pageDrawingsRef = useRef<{ [page: number]: string }>({});
   const pageUndoStacksRef = useRef<{ [page: number]: string[] }>({});
   const pageRedoStacksRef = useRef<{ [page: number]: string[] }>({});
+  /** Text annotations for teacher review — simple text drawn directly on canvas, but we abstract into annotations format for generateAnnotatedPdf */
+  const textAnnotationsRef = useRef<{ [page: number]: any[] }>({});
 
   const saveCurrentPageState = useCallback(() => {
     const drawCanvas = drawCanvasRef.current;
@@ -312,38 +314,28 @@ export default function PdfTeacherReviewCanvas({
     }
   };
 
-  // Save Teacher Review
+  // Save Teacher Review — generates proper annotated PDF instead of low-quality PNG
   const handleSave = async () => {
     if (activeTextarea.current) finalizeLiveText();
     setIsSaving(true);
 
     try {
       saveCurrentPageState();
-      const pdfCanvas = pdfCanvasRef.current;
-      const drawCanvas = drawCanvasRef.current;
-      if (!pdfCanvas || !drawCanvas) throw new Error('Canvas Error');
 
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = pdfCanvas.width;
-      tempCanvas.height = pdfCanvas.height;
-      const tCtx = tempCanvas.getContext('2d');
-      if (!tCtx) throw new Error('Context Error');
-
-      tCtx.fillStyle = '#ffffff';
-      tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-      tCtx.drawImage(pdfCanvas, 0, 0);
-      tCtx.drawImage(drawCanvas, 0, 0);
-
-      const blob = await new Promise<Blob | null>((resolve) =>
-        tempCanvas.toBlob(resolve, 'image/png')
+      const { generateAnnotatedPdf } = await import('@/lib/pdf-utils');
+      // The pdfUrl here is the STUDENT's submitted PDF. generateAnnotatedPdf will
+      // load it, overlay the teacher's annotations on top, and produce a new PDF.
+      const pdfBlob = await generateAnnotatedPdf(
+        pdfUrl,
+        pageDrawingsRef.current,
+        textAnnotationsRef.current
       );
-      if (!blob) throw new Error('Blob Error');
 
-      const fileName = `reviews/pdf_review_${homeworkId}_${Date.now()}.png`;
+      const fileName = `reviews/pdf_review_${homeworkId}_${Date.now()}.pdf`;
 
       const { error: uploadError } = await supabase.storage
         .from('homework-attachments')
-        .upload(fileName, blob, { contentType: 'image/png', upsert: true });
+        .upload(fileName, pdfBlob, { contentType: 'application/pdf', upsert: true });
 
       if (uploadError) throw uploadError;
 

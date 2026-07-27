@@ -2,6 +2,8 @@
  * PDF Utilities for NovaFlow Homework Platform
  */
 
+import { PDFDocument } from 'pdf-lib';
+
 export function isPdfUrl(url?: string | null): boolean {
   if (!url || url === 'null' || url === 'undefined') return false;
   const cleanUrl = url.split('?')[0].toLowerCase();
@@ -97,4 +99,77 @@ export async function renderPdfThumbnail(
     canvasContext: ctx,
     viewport,
   }).promise;
+}
+
+/**
+ * Generate high-resolution PDF document with all student or teacher annotations embedded onto original PDF pages
+ */
+export async function generateAnnotatedPdf(
+  originalPdfUrl: string,
+  pageDrawings: { [pageNumber: number]: string },
+  textAnnotations: { [pageNumber: number]: any[] }
+): Promise<Blob> {
+  const existingPdfBytes = await fetch(originalPdfUrl).then((res) => res.arrayBuffer());
+  const pdfDoc = await PDFDocument.load(existingPdfBytes);
+  const pages = pdfDoc.getPages();
+
+  for (let i = 0; i < pages.length; i++) {
+    const pageNum = i + 1;
+    const page = pages[i];
+    const { width: pWidth, height: pHeight } = page.getSize();
+
+    const pageDataUrl = pageDrawings[pageNum];
+    const pageTexts = textAnnotations[pageNum] || [];
+
+    if (pageDataUrl || (pageTexts && pageTexts.length > 0)) {
+      const overlayCanvas = document.createElement('canvas');
+      const renderScale = 2.0; // 2x high resolution
+      overlayCanvas.width = Math.floor(pWidth * renderScale);
+      overlayCanvas.height = Math.floor(pHeight * renderScale);
+
+      const ctx = overlayCanvas.getContext('2d');
+      if (ctx) {
+        // Render drawings layer
+        if (pageDataUrl) {
+          const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const im = new Image();
+            im.onload = () => resolve(im);
+            im.onerror = reject;
+            im.src = pageDataUrl;
+          });
+          ctx.drawImage(img, 0, 0, overlayCanvas.width, overlayCanvas.height);
+        }
+
+        // Render text annotations layer
+        pageTexts.forEach((ann) => {
+          if (!ann.text || !ann.text.trim()) return;
+          const xPx = ann.xRatio * overlayCanvas.width;
+          const yPx = ann.yRatio * overlayCanvas.height;
+          const fontPx = Math.max(16, ann.fontSize * renderScale);
+
+          ctx.font = `bold ${fontPx}px sans-serif`;
+          ctx.fillStyle = ann.color;
+          ctx.textBaseline = 'top';
+
+          const lines = ann.text.split('\n');
+          lines.forEach((line: string, idx: number) => {
+            ctx.fillText(line, xPx, yPx + idx * (fontPx * 1.25));
+          });
+        });
+
+        const overlayDataUrl = overlayCanvas.toDataURL('image/png');
+        const embeddedPng = await pdfDoc.embedPng(overlayDataUrl);
+
+        page.drawImage(embeddedPng, {
+          x: 0,
+          y: 0,
+          width: pWidth,
+          height: pHeight,
+        });
+      }
+    }
+  }
+
+  const pdfBytes = await pdfDoc.save();
+  return new Blob([pdfBytes as BlobPart], { type: 'application/pdf' });
 }
