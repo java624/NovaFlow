@@ -71,9 +71,8 @@ export default function PdfTeacherReviewCanvas({
 
     async function loadPdf() {
       try {
-        const { getPdfJs } = await import('@/lib/pdf-utils');
-        const pdfjsLib = await getPdfJs();
-        const doc = await pdfjsLib.getDocument(pdfUrl).promise;
+        const { loadPdfDocument } = await import('@/lib/pdf-utils');
+        const doc = await loadPdfDocument(pdfUrl);
         if (isMounted) {
           setPdfDoc(doc);
           setTotalPages(doc.numPages);
@@ -407,6 +406,7 @@ export default function PdfTeacherReviewCanvas({
         currentPage={currentPage}
         totalPages={totalPages}
         zoomScale={zoomScale}
+        showSidebar={false}
         canUndo={undoStack.length > 1}
         canRedo={redoStack.length > 0}
         onToolChange={(tool) => {
@@ -424,6 +424,7 @@ export default function PdfTeacherReviewCanvas({
           saveCurrentPageState();
           setZoomScale(zoom);
         }}
+        onToggleSidebar={() => {}}
         onUndo={handleUndo}
         onRedo={handleRedo}
         onClear={handleClear}

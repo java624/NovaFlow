@@ -14,7 +14,8 @@ export function isPdfUrl(url?: string | null): boolean {
 export async function getPdfJs() {
   const pdfjsLib = await import('pdfjs-dist');
   if (typeof window !== 'undefined' && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    const version = pdfjsLib.version || '3.11.174';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${version}/build/pdf.worker.min.mjs`;
   }
   return pdfjsLib;
 }
@@ -24,7 +25,11 @@ export async function getPdfJs() {
  */
 export async function loadPdfDocument(url: string) {
   const pdfjsLib = await getPdfJs();
-  const loadingTask = pdfjsLib.getDocument(url);
+  const loadingTask = pdfjsLib.getDocument({
+    url,
+    cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+    cMapPacked: true,
+  });
   return await loadingTask.promise;
 }
 
@@ -66,4 +71,30 @@ export async function renderPdfPageToCanvas(
     width: Math.floor(viewport.width),
     height: Math.floor(viewport.height),
   };
+}
+
+/**
+ * Render thumbnail for a PDF page
+ */
+export async function renderPdfThumbnail(
+  pdfDoc: any,
+  pageNumber: number,
+  canvas: HTMLCanvasElement,
+  thumbWidth = 120
+) {
+  const page = await pdfDoc.getPage(pageNumber);
+  const unscaledViewport = page.getViewport({ scale: 1.0 });
+  const scale = thumbWidth / unscaledViewport.width;
+  const viewport = page.getViewport({ scale });
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  canvas.width = Math.floor(viewport.width);
+  canvas.height = Math.floor(viewport.height);
+
+  await page.render({
+    canvasContext: ctx,
+    viewport,
+  }).promise;
 }

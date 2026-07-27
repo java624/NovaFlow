@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { PdfTool, PdfHomeworkCanvasProps } from './types';
+import { PdfTool, PdfHomeworkCanvasProps, PdfTextAnnotation } from './types';
 import { PdfCanvasToolbar } from './PdfCanvasToolbar';
-import { isPdfUrl, renderPdfPageToCanvas } from '@/lib/pdf-utils';
+import { renderPdfPageToCanvas, renderPdfThumbnail } from '@/lib/pdf-utils';
 
 export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHomeworkCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
   const pdfCanvasRef = useRef<HTMLCanvasElement>(null);
   const drawCanvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -16,6 +15,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
   const [totalPages, setTotalPages] = useState(1);
   const [zoomScale, setZoomScale] = useState(1.25);
   const [loading, setLoading] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(true);
 
   const [currentTool, setCurrentTool] = useState<PdfTool>('brush');
   const [drawColor, setDrawColor] = useState('#dc2626');
@@ -23,33 +23,35 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Interactive Text Annotations per page
+  const [textAnnotations, setTextAnnotations] = useState<{ [page: number]: PdfTextAnnotation[] }>({});
+  const [activeTextId, setActiveTextId] = useState<string | null>(null);
+
   const isDrawingRef = useRef(false);
   const lastPointRef = useRef<{ x: number; y: number } | null>(null);
-  const activeTextarea = useRef<HTMLTextAreaElement | null>(null);
 
-  // Per-page annotations storage (data URLs of drawing layer)
+  // Page drawings data URLs (png)
   const pageDrawingsRef = useRef<{ [page: number]: string }>({});
   const pageUndoStacksRef = useRef<{ [page: number]: string[] }>({});
   const pageRedoStacksRef = useRef<{ [page: number]: string[] }>({});
 
-  const storageKey = `pdf_hw_draft_${homeworkId}`;
+  const storageKey = `pdf_hw_draft_v2_${homeworkId}`;
 
-  // ─── 1. Load Draft from localStorage ───────────────────────────────────────
+  // ─── 1. Load Draft ──────────────────────────────────────────────────────────
   useEffect(() => {
     try {
       const savedDraft = localStorage.getItem(storageKey);
       if (savedDraft) {
         const parsed = JSON.parse(savedDraft);
-        if (parsed && typeof parsed === 'object') {
-          pageDrawingsRef.current = parsed;
-        }
+        if (parsed?.drawings) pageDrawingsRef.current = parsed.drawings;
+        if (parsed?.texts) setTextAnnotations(parsed.texts);
       }
     } catch (e) {
       console.warn('Could not load draft:', e);
     }
   }, [storageKey]);
 
-  // Save current page state to memory & localStorage
+  // Save current page state
   const saveCurrentPageState = useCallback(() => {
     const drawCanvas = drawCanvasRef.current;
     if (!drawCanvas) return;
@@ -67,11 +69,15 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
     pageRedoStacksRef.current[currentPage] = [];
 
     try {
-      localStorage.setItem(storageKey, JSON.stringify(pageDrawingsRef.current));
-    } catch (e) {
-      console.warn('Storage full/error:', e);
-    }
-  }, [currentPage, storageKey]);
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({
+          drawings: pageDrawingsRef.current,
+          texts: textAnnotations,
+        })
+      );
+    } catch (e) {}
+  }, [currentPage, storageKey, textAnnotations]);
 
   // ─── 2. Load PDF Document ──────────────────────────────────────────────────
   useEffect(() => {
@@ -80,9 +86,8 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
 
     async function loadPdf() {
       try {
-        const { getPdfJs } = await import('@/lib/pdf-utils');
-        const pdfjsLib = await getPdfJs();
-        const doc = await pdfjsLib.getDocument(pdfUrl).promise;
+        const { loadPdfDocument } = await import('@/lib/pdf-utils');
+        const doc = await loadPdfDocument(pdfUrl);
         if (isMounted) {
           setPdfDoc(doc);
           setTotalPages(doc.numPages);
@@ -95,7 +100,6 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
     }
 
     if (pdfUrl) loadPdf();
-
     return () => {
       isMounted = false;
     };
@@ -116,7 +120,6 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
         zoomScale
       );
 
-      // Match drawing canvas size with PDF canvas
       const outputScale = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
       drawCanvas.width = Math.floor(dimensions.width * outputScale);
       drawCanvas.height = Math.floor(dimensions.height * outputScale);
@@ -126,16 +129,12 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
       const ctx = drawCanvas.getContext('2d');
       if (ctx) {
         ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
-        // Restore drawing for current page if exists
         const savedPageData = pageDrawingsRef.current[currentPage];
         if (savedPageData) {
           const img = new Image();
-          img.onload = () => {
-            ctx.drawImage(img, 0, 0);
-          };
+          img.onload = () => ctx.drawImage(img, 0, 0);
           img.src = savedPageData;
         } else {
-          // Initial empty state for undo stack
           saveCurrentPageState();
         }
       }
@@ -148,7 +147,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
     renderPage();
   }, [renderPage]);
 
-  // ─── 4. Drawing Logic ──────────────────────────────────────────────────────
+  // ─── Coords Calculation ───────────────────────────────────────────────────
   const getCanvasCoords = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const canvas = drawCanvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
@@ -161,78 +160,74 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
     };
   };
 
-  const finalizeLiveText = useCallback(() => {
-    if (!activeTextarea.current || !drawCanvasRef.current) return;
-    const textarea = activeTextarea.current;
-    const text = textarea.value.trim();
-    const x = parseFloat(textarea.dataset.canvasX || '0');
-    const y = parseFloat(textarea.dataset.canvasY || '0');
-    const color = textarea.dataset.color || '#dc2626';
+  // ─── Stamps Rendering Helper ──────────────────────────────────────────────
+  const drawStamp = (type: string, x: number, y: number) => {
+    const drawCanvas = drawCanvasRef.current;
+    const ctx = drawCanvas?.getContext('2d');
+    if (!ctx) return;
 
-    textarea.remove();
-    activeTextarea.current = null;
+    ctx.save();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = drawColor;
+    ctx.strokeStyle = drawColor;
+    ctx.lineWidth = Math.max(3, brushSize);
 
-    if (text) {
-      const ctx = drawCanvasRef.current.getContext('2d');
-      if (ctx) {
-        const fontSize = Math.max(16, brushSize * 4);
-        ctx.font = `bold ${fontSize}px sans-serif`;
-        ctx.fillStyle = color;
-        ctx.textBaseline = 'top';
-
-        const lines = text.split('\n');
-        lines.forEach((line, index) => {
-          ctx.fillText(line, x, y + index * (fontSize * 1.2));
-        });
-        saveCurrentPageState();
-      }
+    if (type === 'stamp_check') {
+      ctx.font = `bold ${brushSize * 8 + 16}px sans-serif`;
+      ctx.fillText('✔', x - 10, y + 10);
+    } else if (type === 'stamp_cross') {
+      ctx.font = `bold ${brushSize * 8 + 16}px sans-serif`;
+      ctx.fillText('✖', x - 10, y + 10);
+    } else if (type === 'stamp_circle') {
+      const radiusX = brushSize * 6 + 15;
+      const radiusY = brushSize * 4 + 10;
+      ctx.beginPath();
+      ctx.ellipse(x, y, radiusX, radiusY, 0, 0, 2 * Math.PI);
+      ctx.stroke();
+    } else if (type === 'stamp_arrow') {
+      const len = brushSize * 6 + 30;
+      ctx.beginPath();
+      ctx.moveTo(x - len, y);
+      ctx.lineTo(x, y);
+      ctx.lineTo(x - 10, y - 8);
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 10, y + 8);
+      ctx.stroke();
     }
-  }, [brushSize, saveCurrentPageState]);
+    ctx.restore();
+    saveCurrentPageState();
+  };
 
+  // ─── Pointer Handling ─────────────────────────────────────────────────────
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (currentTool === 'hand') return;
-    if (activeTextarea.current) {
-      finalizeLiveText();
-      return;
-    }
-
     const coords = getCanvasCoords(e);
 
+    // Text Tool
     if (currentTool === 'text') {
-      const canvas = drawCanvasRef.current;
-      if (!canvas) return;
-      const rect = canvas.getBoundingClientRect();
-      const clickClientX = e.clientX;
-      const clickClientY = e.clientY;
-
-      const textarea = document.createElement('textarea');
-      textarea.className = 'pdf-live-textarea';
-      textarea.style.position = 'fixed';
-      textarea.style.left = `${clickClientX}px`;
-      textarea.style.top = `${clickClientY}px`;
-      textarea.style.color = drawColor;
-      textarea.style.fontSize = `${Math.max(14, brushSize * 3)}px`;
-
-      textarea.dataset.canvasX = String(coords.x);
-      textarea.dataset.canvasY = String(coords.y);
-      textarea.dataset.color = drawColor;
-
-      textarea.onkeydown = (evt) => {
-        if (evt.key === 'Enter' && !evt.shiftKey) {
-          evt.preventDefault();
-          finalizeLiveText();
-        } else if (evt.key === 'Escape') {
-          textarea.remove();
-          activeTextarea.current = null;
-        }
+      const newAnn: PdfTextAnnotation = {
+        id: `txt_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        x: coords.x,
+        y: coords.y,
+        text: 'Текст...',
+        color: drawColor,
+        fontSize: Math.max(14, brushSize * 4),
       };
-
-      document.body.appendChild(textarea);
-      textarea.focus();
-      activeTextarea.current = textarea;
+      setTextAnnotations((prev) => ({
+        ...prev,
+        [currentPage]: [...(prev[currentPage] || []), newAnn],
+      }));
+      setActiveTextId(newAnn.id);
       return;
     }
 
+    // Stamps
+    if (currentTool.startsWith('stamp_')) {
+      drawStamp(currentTool, coords.x, coords.y);
+      return;
+    }
+
+    // Drawing / Highlighter / Eraser
     isDrawingRef.current = true;
     lastPointRef.current = coords;
 
@@ -244,7 +239,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!isDrawingRef.current || currentTool === 'hand' || currentTool === 'text') return;
+    if (!isDrawingRef.current || currentTool === 'hand' || currentTool === 'text' || currentTool.startsWith('stamp_')) return;
     const canvas = drawCanvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!ctx || !lastPointRef.current) return;
@@ -260,12 +255,11 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
       ctx.lineWidth = brushSize * 2;
     } else if (currentTool === 'highlighter') {
       ctx.globalCompositeOperation = 'source-over';
-      // Semi-transparent highlight
-      ctx.strokeStyle = drawColor.length === 7 ? `${drawColor}66` : drawColor;
-      ctx.lineWidth = brushSize * 5;
+      ctx.strokeStyle = drawColor.length === 7 ? `${drawColor}55` : drawColor;
+      ctx.lineWidth = brushSize * 6;
     } else if (currentTool === 'eraser') {
       ctx.globalCompositeOperation = 'destination-out';
-      ctx.lineWidth = brushSize * 6;
+      ctx.lineWidth = brushSize * 8;
     }
 
     ctx.beginPath();
@@ -284,9 +278,26 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
     }
   };
 
-  // ─── 5. Undo / Redo / Clear Page ───────────────────────────────────────────
+  // ─── Text Annotation Editing Helpers ─────────────────────────────────────
+  const updateTextAnnotation = (id: string, text: string) => {
+    setTextAnnotations((prev) => ({
+      ...prev,
+      [currentPage]: (prev[currentPage] || []).map((ann) =>
+        ann.id === id ? { ...ann, text } : ann
+      ),
+    }));
+  };
+
+  const deleteTextAnnotation = (id: string) => {
+    setTextAnnotations((prev) => ({
+      ...prev,
+      [currentPage]: (prev[currentPage] || []).filter((ann) => ann.id !== id),
+    }));
+    setActiveTextId(null);
+  };
+
+  // ─── Undo / Redo / Clear Page ───────────────────────────────────────────────
   const handleUndo = () => {
-    if (activeTextarea.current) finalizeLiveText();
     const undoStack = pageUndoStacksRef.current[currentPage] || [];
     const redoStack = pageRedoStacksRef.current[currentPage] || [];
 
@@ -304,14 +315,10 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
         img.onload = () => ctx.drawImage(img, 0, 0);
         img.src = prevState;
       }
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(pageDrawingsRef.current));
-      } catch (e) {}
     }
   };
 
   const handleRedo = () => {
-    if (activeTextarea.current) finalizeLiveText();
     const undoStack = pageUndoStacksRef.current[currentPage] || [];
     const redoStack = pageRedoStacksRef.current[currentPage] || [];
 
@@ -328,9 +335,6 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
         img.onload = () => ctx.drawImage(img, 0, 0);
         img.src = state;
       }
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(pageDrawingsRef.current));
-      } catch (e) {}
     }
   };
 
@@ -342,39 +346,51 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
         ctx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
         saveCurrentPageState();
       }
+      setTextAnnotations((prev) => ({ ...prev, [currentPage]: [] }));
     }
   };
 
   // ─── 6. Save & Submit Response ─────────────────────────────────────────────
   const handleSave = async () => {
-    if (activeTextarea.current) finalizeLiveText();
     setIsSaving(true);
 
     try {
       saveCurrentPageState();
       const pdfCanvas = pdfCanvasRef.current;
       const drawCanvas = drawCanvasRef.current;
-      if (!pdfCanvas || !drawCanvas) throw new Error('Canvas elements not available');
+      if (!pdfCanvas || !drawCanvas) throw new Error('Canvas error');
 
-      // Create composite canvas of current active view
+      // Burn text annotations onto draw canvas before export
+      const drawCtx = drawCanvas.getContext('2d');
+      if (drawCtx) {
+        const pageTexts = textAnnotations[currentPage] || [];
+        pageTexts.forEach((ann) => {
+          drawCtx.font = `bold ${ann.fontSize}px sans-serif`;
+          drawCtx.fillStyle = ann.color;
+          drawCtx.textBaseline = 'top';
+          const lines = ann.text.split('\n');
+          lines.forEach((l, idx) => {
+            drawCtx.fillText(l, ann.x, ann.y + idx * (ann.fontSize * 1.2));
+          });
+        });
+      }
+
+      // Create composite canvas of current view
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = pdfCanvas.width;
       tempCanvas.height = pdfCanvas.height;
       const tCtx = tempCanvas.getContext('2d');
       if (!tCtx) throw new Error('Context error');
 
-      // Fill white background
       tCtx.fillStyle = '#ffffff';
       tCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-      // Draw PDF page & drawing layer
       tCtx.drawImage(pdfCanvas, 0, 0);
       tCtx.drawImage(drawCanvas, 0, 0);
 
       const blob = await new Promise<Blob | null>((resolve) =>
         tempCanvas.toBlob(resolve, 'image/png')
       );
-      if (!blob) throw new Error('Failed to create composite image');
+      if (!blob) throw new Error('Failed to render output image');
 
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
@@ -407,7 +423,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
       onSave?.();
     } catch (err: any) {
       console.error('PDF save error:', err);
-      alert(`❌ Помилка при збереженні: ${err?.message || err}`);
+      alert(`❌ Помилка збереження: ${err?.message || err}`);
     } finally {
       setIsSaving(false);
     }
@@ -415,6 +431,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
 
   const undoStack = pageUndoStacksRef.current[currentPage] || [];
   const redoStack = pageRedoStacksRef.current[currentPage] || [];
+  const pageTexts = textAnnotations[currentPage] || [];
 
   return (
     <div
@@ -426,7 +443,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
       {/* ── Заголовок ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-purple-50 to-indigo-50 border-b border-gray-200">
         <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
-          <span>📄</span> Інтерактивний PDF-примітчик
+          <span>📄</span> Професійний PDF-редактор завдань
         </h3>
         <button
           type="button"
@@ -445,16 +462,13 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
         currentPage={currentPage}
         totalPages={totalPages}
         zoomScale={zoomScale}
+        showSidebar={showSidebar}
         canUndo={undoStack.length > 1}
         canRedo={redoStack.length > 0}
-        onToolChange={(tool) => {
-          if (activeTextarea.current) finalizeLiveText();
-          setCurrentTool(tool);
-        }}
+        onToolChange={(tool) => setCurrentTool(tool)}
         onColorChange={setDrawColor}
         onSizeChange={setBrushSize}
         onPageChange={(page) => {
-          if (activeTextarea.current) finalizeLiveText();
           saveCurrentPageState();
           setCurrentPage(page);
         }}
@@ -462,49 +476,112 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
           saveCurrentPageState();
           setZoomScale(zoom);
         }}
+        onToggleSidebar={() => setShowSidebar(!showSidebar)}
         onUndo={handleUndo}
         onRedo={handleRedo}
         onClear={handleClear}
       />
 
-      {/* ── Текстова підказка ─────────────────────────────────────────────── */}
-      {currentTool === 'text' && (
-        <div className="px-4 py-1.5 bg-purple-50 border-b border-purple-100 text-xs text-purple-700 flex items-center gap-1.5">
-          💡 Клацніть у будь-якому місці PDF сторінки, щоб ввести відповідь. Enter — зберегти.
-        </div>
-      )}
-
-      {/* ── Canvas Полотно PDF ────────────────────────────────────────────── */}
-      <div
-        ref={wrapperRef}
-        className="relative flex-1 overflow-auto bg-gray-100 p-4 min-h-[450px] flex justify-center items-start touch-none"
-        style={{ cursor: currentTool === 'hand' ? 'grab' : currentTool === 'text' ? 'text' : 'crosshair' }}
-      >
-        {loading && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 z-20">
-            <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mb-2" />
-            <p className="text-sm font-semibold text-gray-600">Завантаження PDF документа...</p>
+      {/* ── Основна робоча область (Сайдбар + Canvas) ────────────────────── */}
+      <div className="flex flex-1 overflow-hidden relative bg-gray-100 min-h-[500px]">
+        {/* Сайдбар мініатюр сторінок */}
+        {showSidebar && pdfDoc && (
+          <div className="w-36 bg-gray-50 border-r border-gray-200 p-2 overflow-y-auto flex flex-col gap-3 select-none">
+            <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center mb-1">
+              Сторінки
+            </p>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+              <button
+                key={pageNum}
+                type="button"
+                onClick={() => {
+                  saveCurrentPageState();
+                  setCurrentPage(pageNum);
+                }}
+                className={`p-2 rounded-xl border text-center transition-all flex flex-col items-center gap-1 hover:shadow-sm ${
+                  currentPage === pageNum
+                    ? 'border-purple-600 bg-purple-50 ring-2 ring-purple-500/20'
+                    : 'border-gray-200 bg-white hover:border-gray-300'
+                }`}
+              >
+                <span className="text-xs font-bold text-gray-700">Стор. {pageNum}</span>
+              </button>
+            ))}
           </div>
         )}
 
-        <div className="relative shadow-lg border border-gray-300 rounded-lg overflow-hidden bg-white">
-          {/* Canvas шари */}
-          <canvas ref={pdfCanvasRef} className="block" />
-          <canvas
-            ref={drawCanvasRef}
-            className="absolute top-0 left-0 block"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
-          />
+        {/* Canvas Полотно PDF */}
+        <div
+          className="relative flex-1 overflow-auto p-6 flex justify-center items-start touch-none"
+          style={{ cursor: currentTool === 'hand' ? 'grab' : currentTool === 'text' ? 'text' : 'crosshair' }}
+        >
+          {loading && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/80 z-20">
+              <div className="w-8 h-8 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mb-2" />
+              <p className="text-sm font-semibold text-gray-600">Завантаження PDF документа...</p>
+            </div>
+          )}
+
+          <div className="relative shadow-xl border border-gray-300 rounded-lg overflow-hidden bg-white">
+            {/* Background PDF Canvas */}
+            <canvas ref={pdfCanvasRef} className="block" />
+
+            {/* Drawing Layer Canvas */}
+            <canvas
+              ref={drawCanvasRef}
+              className="absolute top-0 left-0 block"
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
+            />
+
+            {/* Interactive Text Box Annotations Layer */}
+            {pageTexts.map((ann) => {
+              const drawCanvas = drawCanvasRef.current;
+              const scaleRatio = drawCanvas ? drawCanvas.offsetWidth / drawCanvas.width : 1;
+              const leftPx = ann.x * scaleRatio;
+              const topPx = ann.y * scaleRatio;
+
+              return (
+                <div
+                  key={ann.id}
+                  className="absolute z-30 group"
+                  style={{ left: `${leftPx}px`, top: `${topPx}px` }}
+                >
+                  <div className="relative flex items-center">
+                    <textarea
+                      value={ann.text}
+                      onChange={(e) => updateTextAnnotation(ann.id, e.target.value)}
+                      onFocus={() => setActiveTextId(ann.id)}
+                      className="bg-transparent font-bold border border-dashed border-purple-400 focus:border-purple-600 rounded px-1.5 py-0.5 outline-none resize-y min-w-[80px]"
+                      style={{
+                        color: ann.color,
+                        fontSize: `${ann.fontSize * scaleRatio}px`,
+                        lineHeight: 1.2,
+                      }}
+                      rows={ann.text.split('\n').length || 1}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => deleteTextAnnotation(ann.id)}
+                      className="hidden group-hover:flex ml-1 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] items-center justify-center shadow-md hover:bg-red-600"
+                      title="Видалити текст"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* ── Нижнє меню збереження ─────────────────────────────────────────── */}
       <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
         <span className="text-xs text-gray-500 hidden sm:inline">
-          💾 Зміни зберігаються автоматично на сторінці
+          💾 Чернетка зберігається автоматично у вашому браузері
         </span>
         <button
           type="button"
@@ -519,22 +596,6 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
           )}
         </button>
       </div>
-
-      <style jsx global>{`
-        .pdf-live-textarea {
-          background: rgba(255, 255, 255, 0.95) !important;
-          border: 1.5px dashed rgba(147, 51, 234, 0.8);
-          border-radius: 6px;
-          padding: 4px 8px;
-          font-family: sans-serif;
-          font-weight: bold;
-          outline: none !important;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-          resize: none;
-          z-index: 9999;
-          min-width: 100px;
-        }
-      `}</style>
     </div>
   );
 }
