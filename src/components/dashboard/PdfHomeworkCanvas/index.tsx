@@ -42,7 +42,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
   const pageUndoStacksRef = useRef<{ [page: number]: string[] }>({});
   const pageRedoStacksRef = useRef<{ [page: number]: string[] }>({});
 
-  const storageKey = `pdf_hw_draft_v3_${homeworkId}`;
+  const storageKey = `pdf_hw_draft_v4_${homeworkId}`;
 
   // ─── 1. Load Draft ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -207,33 +207,10 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
     saveCurrentPageState();
   };
 
-  // ─── Pointer Handling ─────────────────────────────────────────────────────
+  // ─── Canvas Pointer Handling (Drawing & Stamps ONLY) ──────────────────────
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (currentTool === 'hand') return;
+    if (currentTool === 'hand' || currentTool === 'text') return;
     const coords = getCanvasCoords(e);
-    const drawCanvas = drawCanvasRef.current;
-
-    // Text Tool: Place text box
-    if (currentTool === 'text' && drawCanvas) {
-      const xRatio = Math.max(0.01, Math.min(0.95, coords.x / drawCanvas.width));
-      const yRatio = Math.max(0.01, Math.min(0.95, coords.y / drawCanvas.height));
-
-      const newAnn: PdfTextAnnotation = {
-        id: `txt_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-        xRatio,
-        yRatio,
-        text: '',
-        color: drawColor,
-        fontSize: Math.max(16, brushSize * 4),
-      };
-
-      setTextAnnotations((prev) => ({
-        ...prev,
-        [currentPage]: [...(prev[currentPage] || []), newAnn],
-      }));
-      setActiveTextId(newAnn.id);
-      return;
-    }
 
     // Stamps
     if (currentTool.startsWith('stamp_')) {
@@ -292,6 +269,33 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
     }
   };
 
+  // ─── Page Container Click (Creating Text Annotation) ──────────────────────
+  const handlePageClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (currentTool !== 'text' || !pageContainerRef.current) {
+      setActiveTextId(null);
+      return;
+    }
+
+    const rect = pageContainerRef.current.getBoundingClientRect();
+    const xRatio = Math.max(0.01, Math.min(0.92, (e.clientX - rect.left) / rect.width));
+    const yRatio = Math.max(0.01, Math.min(0.92, (e.clientY - rect.top) / rect.height));
+
+    const newAnn: PdfTextAnnotation = {
+      id: `txt_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      xRatio,
+      yRatio,
+      text: '',
+      color: drawColor,
+      fontSize: Math.max(16, brushSize * 4),
+    };
+
+    setTextAnnotations((prev) => ({
+      ...prev,
+      [currentPage]: [...(prev[currentPage] || []), newAnn],
+    }));
+    setActiveTextId(newAnn.id);
+  };
+
   // ─── Text Helpers ──────────────────────────────────────────────────────────
   const updateTextAnnotation = (id: string, text: string) => {
     setTextAnnotations((prev) => ({
@@ -306,7 +310,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
     setTextAnnotations((prev) => ({
       ...prev,
       [currentPage]: (prev[currentPage] || []).map((ann) =>
-        ann.id === id ? { ...ann, fontSize: Math.max(10, Math.min(60, ann.fontSize + delta)) } : ann
+        ann.id === id ? { ...ann, fontSize: Math.max(12, Math.min(60, ann.fontSize + delta)) } : ann
       ),
     }));
   };
@@ -401,7 +405,6 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
           const xPx = ann.xRatio * drawCanvas.width;
           const yPx = ann.yRatio * drawCanvas.height;
 
-          // Scale font size according to canvas pixel width
           const scaleFactor = drawCanvas.width / pageDimensions.width;
           const renderFontSize = Math.max(14, ann.fontSize * scaleFactor);
 
@@ -506,7 +509,10 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
         showSidebar={showSidebar}
         canUndo={undoStack.length > 1}
         canRedo={redoStack.length > 0}
-        onToolChange={(tool) => setCurrentTool(tool)}
+        onToolChange={(tool) => {
+          setActiveTextId(null);
+          setCurrentTool(tool);
+        }}
         onColorChange={setDrawColor}
         onSizeChange={setBrushSize}
         onPageChange={(page) => {
@@ -525,8 +531,8 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
 
       {/* ── Підказка для тексту ─────────────────────────────────────────────── */}
       {currentTool === 'text' && (
-        <div className="px-4 py-2 bg-purple-50 border-b border-purple-100 text-xs font-medium text-purple-700 flex items-center gap-2">
-          <span>💡</span> Торкніться будь-якого місця PDF-сторінки, щоб ввести відповідь.
+        <div className="px-4 py-2 bg-purple-50 border-b border-purple-100 text-xs font-semibold text-purple-700 flex items-center gap-2">
+          <span>💬</span> Клацніть у будь-якому місці PDF-сторінки, щоб ввести відповідь.
         </div>
       )}
 
@@ -558,10 +564,10 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
           </div>
         )}
 
-        {/* Canvas Полотно PDF */}
+        {/* Outer Scroll Container */}
         <div
-          onClick={() => setActiveTextId(null)}
           className="relative flex-1 overflow-auto p-6 flex justify-center items-start"
+          onClick={() => setActiveTextId(null)}
           style={{ cursor: currentTool === 'hand' ? 'grab' : currentTool === 'text' ? 'text' : 'crosshair' }}
         >
           {loading && (
@@ -574,9 +580,9 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
           {/* Wrapper container for PDF page & annotation layers */}
           <div
             ref={pageContainerRef}
-            className="relative shadow-2xl border border-gray-300 rounded-lg overflow-hidden bg-white select-none"
+            onClick={handlePageClick}
+            className="relative shadow-2xl border border-gray-300 rounded-lg bg-white select-none transition-all"
             style={{ width: pageDimensions.width, height: pageDimensions.height }}
-            onClick={(e) => e.stopPropagation()}
           >
             {/* Background PDF Canvas */}
             <canvas ref={pdfCanvasRef} className="block w-full h-full" />
@@ -584,7 +590,9 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
             {/* Drawing Layer Canvas */}
             <canvas
               ref={drawCanvasRef}
-              className="absolute top-0 left-0 block w-full h-full"
+              className={`absolute top-0 left-0 block w-full h-full ${
+                currentTool === 'text' ? 'pointer-events-none' : 'pointer-events-auto'
+              }`}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
@@ -608,9 +616,10 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
                       setActiveTextId(ann.id);
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
                   >
                     {isActive ? (
-                      <div className="relative flex flex-col bg-white border-2 border-purple-600 rounded-xl p-2 shadow-2xl ring-4 ring-purple-500/20 min-w-[180px] z-50">
+                      <div className="relative flex flex-col bg-white border-2 border-purple-600 rounded-xl p-2 shadow-2xl ring-4 ring-purple-500/20 min-w-[200px] z-50">
                         {/* Control toolbar for active text box */}
                         <div className="flex items-center justify-between gap-1 mb-1 pb-1 border-b border-gray-100 text-xs select-none">
                           <div className="flex items-center gap-1">
@@ -673,13 +682,9 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
                         <textarea
                           autoFocus
                           value={ann.text}
-                          placeholder="Напишіть відповідь..."
+                          placeholder="Введіть відповідь..."
                           onChange={(e) => updateTextAnnotation(ann.id, e.target.value)}
-                          onBlur={() => {
-                            if (!ann.text.trim()) {
-                              deleteTextAnnotation(ann.id);
-                            }
-                          }}
+                          onKeyDown={(e) => e.stopPropagation()}
                           className="w-full bg-transparent font-bold outline-none resize-y text-gray-900 leading-snug"
                           style={{
                             color: ann.color,
