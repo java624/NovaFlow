@@ -3,6 +3,8 @@
 import { Homework, StudentProfile } from './types';
 import { formatDate } from './DashboardTabHome';
 import HomeworkCanvas from './HomeworkCanvas';
+import PdfHomeworkCanvas from './PdfHomeworkCanvas';
+import { isPdfUrl } from '@/lib/pdf-utils';
 
 interface HomeworkTabProps {
   profile: StudentProfile | null;
@@ -21,6 +23,9 @@ export default function HomeworkTab({
   currentImageUrl, currentHomeworkId,
   onLoadHomeworks, onSelectHomework, onCloseReview,
 }: HomeworkTabProps) {
+  const isPdf = isPdfUrl(currentImageUrl);
+  const isReviewedPdf = isPdfUrl(reviewedHomework?.student_response_url);
+
   return (
     <div className="space-y-6 animate-fadeIn">
       
@@ -54,7 +59,7 @@ export default function HomeworkTab({
                   }
                 }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-xl shadow-md hover:shadow-lg transition-all">
-                📝 Відкрити інтерактивну дошку
+                {isPdf ? '📄 Відкрити PDF-редактор' : '📝 Відкрити інтерактивну дошку'}
               </button>
             </div>
           )}
@@ -64,11 +69,19 @@ export default function HomeworkTab({
       {/* 🎨 ІНТЕРАКТИВНА ДОШКА (КАНВАС) */}
       {currentImageUrl && currentHomeworkId && (
         <div id="homework-editor-zone" className="hidden">
-          <HomeworkCanvas
-            imageUrl={currentImageUrl}
-            homeworkId={currentHomeworkId}
-            onSave={() => { if (profile) onLoadHomeworks(profile.id); }}
-          />
+          {isPdf ? (
+            <PdfHomeworkCanvas
+              pdfUrl={currentImageUrl}
+              homeworkId={currentHomeworkId}
+              onSave={() => { if (profile) onLoadHomeworks(profile.id); }}
+            />
+          ) : (
+            <HomeworkCanvas
+              imageUrl={currentImageUrl}
+              homeworkId={currentHomeworkId}
+              onSave={() => { if (profile) onLoadHomeworks(profile.id); }}
+            />
+          )}
         </div>
       )}
 
@@ -79,12 +92,20 @@ export default function HomeworkTab({
             <h3 className="font-bold text-green-600 flex items-center gap-2">📋 Результат перевірки вчителем</h3>
             <button onClick={onCloseReview} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
           </div>
-          <p className="text-sm text-gray-500 mb-4">Тут ви можете побачити виправлення вчителя на зображенні та його зауваження.</p>
+          <p className="text-sm text-gray-500 mb-4">Тут ви можете побачити виправлення вчителя та його зауваження.</p>
           {reviewedHomework.student_response_url && (
             <div className="bg-gray-50 rounded-xl p-2 mb-4 flex items-center justify-center overflow-hidden max-h-[500px] border border-dashed border-gray-200">
-              <img src={`${reviewedHomework.student_response_url}?t=${Date.now()}`}
-                alt="Перевірене завдання"
-                className="max-w-full max-h-[480px] object-contain rounded-lg" />
+              {isReviewedPdf ? (
+                <iframe
+                  src={`${reviewedHomework.student_response_url}#toolbar=0`}
+                  title="Перевірене PDF завдання"
+                  className="w-full h-[450px] rounded-lg border-0"
+                />
+              ) : (
+                <img src={`${reviewedHomework.student_response_url}?t=${Date.now()}`}
+                  alt="Перевірене завдання"
+                  className="max-w-full max-h-[480px] object-contain rounded-lg" />
+              )}
             </div>
           )}
           <div className="bg-indigo-50 border-l-4 border-indigo-400 rounded-r-xl p-4 text-sm text-gray-700 whitespace-pre-line max-h-[250px] overflow-y-auto">

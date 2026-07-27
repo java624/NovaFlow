@@ -4,6 +4,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { StudentProfile, Homework, Lesson } from './types';
 import TeacherReviewCanvas from '@/components/dashboard/TeacherReviewCanvas';
+import PdfTeacherReviewCanvas from './PdfTeacherReviewCanvas';
+import { isPdfUrl } from '@/lib/pdf-utils';
 
 interface TeacherWorkspaceTabProps {
   selectedStudent: StudentProfile;
@@ -385,8 +387,8 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all resize-y" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Файл:</label>
-              <input type="file" accept="image/*" onChange={(e) => setHwFile(e.target.files?.[0] || null)}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Файл (зображення або PDF):</label>
+              <input type="file" accept="image/*,application/pdf,.pdf" onChange={(e) => setHwFile(e.target.files?.[0] || null)}
                 className="w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700" />
             </div>
             <div>
@@ -467,8 +469,13 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
             <h3 className="text-lg font-bold text-gray-900">🎯 Перевірка роботи</h3>
             <button onClick={closeTeacherReview} className="text-gray-400 hover:text-gray-700 text-2xl leading-none">✕</button>
           </div>
-          <TeacherReviewCanvas imageUrl={currentReviewImageUrl || ''} homeworkId={currentReviewHwId}
-            currentTitle={currentReviewTitle} currentComment={currentReviewComment} onSave={onReviewSaved} />
+          {isPdfUrl(currentReviewImageUrl) ? (
+            <PdfTeacherReviewCanvas pdfUrl={currentReviewImageUrl || ''} homeworkId={currentReviewHwId}
+              currentTitle={currentReviewTitle} currentComment={currentReviewComment} onSave={onReviewSaved} />
+          ) : (
+            <TeacherReviewCanvas imageUrl={currentReviewImageUrl || ''} homeworkId={currentReviewHwId}
+              currentTitle={currentReviewTitle} currentComment={currentReviewComment} onSave={onReviewSaved} />
+          )}
         </div>
       )}
 
@@ -484,7 +491,15 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
             {previewModal.desc && <p className="text-sm text-gray-600 mb-4 whitespace-pre-wrap bg-gray-50 rounded-xl p-4">{previewModal.desc}</p>}
             {previewModal.imgUrl && (
               <div className="bg-gray-100 rounded-xl p-2 flex items-center justify-center overflow-hidden max-h-[500px]">
-                <img src={previewModal.imgUrl} alt="" className="max-w-full max-h-[480px] object-contain rounded-lg" />
+                {isPdfUrl(previewModal.imgUrl) ? (
+                  <iframe
+                    src={`${previewModal.imgUrl}#toolbar=0`}
+                    title="PDF Перегляд"
+                    className="w-full h-[450px] rounded-lg border-0"
+                  />
+                ) : (
+                  <img src={previewModal.imgUrl} alt="" className="max-w-full max-h-[480px] object-contain rounded-lg" />
+                )}
               </div>
             )}
           </div>
