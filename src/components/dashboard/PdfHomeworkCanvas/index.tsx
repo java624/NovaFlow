@@ -3,17 +3,18 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { PdfTool, PdfHomeworkCanvasProps, PdfTextAnnotation } from './types';
 import { PdfCanvasToolbar } from './PdfCanvasToolbar';
-import { renderPdfPageToCanvas, renderPdfThumbnail } from '@/lib/pdf-utils';
+import { renderPdfPageToCanvas } from '@/lib/pdf-utils';
 
 export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHomeworkCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const pageContainerRef = useRef<HTMLDivElement>(null);
   const pdfCanvasRef = useRef<HTMLCanvasElement>(null);
   const drawCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [zoomScale, setZoomScale] = useState(1.25);
+  const [zoomScale, setZoomScale] = useState(1.2);
   const [loading, setLoading] = useState(true);
   const [showSidebar, setShowSidebar] = useState(true);
 
@@ -22,6 +23,12 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
   const [brushSize, setBrushSize] = useState(4);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Dimensions of current page in CSS pixels
+  const [pageDimensions, setPageDimensions] = useState<{ width: number; height: number }>({
+    width: 800,
+    height: 1100,
+  });
 
   // Interactive Text Annotations per page
   const [textAnnotations, setTextAnnotations] = useState<{ [page: number]: PdfTextAnnotation[] }>({});
@@ -35,7 +42,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
   const pageUndoStacksRef = useRef<{ [page: number]: string[] }>({});
   const pageRedoStacksRef = useRef<{ [page: number]: string[] }>({});
 
-  const storageKey = `pdf_hw_draft_v2_${homeworkId}`;
+  const storageKey = `pdf_hw_draft_v3_${homeworkId}`;
 
   // ─── 1. Load Draft ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -120,6 +127,8 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
         zoomScale
       );
 
+      setPageDimensions(dimensions);
+
       const outputScale = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
       drawCanvas.width = Math.floor(dimensions.width * outputScale);
       drawCanvas.height = Math.floor(dimensions.height * outputScale);
@@ -173,14 +182,14 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
     ctx.lineWidth = Math.max(3, brushSize);
 
     if (type === 'stamp_check') {
-      ctx.font = `bold ${brushSize * 8 + 16}px sans-serif`;
+      ctx.font = `bold ${brushSize * 8 + 20}px sans-serif`;
       ctx.fillText('✔', x - 10, y + 10);
     } else if (type === 'stamp_cross') {
-      ctx.font = `bold ${brushSize * 8 + 16}px sans-serif`;
+      ctx.font = `bold ${brushSize * 8 + 20}px sans-serif`;
       ctx.fillText('✖', x - 10, y + 10);
     } else if (type === 'stamp_circle') {
-      const radiusX = brushSize * 6 + 15;
-      const radiusY = brushSize * 4 + 10;
+      const radiusX = brushSize * 6 + 18;
+      const radiusY = brushSize * 4 + 12;
       ctx.beginPath();
       ctx.ellipse(x, y, radiusX, radiusY, 0, 0, 2 * Math.PI);
       ctx.stroke();
@@ -202,17 +211,22 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (currentTool === 'hand') return;
     const coords = getCanvasCoords(e);
+    const drawCanvas = drawCanvasRef.current;
 
-    // Text Tool
-    if (currentTool === 'text') {
+    // Text Tool: Place text box
+    if (currentTool === 'text' && drawCanvas) {
+      const xRatio = Math.max(0.01, Math.min(0.95, coords.x / drawCanvas.width));
+      const yRatio = Math.max(0.01, Math.min(0.95, coords.y / drawCanvas.height));
+
       const newAnn: PdfTextAnnotation = {
         id: `txt_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-        x: coords.x,
-        y: coords.y,
+        xRatio,
+        yRatio,
         text: '',
         color: drawColor,
         fontSize: Math.max(16, brushSize * 4),
       };
+
       setTextAnnotations((prev) => ({
         ...prev,
         [currentPage]: [...(prev[currentPage] || []), newAnn],
@@ -278,12 +292,30 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
     }
   };
 
-  // ─── Text Annotation Editing Helpers ─────────────────────────────────────
+  // ─── Text Helpers ──────────────────────────────────────────────────────────
   const updateTextAnnotation = (id: string, text: string) => {
     setTextAnnotations((prev) => ({
       ...prev,
       [currentPage]: (prev[currentPage] || []).map((ann) =>
         ann.id === id ? { ...ann, text } : ann
+      ),
+    }));
+  };
+
+  const updateTextFontSize = (id: string, delta: number) => {
+    setTextAnnotations((prev) => ({
+      ...prev,
+      [currentPage]: (prev[currentPage] || []).map((ann) =>
+        ann.id === id ? { ...ann, fontSize: Math.max(10, Math.min(60, ann.fontSize + delta)) } : ann
+      ),
+    }));
+  };
+
+  const updateTextColor = (id: string, color: string) => {
+    setTextAnnotations((prev) => ({
+      ...prev,
+      [currentPage]: (prev[currentPage] || []).map((ann) =>
+        ann.id === id ? { ...ann, color } : ann
       ),
     }));
   };
@@ -365,12 +397,21 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
       if (drawCtx) {
         const pageTexts = textAnnotations[currentPage] || [];
         pageTexts.forEach((ann) => {
-          drawCtx.font = `bold ${ann.fontSize}px sans-serif`;
+          if (!ann.text.trim()) return;
+          const xPx = ann.xRatio * drawCanvas.width;
+          const yPx = ann.yRatio * drawCanvas.height;
+
+          // Scale font size according to canvas pixel width
+          const scaleFactor = drawCanvas.width / pageDimensions.width;
+          const renderFontSize = Math.max(14, ann.fontSize * scaleFactor);
+
+          drawCtx.font = `bold ${renderFontSize}px sans-serif`;
           drawCtx.fillStyle = ann.color;
           drawCtx.textBaseline = 'top';
+
           const lines = ann.text.split('\n');
           lines.forEach((l, idx) => {
-            drawCtx.fillText(l, ann.x, ann.y + idx * (ann.fontSize * 1.2));
+            drawCtx.fillText(l, xPx, yPx + idx * (renderFontSize * 1.25));
           });
         });
       }
@@ -482,6 +523,13 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
         onClear={handleClear}
       />
 
+      {/* ── Підказка для тексту ─────────────────────────────────────────────── */}
+      {currentTool === 'text' && (
+        <div className="px-4 py-2 bg-purple-50 border-b border-purple-100 text-xs font-medium text-purple-700 flex items-center gap-2">
+          <span>💡</span> Торкніться будь-якого місця PDF-сторінки, щоб ввести відповідь.
+        </div>
+      )}
+
       {/* ── Основна робоча область (Сайдбар + Canvas) ────────────────────── */}
       <div className="flex flex-1 overflow-hidden relative bg-gray-100 min-h-[500px]">
         {/* Сайдбар мініатюр сторінок */}
@@ -513,7 +561,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
         {/* Canvas Полотно PDF */}
         <div
           onClick={() => setActiveTextId(null)}
-          className="relative flex-1 overflow-auto p-6 flex justify-center items-start touch-none"
+          className="relative flex-1 overflow-auto p-6 flex justify-center items-start"
           style={{ cursor: currentTool === 'hand' ? 'grab' : currentTool === 'text' ? 'text' : 'crosshair' }}
         >
           {loading && (
@@ -523,78 +571,161 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
             </div>
           )}
 
-          <div className="relative shadow-xl border border-gray-300 rounded-lg overflow-hidden bg-white">
+          {/* Wrapper container for PDF page & annotation layers */}
+          <div
+            ref={pageContainerRef}
+            className="relative shadow-2xl border border-gray-300 rounded-lg overflow-hidden bg-white select-none"
+            style={{ width: pageDimensions.width, height: pageDimensions.height }}
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Background PDF Canvas */}
-            <canvas ref={pdfCanvasRef} className="block" />
+            <canvas ref={pdfCanvasRef} className="block w-full h-full" />
 
             {/* Drawing Layer Canvas */}
             <canvas
               ref={drawCanvasRef}
-              className="absolute top-0 left-0 block"
+              className="absolute top-0 left-0 block w-full h-full"
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerLeave={handlePointerUp}
             />
 
-            {/* Interactive Text Box Annotations Layer */}
-            {pageTexts.map((ann) => {
-              const drawCanvas = drawCanvasRef.current;
-              const scaleRatio = drawCanvas ? drawCanvas.offsetWidth / drawCanvas.width : 1;
-              const leftPx = ann.x * scaleRatio;
-              const topPx = ann.y * scaleRatio;
-              const isActive = activeTextId === ann.id;
+            {/* Interactive Text Box Annotations Overlay */}
+            <div className="absolute inset-0 pointer-events-none z-30">
+              {pageTexts.map((ann) => {
+                const isActive = activeTextId === ann.id;
+                const leftPercent = ann.xRatio * 100;
+                const topPercent = ann.yRatio * 100;
 
-              return (
-                <div
-                  key={ann.id}
-                  className="absolute z-30 group"
-                  style={{ left: `${leftPx}px`, top: `${topPx}px` }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="relative flex items-center">
-                    <textarea
-                      autoFocus={isActive}
-                      value={ann.text}
-                      placeholder={isActive ? 'Введіть відповідь...' : ''}
-                      onChange={(e) => updateTextAnnotation(ann.id, e.target.value)}
-                      onFocus={() => setActiveTextId(ann.id)}
-                      onBlur={() => {
-                        if (!ann.text.trim()) {
-                          deleteTextAnnotation(ann.id);
-                        } else {
-                          setActiveTextId(null);
-                        }
-                      }}
-                      className={`font-bold transition-all outline-none resize-y ${
-                        isActive
-                          ? 'bg-white/95 border-2 border-dashed border-purple-600 rounded-lg px-2 py-1 shadow-xl ring-4 ring-purple-500/20 min-w-[140px]'
-                          : 'bg-transparent border border-transparent rounded px-1 py-0.5 cursor-pointer hover:border-purple-300/40 min-w-[40px]'
-                      }`}
-                      style={{
-                        color: ann.color,
-                        fontSize: `${ann.fontSize * scaleRatio}px`,
-                        lineHeight: 1.25,
-                      }}
-                      rows={Math.max(1, ann.text.split('\n').length)}
-                    />
-                    {isActive && (
-                      <button
-                        type="button"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          deleteTextAnnotation(ann.id);
+                return (
+                  <div
+                    key={ann.id}
+                    className="absolute pointer-events-auto transition-transform"
+                    style={{ left: `${leftPercent}%`, top: `${topPercent}%` }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveTextId(ann.id);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    {isActive ? (
+                      <div className="relative flex flex-col bg-white border-2 border-purple-600 rounded-xl p-2 shadow-2xl ring-4 ring-purple-500/20 min-w-[180px] z-50">
+                        {/* Control toolbar for active text box */}
+                        <div className="flex items-center justify-between gap-1 mb-1 pb-1 border-b border-gray-100 text-xs select-none">
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateTextFontSize(ann.id, -2);
+                              }}
+                              className="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 font-bold flex items-center justify-center text-gray-700"
+                              title="Зменшити шрифт"
+                            >
+                              -
+                            </button>
+                            <span className="text-[10px] font-semibold text-gray-500">
+                              {ann.fontSize}px
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                updateTextFontSize(ann.id, 2);
+                              }}
+                              className="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 font-bold flex items-center justify-center text-gray-700"
+                              title="Збільшити шрифт"
+                            >
+                              +
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {['#dc2626', '#2563eb', '#16a34a', '#000000'].map((c) => (
+                              <button
+                                key={c}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateTextColor(ann.id, c);
+                                }}
+                                className={`w-3.5 h-3.5 rounded-full border ${
+                                  ann.color === c ? 'scale-125 ring-1 ring-purple-500' : ''
+                                }`}
+                                style={{ backgroundColor: c }}
+                              />
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteTextAnnotation(ann.id);
+                            }}
+                            className="w-5 h-5 bg-red-50 text-red-600 rounded-full font-bold flex items-center justify-center hover:bg-red-100"
+                            title="Видалити"
+                          >
+                            ✕
+                          </button>
+                        </div>
+
+                        {/* Textarea */}
+                        <textarea
+                          autoFocus
+                          value={ann.text}
+                          placeholder="Напишіть відповідь..."
+                          onChange={(e) => updateTextAnnotation(ann.id, e.target.value)}
+                          onBlur={() => {
+                            if (!ann.text.trim()) {
+                              deleteTextAnnotation(ann.id);
+                            }
+                          }}
+                          className="w-full bg-transparent font-bold outline-none resize-y text-gray-900 leading-snug"
+                          style={{
+                            color: ann.color,
+                            fontSize: `${ann.fontSize}px`,
+                          }}
+                          rows={Math.max(1, ann.text.split('\n').length)}
+                        />
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!ann.text.trim()) {
+                              deleteTextAnnotation(ann.id);
+                            } else {
+                              setActiveTextId(null);
+                            }
+                          }}
+                          className="mt-1 w-full py-1 text-[11px] font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-lg shadow-sm"
+                        >
+                          ✓ Готово
+                        </button>
+                      </div>
+                    ) : (
+                      <div
+                        className="cursor-pointer group flex items-start"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveTextId(ann.id);
                         }}
-                        className="ml-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs font-bold flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
-                        title="Видалити цей текст"
                       >
-                        ✕
-                      </button>
+                        <p
+                          className="font-bold whitespace-pre-wrap leading-snug px-1 py-0.5 rounded border border-transparent group-hover:border-purple-300/50 group-hover:bg-purple-50/20"
+                          style={{
+                            color: ann.color,
+                            fontSize: `${ann.fontSize}px`,
+                          }}
+                        >
+                          {ann.text || <span className="italic text-gray-400 text-xs">(порожньо)</span>}
+                        </p>
+                      </div>
                     )}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

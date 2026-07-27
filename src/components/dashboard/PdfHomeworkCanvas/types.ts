@@ -2,11 +2,11 @@ export type PdfTool = 'brush' | 'highlighter' | 'text' | 'stamp_check' | 'stamp_
 
 export interface PdfTextAnnotation {
   id: string;
-  x: number; // percentage or scale-independent relative coord
-  y: number;
+  xRatio: number; // relative 0..1 to page width
+  yRatio: number; // relative 0..1 to page height
   text: string;
   color: string;
-  fontSize: number;
+  fontSize: number; // base font size in px
 }
 
 export interface PdfHomeworkCanvasProps {
