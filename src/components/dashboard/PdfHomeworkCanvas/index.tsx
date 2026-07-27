@@ -209,9 +209,9 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
         id: `txt_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
         x: coords.x,
         y: coords.y,
-        text: 'Текст...',
+        text: '',
         color: drawColor,
-        fontSize: Math.max(14, brushSize * 4),
+        fontSize: Math.max(16, brushSize * 4),
       };
       setTextAnnotations((prev) => ({
         ...prev,
@@ -512,6 +512,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
 
         {/* Canvas Полотно PDF */}
         <div
+          onClick={() => setActiveTextId(null)}
           className="relative flex-1 overflow-auto p-6 flex justify-center items-start touch-none"
           style={{ cursor: currentTool === 'hand' ? 'grab' : currentTool === 'text' ? 'text' : 'crosshair' }}
         >
@@ -542,34 +543,54 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
               const scaleRatio = drawCanvas ? drawCanvas.offsetWidth / drawCanvas.width : 1;
               const leftPx = ann.x * scaleRatio;
               const topPx = ann.y * scaleRatio;
+              const isActive = activeTextId === ann.id;
 
               return (
                 <div
                   key={ann.id}
                   className="absolute z-30 group"
                   style={{ left: `${leftPx}px`, top: `${topPx}px` }}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <div className="relative flex items-center">
                     <textarea
+                      autoFocus={isActive}
                       value={ann.text}
+                      placeholder={isActive ? 'Введіть відповідь...' : ''}
                       onChange={(e) => updateTextAnnotation(ann.id, e.target.value)}
                       onFocus={() => setActiveTextId(ann.id)}
-                      className="bg-transparent font-bold border border-dashed border-purple-400 focus:border-purple-600 rounded px-1.5 py-0.5 outline-none resize-y min-w-[80px]"
+                      onBlur={() => {
+                        if (!ann.text.trim()) {
+                          deleteTextAnnotation(ann.id);
+                        } else {
+                          setActiveTextId(null);
+                        }
+                      }}
+                      className={`font-bold transition-all outline-none resize-y ${
+                        isActive
+                          ? 'bg-white/95 border-2 border-dashed border-purple-600 rounded-lg px-2 py-1 shadow-xl ring-4 ring-purple-500/20 min-w-[140px]'
+                          : 'bg-transparent border border-transparent rounded px-1 py-0.5 cursor-pointer hover:border-purple-300/40 min-w-[40px]'
+                      }`}
                       style={{
                         color: ann.color,
                         fontSize: `${ann.fontSize * scaleRatio}px`,
-                        lineHeight: 1.2,
+                        lineHeight: 1.25,
                       }}
-                      rows={ann.text.split('\n').length || 1}
+                      rows={Math.max(1, ann.text.split('\n').length)}
                     />
-                    <button
-                      type="button"
-                      onClick={() => deleteTextAnnotation(ann.id)}
-                      className="hidden group-hover:flex ml-1 w-5 h-5 bg-red-500 text-white rounded-full text-[10px] items-center justify-center shadow-md hover:bg-red-600"
-                      title="Видалити текст"
-                    >
-                      ✕
-                    </button>
+                    {isActive && (
+                      <button
+                        type="button"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          deleteTextAnnotation(ann.id);
+                        }}
+                        className="ml-1 w-6 h-6 bg-red-500 text-white rounded-full text-xs font-bold flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
+                        title="Видалити цей текст"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
                 </div>
               );
