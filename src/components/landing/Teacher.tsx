@@ -78,14 +78,13 @@ export default function Teacher() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Row */}
-        <div className="grid lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16 items-center">
-          {/* Photo Column */}
+        <div className="max-w-4xl mx-auto">
+          {/* Photo Column (Закоментовано тимчасово) */}
+          {/*
           <div ref={photoRef} className="reveal-left relative flex justify-center">
             <div className="relative group teacher-photo-float teacher-photo-wrap w-56 h-72 sm:w-72 sm:h-[23rem] md:w-80 md:h-[26rem]">
-              {/* Soft ambient glow behind the photo */}
               <div className="absolute -inset-4 bg-gradient-to-br from-purple-300/40 via-fuchsia-200/25 to-transparent rounded-[2rem] blur-2xl opacity-60 group-hover:opacity-80 transition-opacity duration-700" />
 
-              {/* Slim gradient frame */}
               <div className="teacher-photo-ring w-full h-full shadow-xl shadow-purple-900/15">
                 <div className="teacher-photo-inner relative w-full h-full">
                   <div className="absolute inset-0 bg-gradient-to-t from-purple-900/25 to-transparent z-10" />
@@ -100,6 +99,7 @@ export default function Teacher() {
               </div>
             </div>
           </div>
+          */}
 
           {/* Text Column */}
           <div ref={textRef} className="reveal-right space-y-6 min-w-0 w-full max-w-full text-center lg:text-left">
