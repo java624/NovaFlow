@@ -115,6 +115,16 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
     };
   }, [pdfUrl]);
 
+  // ─── Auto-Fit Width Helper ──────────────────────────────────────────────────
+  const handleFitWidth = useCallback(() => {
+    if (!containerRef.current || !pageDimensions.width) return;
+    const availableWidth = containerRef.current.clientWidth - (showSidebar ? 180 : 48);
+    if (availableWidth > 200) {
+      const fitZoom = Math.max(0.4, Math.min(2.0, Math.floor((availableWidth / pageDimensions.width) * 100) / 100));
+      setZoomScale(fitZoom);
+    }
+  }, [pageDimensions.width, showSidebar]);
+
   // ─── 3. Render Current Page at Fixed Base Resolution ───────────────────────
   const renderPage = useCallback(async () => {
     if (!pdfDoc || !pdfCanvasRef.current || !drawCanvasRef.current) return;
@@ -132,6 +142,15 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
       );
 
       setPageDimensions(dimensions);
+
+      // Auto-fit initial zoom for landscape or large pages so they fit screen
+      if (containerRef.current && dimensions.width > 0) {
+        const availableWidth = containerRef.current.clientWidth - (showSidebar ? 180 : 48);
+        if (availableWidth > 200 && dimensions.width > availableWidth) {
+          const fitZoom = Math.max(0.4, Math.min(1.0, Math.floor((availableWidth / dimensions.width) * 100) / 100));
+          setZoomScale((prev) => (prev === 1.0 ? fitZoom : prev));
+        }
+      }
 
       const outputScale = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
       drawCanvas.width = Math.floor(dimensions.width * outputScale);
@@ -154,7 +173,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
     } catch (err) {
       console.error('Error rendering page:', err);
     }
-  }, [pdfDoc, currentPage, saveCurrentPageState]);
+  }, [pdfDoc, currentPage, showSidebar, saveCurrentPageState]);
 
   useEffect(() => {
     renderPage();
@@ -508,6 +527,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
           saveCurrentPageState();
           setZoomScale(zoom);
         }}
+        onFitWidth={handleFitWidth}
         onToggleSidebar={() => setShowSidebar(!showSidebar)}
         onUndo={handleUndo}
         onRedo={handleRedo}

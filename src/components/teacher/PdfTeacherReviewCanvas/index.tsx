@@ -6,6 +6,8 @@ import { PdfCanvasToolbar } from '@/components/dashboard/PdfHomeworkCanvas/PdfCa
 import { PdfTool } from '@/components/dashboard/PdfHomeworkCanvas/types';
 import { renderPdfPageToCanvas } from '@/lib/pdf-utils';
 
+const BASE_RENDER_SCALE = 1.5;
+
 interface PdfTeacherReviewCanvasProps {
   pdfUrl: string;
   homeworkId: string;
@@ -30,8 +32,12 @@ export default function PdfTeacherReviewCanvas({
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [zoomScale, setZoomScale] = useState(1.25);
+  const [zoomScale, setZoomScale] = useState(1.0);
   const [loading, setLoading] = useState(true);
+  const [pageDimensions, setPageDimensions] = useState<{ width: number; height: number }>({
+    width: 800,
+    height: 1100,
+  });
 
   const [currentTool, setCurrentTool] = useState<PdfTool>('brush');
   const [drawColor, setDrawColor] = useState('#dc2626');
@@ -92,6 +98,16 @@ export default function PdfTeacherReviewCanvas({
     };
   }, [pdfUrl]);
 
+  // Auto-fit helper
+  const handleFitWidth = useCallback(() => {
+    if (!containerRef.current || !pageDimensions.width) return;
+    const availableWidth = containerRef.current.clientWidth - 48;
+    if (availableWidth > 200) {
+      const fitZoom = Math.max(0.4, Math.min(2.0, Math.floor((availableWidth / pageDimensions.width) * 100) / 100));
+      setZoomScale(fitZoom);
+    }
+  }, [pageDimensions.width]);
+
   // Render current page
   const renderPage = useCallback(async () => {
     if (!pdfDoc || !pdfCanvasRef.current || !drawCanvasRef.current) return;
@@ -104,8 +120,19 @@ export default function PdfTeacherReviewCanvas({
         pdfDoc,
         currentPage,
         pdfCanvas,
-        zoomScale
+        BASE_RENDER_SCALE
       );
+
+      setPageDimensions(dimensions);
+
+      // Auto-fit initial zoom for landscape or wide pages so they fit screen
+      if (containerRef.current && dimensions.width > 0) {
+        const availableWidth = containerRef.current.clientWidth - 48;
+        if (availableWidth > 200 && dimensions.width > availableWidth) {
+          const fitZoom = Math.max(0.4, Math.min(1.0, Math.floor((availableWidth / dimensions.width) * 100) / 100));
+          setZoomScale((prev) => (prev === 1.0 ? fitZoom : prev));
+        }
+      }
 
       const outputScale = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
       drawCanvas.width = Math.floor(dimensions.width * outputScale);
@@ -128,7 +155,7 @@ export default function PdfTeacherReviewCanvas({
     } catch (err) {
       console.error('Error rendering review page:', err);
     }
-  }, [pdfDoc, currentPage, zoomScale, saveCurrentPageState]);
+  }, [pdfDoc, currentPage, saveCurrentPageState]);
 
   useEffect(() => {
     renderPage();
@@ -416,6 +443,7 @@ export default function PdfTeacherReviewCanvas({
           saveCurrentPageState();
           setZoomScale(zoom);
         }}
+        onFitWidth={handleFitWidth}
         onToggleSidebar={() => {}}
         onUndo={handleUndo}
         onRedo={handleRedo}
@@ -434,16 +462,31 @@ export default function PdfTeacherReviewCanvas({
           </div>
         )}
 
-        <div className="relative shadow-lg border border-gray-300 rounded-lg overflow-hidden bg-white">
-          <canvas ref={pdfCanvasRef} className="block" />
-          <canvas
-            ref={drawCanvasRef}
-            className="absolute top-0 left-0 block"
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
-          />
+        <div
+          style={{
+            width: pageDimensions.width * zoomScale,
+            height: pageDimensions.height * zoomScale,
+          }}
+          className="flex items-start justify-center transition-all duration-150"
+        >
+          <div
+            className="relative shadow-lg border border-gray-300 rounded-lg overflow-hidden bg-white origin-top-left transition-transform duration-150"
+            style={{
+              width: pageDimensions.width,
+              height: pageDimensions.height,
+              transform: `scale(${zoomScale})`,
+            }}
+          >
+            <canvas ref={pdfCanvasRef} className="block w-full h-full" />
+            <canvas
+              ref={drawCanvasRef}
+              className="absolute top-0 left-0 block w-full h-full"
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onPointerLeave={handlePointerUp}
+            />
+          </div>
         </div>
       </div>
 

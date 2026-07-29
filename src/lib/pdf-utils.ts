@@ -2,12 +2,17 @@
  * PDF Utilities for NovaFlow Homework Platform
  */
 
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, degrees } from 'pdf-lib';
 
 export function isPdfUrl(url?: string | null): boolean {
   if (!url || url === 'null' || url === 'undefined') return false;
   const cleanUrl = url.split('?')[0].toLowerCase();
-  return cleanUrl.endsWith('.pdf') || cleanUrl.includes('.pdf');
+  return (
+    cleanUrl.endsWith('.pdf') ||
+    cleanUrl.includes('.pdf') ||
+    cleanUrl.includes('application/pdf') ||
+    cleanUrl.startsWith('data:application/pdf')
+  );
 }
 
 /**
@@ -102,7 +107,8 @@ export async function renderPdfThumbnail(
 }
 
 /**
- * Generate high-resolution PDF document with all student or teacher annotations embedded onto original PDF pages
+ * Generate high-resolution PDF document with all student or teacher annotations embedded onto original PDF pages,
+ * correctly handling landscape orientation and rotation (0, 90, 180, 270 deg).
  */
 export async function generateAnnotatedPdf(
   originalPdfUrl: string,
@@ -117,15 +123,22 @@ export async function generateAnnotatedPdf(
     const pageNum = i + 1;
     const page = pages[i];
     const { width: pWidth, height: pHeight } = page.getSize();
+    const rawRotation = page.getRotation().angle;
+    const rotation = ((rawRotation % 360) + 360) % 360; // Normalize angle to 0, 90, 180, 270
 
     const pageDataUrl = pageDrawings[pageNum];
     const pageTexts = textAnnotations[pageNum] || [];
 
     if (pageDataUrl || (pageTexts && pageTexts.length > 0)) {
+      // For 90 or 270 degree rotated pages, visual screen orientation is swapped (width <-> height)
+      const is90or270 = rotation === 90 || rotation === 270;
+      const visualWidth = is90or270 ? pHeight : pWidth;
+      const visualHeight = is90or270 ? pWidth : pHeight;
+
       const overlayCanvas = document.createElement('canvas');
       const renderScale = 2.0; // 2x high resolution
-      overlayCanvas.width = Math.floor(pWidth * renderScale);
-      overlayCanvas.height = Math.floor(pHeight * renderScale);
+      overlayCanvas.width = Math.floor(visualWidth * renderScale);
+      overlayCanvas.height = Math.floor(visualHeight * renderScale);
 
       const ctx = overlayCanvas.getContext('2d');
       if (ctx) {
@@ -160,12 +173,39 @@ export async function generateAnnotatedPdf(
         const overlayDataUrl = overlayCanvas.toDataURL('image/png');
         const embeddedPng = await pdfDoc.embedPng(overlayDataUrl);
 
-        page.drawImage(embeddedPng, {
-          x: 0,
-          y: 0,
-          width: pWidth,
-          height: pHeight,
-        });
+        // Position & rotate embedded overlay image based on page's native orientation & rotation angle
+        if (rotation === 0) {
+          page.drawImage(embeddedPng, {
+            x: 0,
+            y: 0,
+            width: pWidth,
+            height: pHeight,
+          });
+        } else if (rotation === 90) {
+          page.drawImage(embeddedPng, {
+            x: pWidth,
+            y: 0,
+            width: pHeight,
+            height: pWidth,
+            rotate: degrees(90),
+          });
+        } else if (rotation === 180) {
+          page.drawImage(embeddedPng, {
+            x: pWidth,
+            y: pHeight,
+            width: pWidth,
+            height: pHeight,
+            rotate: degrees(180),
+          });
+        } else if (rotation === 270) {
+          page.drawImage(embeddedPng, {
+            x: 0,
+            y: pHeight,
+            width: pHeight,
+            height: pWidth,
+            rotate: degrees(270),
+          });
+        }
       }
     }
   }

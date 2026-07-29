@@ -17,6 +17,7 @@ interface PdfCanvasToolbarProps {
   onSizeChange: (size: number) => void;
   onPageChange: (page: number) => void;
   onZoomChange: (scale: number) => void;
+  onFitWidth?: () => void;
   onToggleSidebar: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -55,6 +56,7 @@ export function PdfCanvasToolbar({
   onSizeChange,
   onPageChange,
   onZoomChange,
+  onFitWidth,
   onToggleSidebar,
   onUndo,
   onRedo,
@@ -106,7 +108,7 @@ export function PdfCanvasToolbar({
       <div className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-xl p-1">
         <button
           type="button"
-          onClick={() => onZoomChange(Math.max(0.6, zoomScale - 0.2))}
+          onClick={() => onZoomChange(Math.max(0.4, Math.round((zoomScale - 0.15) * 100) / 100))}
           className="px-2 py-1 rounded-lg hover:bg-gray-200 font-bold transition-colors"
           title="Зменшити"
         >
@@ -117,19 +119,20 @@ export function PdfCanvasToolbar({
         </span>
         <button
           type="button"
-          onClick={() => onZoomChange(Math.min(2.5, zoomScale + 0.2))}
+          onClick={() => onZoomChange(Math.min(2.5, Math.round((zoomScale + 0.15) * 100) / 100))}
           className="px-2 py-1 rounded-lg hover:bg-gray-200 font-bold transition-colors"
           title="Збільшити"
         >
           +
         </button>
-        {zoomScale !== 1.2 && (
+        {onFitWidth && (
           <button
             type="button"
-            onClick={() => onZoomChange(1.2)}
-            className="px-2 py-1 text-[10px] text-purple-600 font-bold hover:bg-purple-50 rounded-lg transition-colors"
+            onClick={onFitWidth}
+            className="px-2 py-1 text-[10px] text-purple-600 font-bold hover:bg-purple-50 rounded-lg transition-colors flex items-center gap-0.5"
+            title="Вписати сторінку по ширині екрану"
           >
-            100%
+            📐 <span className="hidden sm:inline">Вписати</span>
           </button>
         )}
       </div>
