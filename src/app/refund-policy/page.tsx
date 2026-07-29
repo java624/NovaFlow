@@ -16,6 +16,8 @@ const content = {
       subtitle: 'Information for payment processing (WayForPay)',
       nameLabel: 'Business Entity',
       nameVal: 'FOP Hulkin Kiril Valentynovych (ФОП Гулькін Кіріл Валентинович)',
+      addressLabel: 'Registered Address / Location',
+      addressVal: 'Ukraine, 22870, Vinnytsia region, Tulchyn district, Bratslav village, Heroiv Ukrainy str., bldg 47 (Україна, 22870, Вінницька обл., Тульчинський р-н, селище Брацлав, вул. Героїв України, будинок 47)',
       taxLabel: 'Tax Identification Number (ITN / РНОКПП)',
       taxVal: '3852707076',
       emailLabel: 'Support Email',
@@ -67,6 +69,8 @@ const content = {
       subtitle: 'Інформація для платіжної системи (WayForPay)',
       nameLabel: 'Суб\'єкт господарювання',
       nameVal: 'ФОП Гулькін Кіріл Валентинович',
+      addressLabel: 'Місцезнаходження фізичної особи-підприємця',
+      addressVal: 'Україна, 22870, Вінницька обл., Тульчинський р-н, селище Брацлав, вул. Героїв України, будинок 47',
       taxLabel: 'ІПН / РНОКПП',
       taxVal: '3852707076',
       emailLabel: 'Email підтримки',
@@ -118,6 +122,8 @@ const content = {
       subtitle: 'Informationen für die Zahlungsabwicklung (WayForPay)',
       nameLabel: 'Unternehmen',
       nameVal: 'FOP Hulkin Kiril Valentynovych (ФОП Гулькін Кіріл Валентинович)',
+      addressLabel: 'Sitz des Einzelunternehmers (Adresse)',
+      addressVal: 'Ukraine, 22870, Region Winnyzja, Rayon Tultschyn, Siedlung Bratslaw, Herojiw-Ukrajiny-Str., Haus 47 (Україна, 22870, Вінницька обл., Тульчинський р-н, селище Брацлав, вул. Героїв України, будинок 47)',
       taxLabel: 'Steuernummer (ITN / РНОКПП)',
       taxVal: '3852707076',
       emailLabel: 'Support-E-Mail',
@@ -233,6 +239,12 @@ export default function RefundPolicyPage() {
                 {data.entityCard.taxLabel}
               </span>
               <span className="font-semibold text-gray-800">{data.entityCard.taxVal}</span>
+            </div>
+            <div className="sm:col-span-2">
+              <span className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
+                {data.entityCard.addressLabel}
+              </span>
+              <span className="font-semibold text-gray-800">{data.entityCard.addressVal}</span>
             </div>
             <div>
               <span className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
