@@ -90,6 +90,7 @@ export default function VocabularyTab() {
 
       const newItem: VocabularyItem = data.item;
       updateItems([newItem, ...items]);
+      setSelectedWordCard(newItem);
       setNewWordInput('');
       setShowAddModal(false);
     } catch (err: any) {
