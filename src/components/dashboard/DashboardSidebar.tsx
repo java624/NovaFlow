@@ -16,6 +16,7 @@ const SIDEBAR_TABS: { id: Tab; label: string; icon: string; locked?: boolean }[]
   { id: 'lessons', label: 'Заняття', icon: '🎓', locked: true },
   { id: 'homework', label: 'Домашні завдання', icon: '📖', locked: true },
   { id: 'materials', label: 'Матеріали', icon: '📂', locked: true },
+  { id: 'vocabulary', label: 'Словник', icon: '📚' },
   { id: 'payments', label: 'Оплата', icon: '💳' },
   { id: 'profile', label: 'Мій профіль', icon: '⚙️' },
 ];

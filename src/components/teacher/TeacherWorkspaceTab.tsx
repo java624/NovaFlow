@@ -462,6 +462,73 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
         </div>
       </div>
 
+      {/* 📚 Teacher Vocabulary & Wordpacks Manager */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 pb-4">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <span>📚</span> Словник учня ({selectedStudent.full_name})
+            </h3>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Призначайте нові набори слів (Wordpacks) або додавайте персональні слова через ШІ до словника учня.
+            </p>
+          </div>
+          <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full">
+            🧠 Smart Vocabulary Active
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+          {/* Wordpack 1 */}
+          <div className="p-4 bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-100 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-2xl">💼</span>
+              <span className="px-2 py-0.5 bg-purple-200 text-purple-800 text-[10px] font-bold rounded-md">B2 Level</span>
+            </div>
+            <h4 className="font-bold text-gray-900 text-sm">Business English Essentials</h4>
+            <p className="text-xs text-gray-600 line-clamp-2">Ключові слова для презентацій, переговорів та стратегічних сесій.</p>
+            <button
+              onClick={() => alert(`Сет 'Business English Essentials' призначено учню ${selectedStudent.full_name}!`)}
+              className="w-full mt-2 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs shadow-sm transition-all"
+            >
+              + Призначити цей сет
+            </button>
+          </div>
+
+          {/* Wordpack 2 */}
+          <div className="p-4 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-2xl">🚀</span>
+              <span className="px-2 py-0.5 bg-indigo-200 text-indigo-800 text-[10px] font-bold rounded-md">B1 Level</span>
+            </div>
+            <h4 className="font-bold text-gray-900 text-sm">Daily Fluency Boost</h4>
+            <p className="text-xs text-gray-600 line-clamp-2">Розмовні дієслова та фрази для впевненого спілкування щодня.</p>
+            <button
+              onClick={() => alert(`Сет 'Daily Fluency Boost' призначено учню ${selectedStudent.full_name}!`)}
+              className="w-full mt-2 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-sm transition-all"
+            >
+              + Призначити цей сет
+            </button>
+          </div>
+
+          {/* Wordpack 3 */}
+          <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-2xl">🎯</span>
+              <span className="px-2 py-0.5 bg-emerald-200 text-emerald-800 text-[10px] font-bold rounded-md">C1 Level</span>
+            </div>
+            <h4 className="font-bold text-gray-900 text-sm">Academic & Expressive</h4>
+            <p className="text-xs text-gray-600 line-clamp-2">Вишуканий словниковий запас для есе та глибоких дискусій.</p>
+            <button
+              onClick={() => alert(`Сет 'Academic & Expressive' призначено учню ${selectedStudent.full_name}!`)}
+              className="w-full mt-2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm transition-all"
+            >
+              + Призначити цей сет
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Teacher Review Canvas */}
       {currentReviewHwId && (
         <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 relative">

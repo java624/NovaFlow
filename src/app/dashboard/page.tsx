@@ -13,6 +13,7 @@ import PaymentsTab from '@/components/dashboard/PaymentsTab';
 import ProfileTab from '@/components/dashboard/ProfileTab';
 import LessonsTab from '@/components/dashboard/LessonsTab';
 import MaterialsTab from '@/components/dashboard/MaterialsTab';
+import VocabularyTab from '@/components/dashboard/VocabularyTab';
 import dynamic from 'next/dynamic';
 import CheckoutOverlay from '@/components/dashboard/CheckoutOverlay';
 
@@ -271,6 +272,8 @@ export default function DashboardPage() {
               )}
 
               {activeTab === 'materials' && <MaterialsTab />}
+
+              {activeTab === 'vocabulary' && <VocabularyTab />}
             </div>
           </div>
         </main>

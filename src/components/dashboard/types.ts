@@ -1,6 +1,6 @@
 // Shared types for the Student Dashboard
 
-export type Tab = 'dashboard' | 'lessons' | 'homework' | 'materials' | 'payments' | 'profile';
+export type Tab = 'dashboard' | 'lessons' | 'homework' | 'materials' | 'vocabulary' | 'payments' | 'profile';
 
 export interface StudentProfile {
   id: string;
