@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { StudentProfile } from './types';
+import DeleteStudentModal from './DeleteStudentModal';
 
 interface StudentProfileModalProps {
   student: StudentProfile;
@@ -10,10 +11,12 @@ interface StudentProfileModalProps {
   onClose: () => void;
   onSaved: (updated: StudentProfile) => void;
   onViewPaymentHistory?: (student: StudentProfile) => void;
+  onStudentDeleted?: (studentId: string) => void;
 }
 
-export default function StudentProfileModal({ student, visible, onClose, onSaved, onViewPaymentHistory }: StudentProfileModalProps) {
+export default function StudentProfileModal({ student, visible, onClose, onSaved, onViewPaymentHistory, onStudentDeleted }: StudentProfileModalProps) {
   const supabase = createClient();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [form, setForm] = useState({
     first_name: student.first_name || '',
     last_name: student.last_name || '',
@@ -110,8 +113,33 @@ export default function StudentProfileModal({ student, visible, onClose, onSaved
               </button>
             )}
           </div>
+
+          {/* Danger zone */}
+          <div className="pt-4 mt-4 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => setShowDeleteModal(true)}
+              className="w-full inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl transition-colors"
+            >
+              🗑️ Видалити акаунт учня
+            </button>
+          </div>
         </form>
       </div>
+
+      {/* Delete Student Confirmation Modal */}
+      {showDeleteModal && (
+        <DeleteStudentModal
+          student={student}
+          visible={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onDeleted={(studentId) => {
+            setShowDeleteModal(false);
+            onClose();
+            onStudentDeleted?.(studentId);
+          }}
+        />
+      )}
     </div>
   );
 }

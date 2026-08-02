@@ -1,18 +1,23 @@
 'use client';
 
+import { useState } from 'react';
 import { StudentProfile } from './types';
+import DeleteStudentModal from './DeleteStudentModal';
 
 interface TeacherStudentsTabProps {
   students: StudentProfile[];
   onStudentClick: (student: StudentProfile) => void;
   onViewPaymentHistory?: (student: StudentProfile) => void;
+  onStudentDeleted?: (studentId: string) => void;
 }
 
 export default function TeacherStudentsTab({
   students,
   onStudentClick,
   onViewPaymentHistory,
+  onStudentDeleted,
 }: TeacherStudentsTabProps) {
+  const [deleteTarget, setDeleteTarget] = useState<StudentProfile | null>(null);
   const getStudentAvatarUrl = (s: StudentProfile) =>
     s.avatar_url ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(s.full_name || s.first_name || 'Учень')}&background=5e077e&color=fff&size=80`;
@@ -68,6 +73,13 @@ export default function TeacherStudentsTab({
                           💳 Платежі
                         </button>
                       )}
+                      <button
+                        onClick={() => setDeleteTarget(s)}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200/60 rounded-xl transition-all"
+                        title="Повністю видалити учня з системи"
+                      >
+                        🗑️ Видалити
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -76,6 +88,19 @@ export default function TeacherStudentsTab({
           </tbody>
         </table>
       </div>
+
+      {/* Delete Student Confirmation Modal */}
+      {deleteTarget && (
+        <DeleteStudentModal
+          student={deleteTarget}
+          visible={!!deleteTarget}
+          onClose={() => setDeleteTarget(null)}
+          onDeleted={(studentId) => {
+            setDeleteTarget(null);
+            onStudentDeleted?.(studentId);
+          }}
+        />
+      )}
     </div>
   );
 }

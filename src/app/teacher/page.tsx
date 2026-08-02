@@ -37,6 +37,8 @@ export default function TeacherDashboardPage() {
   const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState(false);
   const [paymentHistoryStudent, setPaymentHistoryStudent] = useState<StudentProfile | null>(null);
   const [activeLessonChannel, setActiveLessonChannel] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
 // =========================================================================
   // VERIFY TEACHER SESSION  
@@ -265,6 +267,29 @@ export default function TeacherDashboardPage() {
     loadStudents();
   }, [loadStudents]);
 
+  const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setToast({ msg, type });
+    toastTimerRef.current = setTimeout(() => setToast(null), 5000);
+  }, []);
+
+  const handleStudentDeleted = useCallback((studentId: string) => {
+    // Оновлюємо список учнів
+    setStudents((prev) => prev.filter((s) => s.id !== studentId));
+    setActiveStudentsCount((prev) => Math.max(0, prev - 1));
+
+    // Якщо видалений учень був обраний — скидаємо вибір
+    if (selectedStudent?.id === studentId) {
+      setSelectedStudent(null);
+      setProfileStudent(null);
+      setShowStudentModal(false);
+      setActiveTab('students');
+    }
+
+    // Показуємо тост-повідомлення
+    showToast('Учня успішно видалено з системи', 'success');
+  }, [selectedStudent, showToast]);
+
   const deleteComment = useCallback(async (id: string) => {
     if (!confirm('Видалити назавжди?')) return;
     await supabase.from('comments').delete().eq('id', id);
@@ -370,6 +395,7 @@ export default function TeacherDashboardPage() {
                     setPaymentHistoryStudent(st);
                     setShowPaymentHistoryModal(true);
                   }}
+                  onStudentDeleted={handleStudentDeleted}
                 />
               )}
 
@@ -404,6 +430,7 @@ export default function TeacherDashboardPage() {
             setPaymentHistoryStudent(st);
             setShowPaymentHistoryModal(true);
           }}
+          onStudentDeleted={handleStudentDeleted}
         />
       )}
 
@@ -418,6 +445,54 @@ export default function TeacherDashboardPage() {
           }}
         />
       )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 left-1/2 z-[70] -translate-x-1/2 flex items-center gap-3 w-[calc(100%-2rem)] max-w-md rounded-2xl shadow-2xl px-5 py-4 border animate-toast-in ${
+            toast.type === 'success'
+              ? 'bg-white border-green-200'
+              : 'bg-white border-red-200'
+          }`}
+          role="alert"
+          aria-live="assertive"
+        >
+          <span
+            className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center mt-0.5 ${
+              toast.type === 'success'
+                ? 'bg-gradient-to-br from-green-600 to-green-400'
+                : 'bg-gradient-to-br from-red-600 to-red-400'
+            }`}
+          >
+            {toast.type === 'success' ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            )}
+          </span>
+          <p className="flex-1 text-sm font-medium text-gray-800 leading-relaxed">{toast.msg}</p>
+          <button
+            onClick={() => setToast(null)}
+            className="flex-shrink-0 w-7 h-7 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-400 hover:text-gray-700"
+            aria-label="Закрити сповіщення"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      <style jsx global>{`
+        @keyframes toast-in {
+          from { opacity: 0; transform: translateY(24px) scale(0.95); }
+          to   { opacity: 1; transform: translateY(0)   scale(1);    }
+        }
+        .animate-toast-in { animation: toast-in 0.38s cubic-bezier(0.34,1.56,0.64,1) both; }
+      `}</style>
     </div>
   );
 }
