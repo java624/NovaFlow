@@ -139,7 +139,7 @@ export default function LanguageCoursePage() {
       return;
     }
     const courseNameEncoded = encodeURIComponent(plan.title);
-    window.location.href = `/dashboard?payment=stripe&lang=${langKey}&plan=${courseNameEncoded}&price=${plan.btnPrice}&lessons=${plan.btnLessons}`;
+    window.location.href = `/dashboard?tab=payments&lang=${langKey}&plan=${courseNameEncoded}&price=${plan.btnPrice}&lessons=${plan.btnLessons}`;
   };
 
   return (

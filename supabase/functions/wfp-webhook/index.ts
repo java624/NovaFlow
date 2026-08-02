@@ -21,17 +21,53 @@ Deno.serve(async (req: Request) => {
     const body = await req.json()
     console.log("Received WayForPay webhook payload:", body)
     
-    const { orderReference, transactionStatus } = body
+    const {
+      merchantAccount,
+      orderReference,
+      amount,
+      currency,
+      authCode = "",
+      cardPan = "",
+      transactionStatus,
+      reasonCode = "",
+      reason = "",
+      signature,
+      recId,
+      payMethod,
+      createdDate
+    } = body
+
+    const secretKey = Deno.env.get("WAYFORPAY_SECRET_KEY") || "b85872d3530aae9339458de8e60a5496f7140fbd"
+
+    // Verify HMAC-MD5 Signature
+    const signatureFields = [
+      merchantAccount,
+      orderReference,
+      amount,
+      currency,
+      authCode,
+      cardPan,
+      transactionStatus,
+      reasonCode,
+      reason
+    ]
+    const signatureString = signatureFields.join(";")
+    const expectedSignature = generateHmacMd5(signatureString, secretKey)
+
+    if (signature && signature.toLowerCase() !== expectedSignature.toLowerCase()) {
+      console.error("Signature mismatch in wfp-webhook:", { signature, expectedSignature })
+      return new Response(JSON.stringify({ error: "Invalid signature" }), { status: 400 })
+    }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? ""
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Find the pending payment in payments_history
+    // Find payment record
     const { data: payment, error: pError } = await supabase
       .from("payments_history")
       .select("*")
-      .eq("stripe_session_id", orderReference)
+      .or(`order_reference.eq.${orderReference},stripe_session_id.eq.${orderReference}`)
       .maybeSingle()
 
     if (pError) {
@@ -39,10 +75,8 @@ Deno.serve(async (req: Request) => {
       throw pError
     }
 
-    if (!payment) {
-      console.error(`Payment not found for orderReference: ${orderReference}`)
-    } else if (transactionStatus === "Approved" && payment.status !== "completed") {
-      // 1. Get current user profile lessons balance
+    if (payment && transactionStatus === "Approved" && payment.status !== "completed") {
+      // 1. Get student profile
       const { data: profile, error: prError } = await supabase
         .from("profiles")
         .select("lessons_left")
@@ -55,7 +89,7 @@ Deno.serve(async (req: Request) => {
       }
 
       const currentLessons = profile?.lessons_left ?? 0
-      const newLessons = currentLessons + payment.lessons_purchased
+      const newLessons = currentLessons + (payment.lessons_purchased || 0)
 
       // 2. Update profiles balance
       const { error: upError } = await supabase
@@ -74,9 +108,15 @@ Deno.serve(async (req: Request) => {
         .update({
           status: "completed",
           completed_at: new Date().toISOString(),
+          wayforpay_transaction_id: recId || payment.wayforpay_transaction_id,
           metadata: {
             ...payment.metadata,
             wayforpay_response: body,
+            recId,
+            payMethod,
+            createdDate,
+            cardPan,
+            authCode
           }
         })
         .eq("id", payment.id)
@@ -89,29 +129,25 @@ Deno.serve(async (req: Request) => {
       console.log(`Successfully credited ${payment.lessons_purchased} lessons to user ${payment.user_id}`)
     }
 
-    // Prepare response to WayForPay (Must be signed!)
+    // Prepare signed response to WayForPay
     const status = "accept"
     const time = Math.floor(Date.now() / 1000)
-    const secretKey = "flk3409refn54t54t*FNJRET" // Correct test mode secret key
-
-    const signatureString = `${orderReference};${status};${time}`
-    const signature = generateHmacMd5(signatureString, secretKey)
+    const responseSignatureString = `${orderReference};${status};${time}`
+    const responseSignature = generateHmacMd5(responseSignatureString, secretKey)
 
     const responsePayload = {
       orderReference,
       status,
       time,
-      signature
+      signature: responseSignature
     }
-
-    console.log("Sending Webhook Response:", responsePayload)
 
     return new Response(JSON.stringify(responsePayload), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" }
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("wfp-webhook error:", error)
     return new Response(JSON.stringify({ error: error.message }), { status: 400 })
   }

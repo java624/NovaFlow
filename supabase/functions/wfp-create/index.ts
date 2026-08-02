@@ -24,8 +24,9 @@ Deno.serve(async (req: Request) => {
     const amount = Number(body.amount || body.totalAmount)
     const planName = body.planName || "Lessons Package"
     const lang = body.lang || "english"
+    const currency = body.currency || "USD"
 
-    if (!userId || !amount || !lessonsCount) {
+    if (!userId || amount === undefined || !lessonsCount) {
       throw new Error("Missing required fields")
     }
 
@@ -33,42 +34,42 @@ Deno.serve(async (req: Request) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Generate UUID for the payment record
     const paymentId = crypto.randomUUID()
-    const orderReference = `wfp_${paymentId}_${Date.now()}`
+    const cleanUserId = String(userId).replace(/[^a-zA-Z0-9]/g, '').slice(0, 8)
+    const orderReference = `NF_ORD_${Date.now()}_${cleanUserId}`
+    const orderDate = Math.floor(Date.now() / 1000)
     
-    // Insert pending payment into payments_history
-    const { data: payment, error: pError } = await supabase
+    // Save pending payment into payments_history
+    const { error: pError } = await supabase
       .from("payments_history")
       .insert([{
         id: paymentId,
         user_id: userId,
-        stripe_session_id: orderReference, // using this to store orderReference
+        order_reference: orderReference,
+        stripe_session_id: orderReference,
         plan_name: planName,
         learning_language: lang,
         lessons_purchased: lessonsCount,
-        amount_paid_cents: Math.round(amount * 100), // amount is in USD, store as cents
-        currency: "usd",
+        amount_paid_cents: Math.round(amount * 100),
+        currency: currency.toLowerCase(),
         status: "pending",
       }])
-      .select().single()
 
     if (pError) throw new Error(`DB Error: ${pError.message}`)
 
-    // Test mode credentials
-    const merchantAccount = "test_merch_n1"
-    const secretKey = "flk3409refn54t54t*FNJRET" // Correct test mode secret key
-    
-    const rawOrigin = req.headers.get("origin") ?? "http://localhost:3000"
-    const merchantDomainName = rawOrigin.replace(/^https?:\/\//, "").split(":")[0]
+    const merchantAccount = Deno.env.get("WAYFORPAY_MERCHANT_ACCOUNT") || "novaflow_school_com"
+    const secretKey = Deno.env.get("WAYFORPAY_SECRET_KEY") || "b85872d3530aae9339458de8e60a5496f7140fbd"
+    const merchantDomainName = Deno.env.get("WAYFORPAY_MERCHANT_DOMAIN") || "novaflow-school.com"
+    const siteUrl = Deno.env.get("NEXT_PUBLIC_SITE_URL") || "https://novaflow-school.com"
 
-    const orderDate = Math.floor(Date.now() / 1000)
-    const productName = `${lessonsCount} Lessons (${planName})`
+    const productName = `${lessonsCount} Lesson${lessonsCount > 1 ? 's' : ''} - ${planName}`
 
-    // Convert amount from USD to UAH for WayForPay (1 USD = 40 UAH)
-    const amountUah = Math.round(amount * 40)
+    let amountUah = amount
+    if (currency.toUpperCase() === "USD") {
+      amountUah = Math.round(amount * 40)
+    }
+    if (amountUah < 1) amountUah = 1
 
-    // Signature COMPONENTS for CREATE_INVOICE
     const signatureComponents = [
       merchantAccount,
       merchantDomainName,
@@ -84,9 +85,6 @@ Deno.serve(async (req: Request) => {
     const signatureString = signatureComponents.join(";")
     const merchantSignature = generateHmacMd5(signatureString, secretKey)
 
-    console.log("Built Signature String:", signatureString)
-    console.log("Generated HMAC-MD5:", merchantSignature)
-
     const wfpPayload = {
       transactionType: "CREATE_INVOICE",
       merchantAccount,
@@ -101,8 +99,9 @@ Deno.serve(async (req: Request) => {
       productName: [productName],
       productPrice: [amountUah],
       productCount: [1],
-      serviceUrl: `${supabaseUrl}/functions/v1/wfp-webhook`,
-      returnUrl: `${rawOrigin}/dashboard?payment=success&session_id=${orderReference}`
+      serviceUrl: `${siteUrl}/api/payments/wayforpay/callback`,
+      returnUrl: `${siteUrl}/payment/success?order=${orderReference}`,
+      failedUrl: `${siteUrl}/payment/failed?order=${orderReference}`
     }
 
     const wfpResponse = await fetch("https://api.wayforpay.com/api", {
@@ -112,18 +111,17 @@ Deno.serve(async (req: Request) => {
     })
 
     const wfpData = await wfpResponse.json()
-    console.log("WayForPay response:", wfpData)
 
     if (!wfpData.invoiceUrl) {
       throw new Error(wfpData.reason || `WayForPay error: ${JSON.stringify(wfpData)}`)
     }
 
-    return new Response(JSON.stringify({ url: wfpData.invoiceUrl }), {
+    return new Response(JSON.stringify({ url: wfpData.invoiceUrl, orderReference }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("wfp-create error:", error)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

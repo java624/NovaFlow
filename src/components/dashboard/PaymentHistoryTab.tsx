@@ -144,7 +144,7 @@ export default function PaymentHistoryTab({ payments, loading }: PaymentHistoryT
 
       <div className="text-center pt-4">
         <p className="text-xs text-gray-400">
-          💳 Усі платежі здійснюються через захищений Stripe. Ваші дані в безпеці.
+          💳 Усі платежі здійснюються через захищений WayForPay. Ваші дані в безпеці.
         </p>
       </div>
     </div>

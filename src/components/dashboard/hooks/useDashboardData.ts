@@ -136,7 +136,7 @@ export function useDashboardData() {
   }, [supabase]);
 
   // =========================================================================
-  // HANDLE PAYMENT RETURN (after Stripe redirect)
+  // HANDLE PAYMENT RETURN (after WayForPay redirect)
   // =========================================================================
   const handlePaymentReturn = useCallback(async (
     currentProfile: StudentProfile | null,
@@ -149,6 +149,7 @@ export function useDashboardData() {
     // Clean URL immediately
     const cleanUrl = new URL(window.location.href);
     cleanUrl.searchParams.delete('payment');
+    cleanUrl.searchParams.delete('order');
     cleanUrl.searchParams.delete('session_id');
     cleanUrl.searchParams.delete('mock');
     window.history.replaceState({}, '', cleanUrl.pathname + cleanUrl.search);

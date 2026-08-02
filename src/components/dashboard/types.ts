@@ -38,8 +38,10 @@ export interface Lesson {
 export interface PaymentHistory {
   id: string;
   user_id: string;
-  stripe_session_id: string | null;
-  stripe_payment_intent_id: string | null;
+  order_reference?: string | null;
+  wayforpay_transaction_id?: string | null;
+  stripe_session_id?: string | null;
+  stripe_payment_intent_id?: string | null;
   plan_name: string;
   learning_language: string;
   lessons_purchased: number;

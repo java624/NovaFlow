@@ -130,7 +130,7 @@ export function useDashboardActions({
       const totalAmount = Number(price) * lessonsCount;
 
       const response = await fetch(
-        'https://vagrglarsxjtnsusyonv.supabase.co/functions/v1/wfp-create',
+        '/api/payments/wayforpay/create',
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -140,6 +140,7 @@ export function useDashboardActions({
             lessonsCount,
             planName,
             lang,
+            currency: 'USD',
           }),
         }
       );

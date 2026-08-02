@@ -188,6 +188,28 @@ export default function PaymentsTab({
             )}
           </div>
 
+          {/* Test Payment Banner */}
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 shadow-sm border border-amber-200/60">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <span className="inline-block px-2.5 py-0.5 bg-amber-200/60 text-amber-900 text-xs font-semibold rounded-full mb-1.5">
+                  🧪 Перевірка реальної транзакції WayForPay
+                </span>
+                <h4 className="font-bold text-gray-900">Тестовий допуск до уроку (Test Payment) — $1 (~40 UAH)</h4>
+                <p className="text-xs text-gray-600 mt-1">
+                  Придбай 1 тестовий урок за мінімальну суму $1 для миттєвої перевірки проведення банківської операції.
+                </p>
+              </div>
+              <button
+                onClick={() => onBuyCourse('Тестовий допуск до уроку (Test Payment)', 1, 1, learningLang)}
+                disabled={purchasing}
+                className="w-full sm:w-auto flex-shrink-0 px-5 py-2.5 text-xs font-bold text-amber-900 bg-amber-400 hover:bg-amber-500 rounded-xl shadow transition-all disabled:opacity-50"
+              >
+                {purchasing ? '⏳ Обробка...' : '💳 Сплатити $1 (Тест)'}
+              </button>
+            </div>
+          </div>
+
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
             <div className="flex flex-col sm:flex-row items-start gap-4">
               <div className="flex-1">
