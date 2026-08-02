@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { VocabularyItem, AssignedWordpack } from '@/types/vocabulary';
 import { StudentProfile } from './types';
+import { getStoredAssignedPacks, saveAssignedPacks, getStoredVocabulary, saveVocabulary } from '@/lib/mockVocabularyData';
 
 interface AssignVocabularyModalProps {
   student: StudentProfile;
@@ -83,6 +84,20 @@ export default function AssignVocabularyModal({
       words: previewItems,
     };
 
+    // 1. Save to assigned packs library (localStorage)
+    const existingPacks = getStoredAssignedPacks();
+    const updatedPacks = [...existingPacks, pack];
+    saveAssignedPacks(updatedPacks);
+
+    // 2. Also merge the generated words into the student's personal vocabulary
+    const existingVocab = getStoredVocabulary();
+    const existingIds = new Set(existingVocab.map((v) => v.word.toLowerCase()));
+    const newWords = previewItems.filter((w) => !existingIds.has(w.word.toLowerCase()));
+    if (newWords.length > 0) {
+      saveVocabulary([...newWords, ...existingVocab]);
+    }
+
+    // 3. Notify parent component to update UI state
     onAssigned(pack);
     onClose();
     setRawInput('');

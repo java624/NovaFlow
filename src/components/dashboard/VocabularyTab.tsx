@@ -38,6 +38,21 @@ export default function VocabularyTab() {
     setAssignedPacks(getStoredAssignedPacks());
   }, []);
 
+  // Listen for localStorage changes (when teacher assigns a new pack)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'novaflow_assigned_packs_v1' || e.key === null) {
+        setAssignedPacks(getStoredAssignedPacks());
+      }
+      if (e.key === 'novaflow_vocabulary_items_v1' || e.key === null) {
+        setItems(getStoredVocabulary());
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
   // Update storage whenever items change
   const updateItems = (newItems: VocabularyItem[]) => {
     setItems(newItems);
