@@ -76,8 +76,8 @@ export async function POST(req: Request) {
     const merchantSignature = generateHmacMd5(signatureString, secretKey);
 
     const serviceUrl = `${siteUrl}/api/payments/wayforpay/callback`;
-    const returnUrl = `${siteUrl}/payment/success?order=${orderReference}`;
-    const failedUrl = `${siteUrl}/payment/failed?order=${orderReference}`;
+    const returnUrl = `${siteUrl}/api/payments/wayforpay/return-success?order=${orderReference}`;
+    const failedUrl = `${siteUrl}/api/payments/wayforpay/return-failed?order=${orderReference}`;
 
     const wfpPayload = {
       transactionType: 'CREATE_INVOICE',

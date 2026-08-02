@@ -2,15 +2,36 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
- * Цей middleware НЕ виконує жодних редіректів на основі ролей.
- * Його єдина задача — оновлювати токен сесії Supabase у куках між
- * навігаціями. Без нього @supabase/ssr не може зберігати сесію
- * між серверними запитами і getUser() повертає null.
- *
- * Захист конкретних маршрутів за роллю залишається у клієнтському
- * коді кожної сторінки (verifySession у teacher/page.tsx тощо).
+ * Цей middleware:
+ * 1. Оновлює токен сесії Supabase у куках між навігаціями.
+ * 2. Обробляє POST-запити від WayForPay на /payment/success та /payment/failed,
+ *    перетворюючи їх на GET-запити (303 See Other redirect), щоб уникнути помилки 404 у Next.js.
  */
 export async function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
+
+  // Handle POST redirects from WayForPay returnUrl / failedUrl
+  if (request.method === 'POST' && (pathname === '/payment/success' || pathname === '/payment/failed')) {
+    let orderRef = request.nextUrl.searchParams.get('order') || request.nextUrl.searchParams.get('orderReference') || '';
+    
+    if (!orderRef) {
+      try {
+        const formData = await request.formData();
+        orderRef = (formData.get('orderReference') || formData.get('order') || '').toString();
+      } catch {
+        // ignore
+      }
+    }
+
+    const redirectUrl = new URL(pathname, request.url);
+    if (orderRef) {
+      redirectUrl.searchParams.set('order', orderRef);
+    }
+
+    // 303 See Other forces browser to use GET method
+    return NextResponse.redirect(redirectUrl, 303);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -22,7 +43,6 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          // Оновлюємо куки у запиті та відповіді
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
@@ -35,8 +55,6 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Оновлюємо токен сесії (якщо потрібно) — без перевірки ролей
-  // ВАЖЛИВО: не виконуємо жодної іншої логіки між createServerClient та getUser
   await supabase.auth.getUser();
 
   return supabaseResponse;
@@ -46,7 +64,7 @@ export const config = {
   matcher: [
     /*
      * Виключаємо: статичні файли, зображення, favicon
-     * Включаємо: всі сторінки додатку (/login, /dashboard, /teacher тощо)
+     * Включаємо: всі сторінки додатку (/login, /dashboard, /teacher, /payment/* тощо)
      */
     '/((?!_next/static|_next/image|favicon.ico|img/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],

@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
-  const orderRef = searchParams.get('order') || searchParams.get('session_id') || '';
+  const orderRef = searchParams.get('order') || searchParams.get('orderReference') || searchParams.get('session_id') || '';
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-slate-900 text-white flex items-center justify-center p-4 sm:p-6">
@@ -22,9 +22,9 @@ function SuccessContent() {
           <span className="inline-block px-3 py-1 bg-emerald-500/20 text-emerald-300 text-xs font-semibold rounded-full border border-emerald-500/30 mb-3">
             WayForPay Confirmed
           </span>
-          <h1 className="text-3xl font-extrabold tracking-tight">Оплата Успішна!</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">Оплата успішна!</h1>
           <p className="text-gray-300 text-sm mt-2">
-            Дякуємо за покупку. Ваші уроки зараховано на баланс та доступні в кабінеті.
+            Оплату успішно здійснено! Дякуємо за покупку. Ваші уроки зараховано на баланс та доступні в кабінеті.
           </p>
         </div>
 
@@ -40,7 +40,7 @@ function SuccessContent() {
             href="/dashboard?tab=payments&payment=success"
             className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-purple-500/25 transition-all transform hover:-translate-y-0.5"
           >
-            🎓 Перейти в особистий кабінет
+            🎓 Повернутися в кабінет
           </Link>
           <Link
             href="/languages/english"

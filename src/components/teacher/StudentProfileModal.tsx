@@ -9,9 +9,10 @@ interface StudentProfileModalProps {
   visible: boolean;
   onClose: () => void;
   onSaved: (updated: StudentProfile) => void;
+  onViewPaymentHistory?: (student: StudentProfile) => void;
 }
 
-export default function StudentProfileModal({ student, visible, onClose, onSaved }: StudentProfileModalProps) {
+export default function StudentProfileModal({ student, visible, onClose, onSaved, onViewPaymentHistory }: StudentProfileModalProps) {
   const supabase = createClient();
   const [form, setForm] = useState({
     first_name: student.first_name || '',
@@ -93,7 +94,22 @@ export default function StudentProfileModal({ student, visible, onClose, onSaved
             <input type="text" value={form.learning_language} onChange={(e) => setForm({ ...form, learning_language: e.target.value })} placeholder="english:English B2"
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-purple-500/20 focus:border-purple-400 transition-all" /></div>
           {profileAlert && <div className={`px-4 py-3 rounded-xl text-sm font-medium ${profileAlert.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>{profileAlert.msg}</div>}
-          <button type="submit" className="w-full inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 rounded-xl shadow-md hover:shadow-lg">💾 Зберегти</button>
+          <div className="flex gap-3">
+            <button type="submit" className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 rounded-xl shadow-md hover:shadow-lg">💾 Зберегти</button>
+            {onViewPaymentHistory && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onViewPaymentHistory(student);
+                }}
+                className="px-4 py-2.5 text-sm font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl border border-purple-200 transition-colors"
+                title="Переглянути транзакції учня"
+              >
+                💳 Платежі
+              </button>
+            )}
+          </div>
         </form>
       </div>
     </div>

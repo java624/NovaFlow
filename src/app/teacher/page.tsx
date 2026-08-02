@@ -11,6 +11,7 @@ import TeacherWorkspaceTab from '@/components/teacher/TeacherWorkspaceTab';
 import TeacherCommentsTab from '@/components/teacher/TeacherCommentsTab';
 import dynamic from 'next/dynamic';
 import StudentProfileModal from '@/components/teacher/StudentProfileModal';
+import StudentPaymentHistoryModal from '@/components/teacher/StudentPaymentHistoryModal';
 
 const LessonRoom = dynamic(() => import('@/components/dashboard/LessonRoom'), { ssr: false });
 
@@ -33,6 +34,8 @@ export default function TeacherDashboardPage() {
   const [allLessons, setAllLessons] = useState<Lesson[]>([]);
   const [showStudentModal, setShowStudentModal] = useState(false);
   const [profileStudent, setProfileStudent] = useState<StudentProfile | null>(null);
+  const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState(false);
+  const [paymentHistoryStudent, setPaymentHistoryStudent] = useState<StudentProfile | null>(null);
   const [activeLessonChannel, setActiveLessonChannel] = useState<string | null>(null);
 
 // =========================================================================
@@ -363,6 +366,10 @@ export default function TeacherDashboardPage() {
                 <TeacherStudentsTab
                   students={students}
                   onStudentClick={openStudentWorkspace}
+                  onViewPaymentHistory={(st) => {
+                    setPaymentHistoryStudent(st);
+                    setShowPaymentHistoryModal(true);
+                  }}
                 />
               )}
 
@@ -393,6 +400,22 @@ export default function TeacherDashboardPage() {
           visible={showStudentModal}
           onClose={() => { setShowStudentModal(false); setProfileStudent(null); }}
           onSaved={handleStudentSaved}
+          onViewPaymentHistory={(st) => {
+            setPaymentHistoryStudent(st);
+            setShowPaymentHistoryModal(true);
+          }}
+        />
+      )}
+
+      {/* Student Payment History Modal */}
+      {paymentHistoryStudent && (
+        <StudentPaymentHistoryModal
+          student={paymentHistoryStudent}
+          visible={showPaymentHistoryModal}
+          onClose={() => {
+            setShowPaymentHistoryModal(false);
+            setPaymentHistoryStudent(null);
+          }}
         />
       )}
     </div>

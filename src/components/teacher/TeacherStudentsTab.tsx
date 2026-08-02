@@ -5,9 +5,14 @@ import { StudentProfile } from './types';
 interface TeacherStudentsTabProps {
   students: StudentProfile[];
   onStudentClick: (student: StudentProfile) => void;
+  onViewPaymentHistory?: (student: StudentProfile) => void;
 }
 
-export default function TeacherStudentsTab({ students, onStudentClick }: TeacherStudentsTabProps) {
+export default function TeacherStudentsTab({
+  students,
+  onStudentClick,
+  onViewPaymentHistory,
+}: TeacherStudentsTabProps) {
   const getStudentAvatarUrl = (s: StudentProfile) =>
     s.avatar_url ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(s.full_name || s.first_name || 'Учень')}&background=5e077e&color=fff&size=80`;
@@ -15,14 +20,14 @@ export default function TeacherStudentsTab({ students, onStudentClick }: Teacher
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
       <h2 className="text-xl font-bold text-gray-900 mb-2">👥 Список активних учнів</h2>
-      <p className="text-sm text-gray-500 mb-6">Оберіть учня, щоб перейти до керування розкладом та ДЗ.</p>
+      <p className="text-sm text-gray-500 mb-6">Оберіть учня, щоб перейти до керування розкладом, ДЗ або історією платежів.</p>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50/50">
               <th className="text-left py-3 px-3 font-semibold text-gray-600">Учень</th>
               <th className="text-left py-3 px-3 font-semibold text-gray-600">Залишок уроків</th>
-              <th className="text-left py-3 px-3 font-semibold text-gray-600">Дія</th>
+              <th className="text-left py-3 px-3 font-semibold text-gray-600">Дії</th>
             </tr>
           </thead>
           <tbody>
@@ -47,12 +52,23 @@ export default function TeacherStudentsTab({ students, onStudentClick }: Teacher
                     </span>
                   </td>
                   <td className="py-3 px-3">
-                    <button
-                      onClick={() => onStudentClick(s)}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-xl transition-all shadow-sm"
-                    >
-                      🎓 Керувати
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => onStudentClick(s)}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-xl transition-all shadow-sm"
+                      >
+                        🎓 Керувати
+                      </button>
+                      {onViewPaymentHistory && (
+                        <button
+                          onClick={() => onViewPaymentHistory(s)}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200/60 rounded-xl transition-all"
+                          title="Переглянути історію транзакцій WayForPay"
+                        >
+                          💳 Платежі
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))

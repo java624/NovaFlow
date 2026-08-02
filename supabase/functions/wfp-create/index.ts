@@ -100,8 +100,8 @@ Deno.serve(async (req: Request) => {
       productPrice: [amountUah],
       productCount: [1],
       serviceUrl: `${siteUrl}/api/payments/wayforpay/callback`,
-      returnUrl: `${siteUrl}/payment/success?order=${orderReference}`,
-      failedUrl: `${siteUrl}/payment/failed?order=${orderReference}`
+      returnUrl: `${siteUrl}/api/payments/wayforpay/return-success?order=${orderReference}`,
+      failedUrl: `${siteUrl}/api/payments/wayforpay/return-failed?order=${orderReference}`
     }
 
     const wfpResponse = await fetch("https://api.wayforpay.com/api", {
