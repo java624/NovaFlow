@@ -137,7 +137,7 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
           initialView: lastViewRef.current || (isMobile ? 'timeGridDay' : 'timeGridWeek'),
           initialDate: lastDateRef.current ? new Date(lastDateRef.current) : undefined,
           locale: 'uk',
-          firstDay: 1, slotMinTime: '08:00:00', slotMaxTime: '22:00:00', allDaySlot: false,
+          firstDay: 1, slotMinTime: '06:00:00', slotMaxTime: '24:00:00', allDaySlot: false,
           editable: false, selectable: true, height: isCalendarFullscreen ? 'parent' : 'auto', events,
           headerToolbar: isMobile
             ? { left: 'prev,next', center: 'title', right: 'timeGridDay,timeGridWeek' }
