@@ -8,7 +8,10 @@ import PdfTeacherReviewCanvas from './PdfTeacherReviewCanvas';
 import { isPdfUrl } from '@/lib/pdf-utils';
 import AssignVocabularyModal from './AssignVocabularyModal';
 import { AssignedWordpack } from '@/types/vocabulary';
-import { getStoredAssignedPacks, saveAssignedPacks } from '@/lib/mockVocabularyData';
+import {
+  getAssignedPacksForStudent,
+  calculateAssignedProgress,
+} from '@/lib/mockVocabularyData';
 
 interface TeacherWorkspaceTabProps {
   selectedStudent: StudentProfile;
@@ -46,15 +49,17 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
   const [assignedPacks, setAssignedPacks] = useState<AssignedWordpack[]>([]);
 
   useEffect(() => {
-    setAssignedPacks(getStoredAssignedPacks());
-  }, []);
+    setAssignedPacks(getAssignedPacksForStudent(selectedStudent.id));
+  }, [selectedStudent.id]);
 
-  const handlePackAssigned = useCallback((pack: AssignedWordpack) => {
-    const updated = [...assignedPacks, pack];
-    setAssignedPacks(updated);
-    saveAssignedPacks(updated);
-    alert(`✅ Модуль "${pack.title}" призначено учню ${selectedStudent.full_name}!`);
-  }, [assignedPacks, selectedStudent.full_name]);
+  const handlePackAssigned = useCallback(
+    (pack: AssignedWordpack) => {
+      setAssignedPacks((prev) => [...prev, pack]);
+    },
+    []
+  );
+
+  const assignedProgress = calculateAssignedProgress(assignedPacks);
 
   const studentId = selectedStudent.id;
 
@@ -480,7 +485,7 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
         </div>
       </div>
 
-      {/* 📚 Teacher Vocabulary & Wordpacks Manager */}
+      {/* 📚 Teacher Vocabulary Manager */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 pb-4">
           <div>
@@ -488,71 +493,61 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
               <span>📚</span> Словник учня ({selectedStudent.full_name})
             </h3>
             <p className="text-xs text-gray-500 mt-0.5">
-              Призначайте нові набори слів (Wordpacks) або додавайте персональні слова через ШІ до словника учня.
+              Задайте пакет слів українською — ШІ згенерує переклад, приклади та пояснення для кожного слова.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowAssignVocab(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-xl shadow-sm transition-all"
-            >
-              ✨ Задати модуль слів
-            </button>
-            <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full">
-              🧠 Smart Vocabulary Active
-            </span>
-          </div>
+          <button
+            onClick={() => setShowAssignVocab(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-xl shadow-sm transition-all"
+          >
+            📦 Задати пакет слів
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-          {/* Wordpack 1 */}
-          <div className="p-4 bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-100 rounded-2xl space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-2xl">💼</span>
-              <span className="px-2 py-0.5 bg-purple-200 text-purple-800 text-[10px] font-bold rounded-md">B2 Level</span>
+        {assignedPacks.length > 0 ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-4 text-xs text-gray-600">
+              <span>
+                Призначено: <strong className="text-gray-900">{assignedProgress.total}</strong> слів
+              </span>
+              <span>
+                Вивчено: <strong className="text-emerald-600">{assignedProgress.mastered}</strong>
+              </span>
+              <span>
+                Залишилось: <strong className="text-amber-600">{assignedProgress.remaining}</strong>
+              </span>
             </div>
-            <h4 className="font-bold text-gray-900 text-sm">Business English Essentials</h4>
-            <p className="text-xs text-gray-600 line-clamp-2">Ключові слова для презентацій, переговорів та стратегічних сесій.</p>
-            <button
-              onClick={() => alert(`Сет 'Business English Essentials' призначено учню ${selectedStudent.full_name}!`)}
-              className="w-full mt-2 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl text-xs shadow-sm transition-all"
-            >
-              + Призначити цей сет
-            </button>
+            {assignedPacks.map((pack) => {
+              const mastered = pack.words.filter((w) => w.status === 'mastered').length;
+              const pct = pack.words.length > 0 ? Math.round((mastered / pack.words.length) * 100) : 0;
+              return (
+                <div key={pack.id} className="flex items-center justify-between gap-3 p-3 border border-gray-100 rounded-xl">
+                  <div className="min-w-0">
+                    <h4 className="font-semibold text-gray-900 text-sm truncate">{pack.title}</h4>
+                    <p className="text-xs text-gray-500">
+                      {pack.targetLanguage} • {mastered}/{pack.words.length} слів
+                      {pack.dueDate && ` • до ${new Date(pack.dueDate).toLocaleDateString('uk-UA')}`}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${pct === 100 ? 'bg-emerald-500' : 'bg-purple-500'}`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-bold text-purple-600 w-8">{pct}%</span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-
-          {/* Wordpack 2 */}
-          <div className="p-4 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-2xl">🚀</span>
-              <span className="px-2 py-0.5 bg-indigo-200 text-indigo-800 text-[10px] font-bold rounded-md">B1 Level</span>
-            </div>
-            <h4 className="font-bold text-gray-900 text-sm">Daily Fluency Boost</h4>
-            <p className="text-xs text-gray-600 line-clamp-2">Розмовні дієслова та фрази для впевненого спілкування щодня.</p>
-            <button
-              onClick={() => alert(`Сет 'Daily Fluency Boost' призначено учню ${selectedStudent.full_name}!`)}
-              className="w-full mt-2 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs shadow-sm transition-all"
-            >
-              + Призначити цей сет
-            </button>
+        ) : (
+          <div className="text-center py-8 text-gray-400 text-sm">
+            <span className="text-3xl block mb-2">📦</span>
+            Ще немає призначених пакетів. Натисніть «Задати пакет слів», щоб створити перший.
           </div>
-
-          {/* Wordpack 3 */}
-          <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-2xl">🎯</span>
-              <span className="px-2 py-0.5 bg-emerald-200 text-emerald-800 text-[10px] font-bold rounded-md">C1 Level</span>
-            </div>
-            <h4 className="font-bold text-gray-900 text-sm">Academic & Expressive</h4>
-            <p className="text-xs text-gray-600 line-clamp-2">Вишуканий словниковий запас для есе та глибоких дискусій.</p>
-            <button
-              onClick={() => alert(`Сет 'Academic & Expressive' призначено учню ${selectedStudent.full_name}!`)}
-              className="w-full mt-2 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm transition-all"
-            >
-              + Призначити цей сет
-            </button>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Assign Vocabulary Modal */}

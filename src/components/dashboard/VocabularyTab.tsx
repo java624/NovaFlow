@@ -12,11 +12,17 @@ import {
   getStoredVocabulary,
   saveVocabulary,
   calculateVocabularyStats,
+  getAssignedPacksForStudent,
+  saveAssignedPacks,
   getStoredAssignedPacks,
-  saveAssignedPacks
+  calculateAssignedProgress,
 } from '@/lib/mockVocabularyData';
 
-export default function VocabularyTab() {
+interface VocabularyTabProps {
+  studentId?: string;
+}
+
+export default function VocabularyTab({ studentId }: VocabularyTabProps) {
   const [items, setItems] = useState<VocabularyItem[]>([]);
   const [assignedPacks, setAssignedPacks] = useState<AssignedWordpack[]>([]);
   const [activeMode, setActiveMode] = useState<StudyMode>('browse');
@@ -34,33 +40,56 @@ export default function VocabularyTab() {
 
   // Load vocabulary from storage on mount
   useEffect(() => {
-    setItems(getStoredVocabulary());
-    setAssignedPacks(getStoredAssignedPacks());
-  }, []);
+    if (studentId) {
+      setItems(getStoredVocabulary(studentId));
+      setAssignedPacks(getAssignedPacksForStudent(studentId));
+    } else {
+      setItems(getStoredVocabulary());
+      setAssignedPacks(getStoredAssignedPacks());
+    }
+  }, [studentId]);
 
   // Listen for localStorage changes (when teacher assigns a new pack)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'novaflow_assigned_packs_v1' || e.key === null) {
-        setAssignedPacks(getStoredAssignedPacks());
+        setAssignedPacks(
+          studentId ? getAssignedPacksForStudent(studentId) : getStoredAssignedPacks()
+        );
       }
-      if (e.key === 'novaflow_vocabulary_items_v1' || e.key === null) {
-        setItems(getStoredVocabulary());
+      const vocabKey = studentId
+        ? `novaflow_vocabulary_items_v1_${studentId}`
+        : 'novaflow_vocabulary_items_v1';
+      if (e.key === vocabKey || e.key === null) {
+        setItems(getStoredVocabulary(studentId));
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [studentId]);
 
   // Update storage whenever items change
   const updateItems = (newItems: VocabularyItem[]) => {
     setItems(newItems);
-    saveVocabulary(newItems);
+    saveVocabulary(newItems, studentId);
+  };
+
+  const updateAssignedPacks = (packs: AssignedWordpack[]) => {
+    setAssignedPacks(packs);
+    const allPacks = getStoredAssignedPacks();
+    const otherPacks = studentId
+      ? allPacks.filter((p) => !p.assignedStudentIds.includes(studentId))
+      : [];
+    saveAssignedPacks([...otherPacks, ...packs]);
   };
 
   // Calculated Statistics
   const stats = useMemo(() => calculateVocabularyStats(items), [items]);
+  const assignedProgress = useMemo(
+    () => calculateAssignedProgress(assignedPacks),
+    [assignedPacks]
+  );
 
   // Filtered vocabulary list
   const filteredItems = useMemo(() => {
@@ -124,18 +153,31 @@ export default function VocabularyTab() {
   // Update mastery status
   const handleToggleMastery = (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    const nextItems = items.map((item) => {
-      if (item.id === id) {
-        const newStatus: MasteryStatus = item.status === 'mastered' ? 'learning' : 'mastered';
-        return {
-          ...item,
-          status: newStatus,
-          boxLevel: newStatus === 'mastered' ? 5 : 1
-        };
-      }
-      return item;
-    });
+    const target = items.find((item) => item.id === id);
+    if (!target) return;
+
+    const newStatus: MasteryStatus = target.status === 'mastered' ? 'learning' : 'mastered';
+    const toggledItem: VocabularyItem = {
+      ...target,
+      status: newStatus,
+      boxLevel: newStatus === 'mastered' ? 5 : 1,
+    };
+
+    const nextItems = items.map((item) => (item.id === id ? toggledItem : item));
     updateItems(nextItems);
+
+    const wordText = toggledItem.word.toLowerCase();
+    const syncedPacks = assignedPacks.map((pack) => ({
+      ...pack,
+      words: pack.words.map((w) =>
+        w.word.toLowerCase() === wordText
+          ? { ...w, status: toggledItem.status, boxLevel: toggledItem.boxLevel }
+          : w
+      ),
+    }));
+    if (syncedPacks.some((p, i) => p.words !== assignedPacks[i]?.words)) {
+      updateAssignedPacks(syncedPacks);
+    }
   };
 
   // Delete word
@@ -158,10 +200,10 @@ export default function VocabularyTab() {
               <span>Spaced Repetition (SRS)</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
-              Ваш Інтерактивний Словник
+              Мій словник
             </h1>
             <p className="text-purple-200 mt-2 max-w-xl text-sm md:text-base">
-              Вивчайте нові слова за допомогою мнемонік від ШІ, аудіо-вимови, контекстних прикладів та ігрових тренувань!
+              Ваш особистий словник і завдання від вчителя. Вивчайте слова з прикладами, поясненнями та тренуваннями!
             </p>
           </div>
 
@@ -175,25 +217,43 @@ export default function VocabularyTab() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-8 pt-6 border-t border-white/10">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-8 pt-6 border-t border-white/10">
           <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-            <span className="text-xs text-purple-300 font-medium">Всього у словнику</span>
+            <span className="text-xs text-purple-300 font-medium">У моєму словнику</span>
             <div className="text-2xl font-bold mt-1 text-white">{stats.totalWords}</div>
           </div>
           <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-            <span className="text-xs text-emerald-300 font-medium">Засвоєно слів</span>
+            <span className="text-xs text-emerald-300 font-medium">Вивчено</span>
             <div className="text-2xl font-bold mt-1 text-emerald-400">{stats.masteredWords}</div>
           </div>
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-            <span className="text-xs text-amber-300 font-medium">Потрібно повторити</span>
-            <div className="text-2xl font-bold mt-1 text-amber-400">{stats.dueForReview}</div>
-          </div>
-          <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-            <span className="text-xs text-pink-300 font-medium">Серія тренувань</span>
-            <div className="text-2xl font-bold mt-1 text-pink-300 flex items-center gap-1">
-              <span>🔥</span> {stats.streakDays} днів
-            </div>
-          </div>
+          {assignedProgress.total > 0 && (
+            <>
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                <span className="text-xs text-sky-300 font-medium">Задано вчителем</span>
+                <div className="text-2xl font-bold mt-1 text-sky-300">{assignedProgress.total}</div>
+              </div>
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                <span className="text-xs text-amber-300 font-medium">Залишилось</span>
+                <div className="text-2xl font-bold mt-1 text-amber-400">{assignedProgress.remaining}</div>
+              </div>
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                <span className="text-xs text-pink-300 font-medium">Прогрес завдань</span>
+                <div className="text-2xl font-bold mt-1 text-pink-300">{assignedProgress.percent}%</div>
+              </div>
+            </>
+          )}
+          {assignedProgress.total === 0 && (
+            <>
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                <span className="text-xs text-amber-300 font-medium">Потрібно повторити</span>
+                <div className="text-2xl font-bold mt-1 text-amber-400">{stats.dueForReview}</div>
+              </div>
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10">
+                <span className="text-xs text-pink-300 font-medium">На вивченні</span>
+                <div className="text-2xl font-bold mt-1 text-pink-300">{stats.learningWords}</div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -201,10 +261,9 @@ export default function VocabularyTab() {
       {assignedPacks.length > 0 && (
         <AssignedPacksSection
           packs={assignedPacks}
-          onUpdatePacks={(packs) => {
-            setAssignedPacks(packs);
-            saveAssignedPacks(packs);
-          }}
+          personalItems={items}
+          onUpdatePacks={updateAssignedPacks}
+          onSyncPersonalItems={updateItems}
         />
       )}
 
@@ -377,26 +436,45 @@ export default function VocabularyTab() {
 ============================================================================ */
 function AssignedPacksSection({
   packs,
-  onUpdatePacks
+  personalItems,
+  onUpdatePacks,
+  onSyncPersonalItems,
 }: {
   packs: AssignedWordpack[];
+  personalItems: VocabularyItem[];
   onUpdatePacks: (packs: AssignedWordpack[]) => void;
+  onSyncPersonalItems: (items: VocabularyItem[]) => void;
 }) {
   const [expandedPackId, setExpandedPackId] = useState<string | null>(null);
 
   const handleToggleWord = (packId: string, wordId: string) => {
-    const updated = packs.map((pack) => {
-      if (pack.id !== packId) return pack;
+    const pack = packs.find((p) => p.id === packId);
+    const target = pack?.words.find((w) => w.id === wordId);
+    if (!target) return;
+
+    const newStatus: MasteryStatus = target.status === 'mastered' ? 'learning' : 'mastered';
+    const toggledWord: VocabularyItem = {
+      ...target,
+      status: newStatus,
+      boxLevel: newStatus === 'mastered' ? 5 : 1,
+    };
+
+    const updated = packs.map((p) => {
+      if (p.id !== packId) return p;
       return {
-        ...pack,
-        words: pack.words.map((w) => {
-          if (w.id !== wordId) return w;
-          const newStatus: MasteryStatus = w.status === 'mastered' ? 'learning' : 'mastered';
-          return { ...w, status: newStatus, boxLevel: newStatus === 'mastered' ? 5 : 1 };
-        })
+        ...p,
+        words: p.words.map((w) => (w.id === wordId ? toggledWord : w)),
       };
     });
     onUpdatePacks(updated);
+
+    const wordText = toggledWord.word.toLowerCase();
+    const synced = personalItems.map((item) =>
+      item.word.toLowerCase() === wordText
+        ? { ...item, status: toggledWord.status, boxLevel: toggledWord.boxLevel }
+        : item
+    );
+    onSyncPersonalItems(synced);
   };
 
   const formatDate = (d?: string) => {
@@ -408,7 +486,7 @@ function AssignedPacksSection({
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">📦 Призначені модулі від вчителя</h2>
+          <h2 className="text-lg font-bold text-gray-900">📦 Завдання від вчителя</h2>
           <p className="text-xs text-gray-500 mt-0.5">Пакети слів, які вам задав викладач</p>
         </div>
         <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full">
@@ -523,8 +601,8 @@ function MasteredArchiveSection({
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
-          <h2 className="text-lg font-bold text-gray-900">🏆 Архів вивченого</h2>
-          <p className="text-xs text-gray-500 mt-0.5">Усі слова, які ви засвоїли за весь час</p>
+          <h2 className="text-lg font-bold text-gray-900">📋 Вивчені слова</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Слово і переклад — без пояснень та прикладів</p>
         </div>
         <div className="relative">
           <input

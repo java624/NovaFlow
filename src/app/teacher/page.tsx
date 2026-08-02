@@ -12,6 +12,7 @@ import TeacherCommentsTab from '@/components/teacher/TeacherCommentsTab';
 import dynamic from 'next/dynamic';
 import StudentProfileModal from '@/components/teacher/StudentProfileModal';
 import StudentPaymentHistoryModal from '@/components/teacher/StudentPaymentHistoryModal';
+import AssignVocabularyModal from '@/components/teacher/AssignVocabularyModal';
 
 const LessonRoom = dynamic(() => import('@/components/dashboard/LessonRoom'), { ssr: false });
 
@@ -36,6 +37,8 @@ export default function TeacherDashboardPage() {
   const [profileStudent, setProfileStudent] = useState<StudentProfile | null>(null);
   const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState(false);
   const [paymentHistoryStudent, setPaymentHistoryStudent] = useState<StudentProfile | null>(null);
+  const [showAssignVocabModal, setShowAssignVocabModal] = useState(false);
+  const [assignVocabStudent, setAssignVocabStudent] = useState<StudentProfile | null>(null);
   const [activeLessonChannel, setActiveLessonChannel] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -431,6 +434,10 @@ export default function TeacherDashboardPage() {
             setShowPaymentHistoryModal(true);
           }}
           onStudentDeleted={handleStudentDeleted}
+          onAssignVocabulary={(st) => {
+            setAssignVocabStudent(st);
+            setShowAssignVocabModal(true);
+          }}
         />
       )}
 
@@ -442,6 +449,27 @@ export default function TeacherDashboardPage() {
           onClose={() => {
             setShowPaymentHistoryModal(false);
             setPaymentHistoryStudent(null);
+          }}
+        />
+      )}
+
+      {/* Assign Vocabulary Modal */}
+      {assignVocabStudent && (
+        <AssignVocabularyModal
+          student={assignVocabStudent}
+          visible={showAssignVocabModal}
+          teacherId={profile?.id}
+          onClose={() => {
+            setShowAssignVocabModal(false);
+            setAssignVocabStudent(null);
+          }}
+          onAssigned={(pack) => {
+            setToast({
+              msg: `✅ Пакет слів "${pack.title}" надіслано учню!`,
+              type: 'success'
+            });
+            if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+            toastTimerRef.current = setTimeout(() => setToast(null), 3000);
           }}
         />
       )}

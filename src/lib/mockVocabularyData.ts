@@ -200,29 +200,37 @@ export const INITIAL_WORDPACKS: Wordpack[] = [
 ];
 
 // Helper functions for LocalStorage persistence
-const STORAGE_KEY_VOCAB = 'novaflow_vocabulary_items_v1';
+const STORAGE_KEY_VOCAB_PREFIX = 'novaflow_vocabulary_items_v1';
 const STORAGE_KEY_WORDPACKS = 'novaflow_wordpacks_v1';
 const STORAGE_KEY_ASSIGNED_PACKS = 'novaflow_assigned_packs_v1';
 
-export function getStoredVocabulary(): VocabularyItem[] {
-  if (typeof window === 'undefined') return INITIAL_VOCABULARY_ITEMS;
+function vocabStorageKey(studentId?: string): string {
+  return studentId ? `${STORAGE_KEY_VOCAB_PREFIX}_${studentId}` : STORAGE_KEY_VOCAB_PREFIX;
+}
+
+export function getStoredVocabulary(studentId?: string): VocabularyItem[] {
+  if (typeof window === 'undefined') return studentId ? [] : INITIAL_VOCABULARY_ITEMS;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY_VOCAB);
+    const key = vocabStorageKey(studentId);
+    const raw = localStorage.getItem(key);
     if (!raw) {
-      localStorage.setItem(STORAGE_KEY_VOCAB, JSON.stringify(INITIAL_VOCABULARY_ITEMS));
-      return INITIAL_VOCABULARY_ITEMS;
+      if (!studentId) {
+        localStorage.setItem(key, JSON.stringify(INITIAL_VOCABULARY_ITEMS));
+        return INITIAL_VOCABULARY_ITEMS;
+      }
+      return [];
     }
     return JSON.parse(raw);
   } catch (err) {
     console.error('Failed to load vocabulary from localStorage', err);
-    return INITIAL_VOCABULARY_ITEMS;
+    return studentId ? [] : INITIAL_VOCABULARY_ITEMS;
   }
 }
 
-export function saveVocabulary(items: VocabularyItem[]) {
+export function saveVocabulary(items: VocabularyItem[], studentId?: string) {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(STORAGE_KEY_VOCAB, JSON.stringify(items));
+    localStorage.setItem(vocabStorageKey(studentId), JSON.stringify(items));
   } catch (err) {
     console.error('Failed to save vocabulary to localStorage', err);
   }
@@ -271,6 +279,32 @@ export function saveAssignedPacks(packs: AssignedWordpack[]) {
   } catch (err) {
     console.error('Failed to save assigned packs to localStorage', err);
   }
+}
+
+export function getAssignedPacksForStudent(studentId: string): AssignedWordpack[] {
+  return getStoredAssignedPacks().filter((pack) =>
+    pack.assignedStudentIds.includes(studentId)
+  );
+}
+
+export function calculateAssignedProgress(packs: AssignedWordpack[]) {
+  const allWords = packs.flatMap((p) => p.words);
+  const total = allWords.length;
+  const mastered = allWords.filter((w) => w.status === 'mastered').length;
+  return {
+    total,
+    mastered,
+    remaining: total - mastered,
+    percent: total > 0 ? Math.round((mastered / total) * 100) : 0,
+  };
+}
+
+/** Parse raw word input: comma, newline, semicolon, or space separated */
+export function parseWordInput(rawInput: string): string[] {
+  return rawInput
+    .split(/[,\n;]+|\s+/)
+    .map((w) => w.trim())
+    .filter((w) => w.length > 0);
 }
 
 export function calculateVocabularyStats(items: VocabularyItem[]): VocabularyStats {
