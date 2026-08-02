@@ -1,4 +1,4 @@
-import { VocabularyItem, Wordpack, VocabularyStats } from '@/types/vocabulary';
+import { VocabularyItem, Wordpack, VocabularyStats, AssignedWordpack } from '@/types/vocabulary';
 
 export const INITIAL_VOCABULARY_ITEMS: VocabularyItem[] = [
   {
@@ -202,6 +202,7 @@ export const INITIAL_WORDPACKS: Wordpack[] = [
 // Helper functions for LocalStorage persistence
 const STORAGE_KEY_VOCAB = 'novaflow_vocabulary_items_v1';
 const STORAGE_KEY_WORDPACKS = 'novaflow_wordpacks_v1';
+const STORAGE_KEY_ASSIGNED_PACKS = 'novaflow_assigned_packs_v1';
 
 export function getStoredVocabulary(): VocabularyItem[] {
   if (typeof window === 'undefined') return INITIAL_VOCABULARY_ITEMS;
@@ -248,6 +249,27 @@ export function saveWordpacks(packs: Wordpack[]) {
     localStorage.setItem(STORAGE_KEY_WORDPACKS, JSON.stringify(packs));
   } catch (err) {
     console.error('Failed to save wordpacks to localStorage', err);
+  }
+}
+
+export function getStoredAssignedPacks(): AssignedWordpack[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_ASSIGNED_PACKS);
+    if (!raw) return [];
+    return JSON.parse(raw);
+  } catch (err) {
+    console.error('Failed to load assigned packs from localStorage', err);
+    return [];
+  }
+}
+
+export function saveAssignedPacks(packs: AssignedWordpack[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(STORAGE_KEY_ASSIGNED_PACKS, JSON.stringify(packs));
+  } catch (err) {
+    console.error('Failed to save assigned packs to localStorage', err);
   }
 }
 

@@ -5,21 +5,26 @@ import {
   VocabularyItem,
   CEFRLevel,
   StudyMode,
-  MasteryStatus
+  MasteryStatus,
+  AssignedWordpack
 } from '@/types/vocabulary';
 import {
   getStoredVocabulary,
   saveVocabulary,
-  calculateVocabularyStats
+  calculateVocabularyStats,
+  getStoredAssignedPacks,
+  saveAssignedPacks
 } from '@/lib/mockVocabularyData';
 
 export default function VocabularyTab() {
   const [items, setItems] = useState<VocabularyItem[]>([]);
+  const [assignedPacks, setAssignedPacks] = useState<AssignedWordpack[]>([]);
   const [activeMode, setActiveMode] = useState<StudyMode>('browse');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedWordCard, setSelectedWordCard] = useState<VocabularyItem | null>(null);
+  const [archiveSearch, setArchiveSearch] = useState('');
 
   // Modal State for adding new word
   const [showAddModal, setShowAddModal] = useState(false);
@@ -30,6 +35,7 @@ export default function VocabularyTab() {
   // Load vocabulary from storage on mount
   useEffect(() => {
     setItems(getStoredVocabulary());
+    setAssignedPacks(getStoredAssignedPacks());
   }, []);
 
   // Update storage whenever items change
@@ -175,6 +181,24 @@ export default function VocabularyTab() {
           </div>
         </div>
       </div>
+
+      {/* Assigned Packs from Teacher */}
+      {assignedPacks.length > 0 && (
+        <AssignedPacksSection
+          packs={assignedPacks}
+          onUpdatePacks={(packs) => {
+            setAssignedPacks(packs);
+            saveAssignedPacks(packs);
+          }}
+        />
+      )}
+
+      {/* Mastered Vocabulary Archive */}
+      <MasteredArchiveSection
+        items={items}
+        searchQuery={archiveSearch}
+        setSearchQuery={setArchiveSearch}
+      />
 
       {/* Navigation & Study Mode Switcher */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-2 md:p-3 rounded-2xl border border-gray-100 shadow-sm">
@@ -327,6 +351,198 @@ export default function VocabularyTab() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================================
+   ASSIGNED PACKS SECTION (from teacher)
+============================================================================ */
+function AssignedPacksSection({
+  packs,
+  onUpdatePacks
+}: {
+  packs: AssignedWordpack[];
+  onUpdatePacks: (packs: AssignedWordpack[]) => void;
+}) {
+  const [expandedPackId, setExpandedPackId] = useState<string | null>(null);
+
+  const handleToggleWord = (packId: string, wordId: string) => {
+    const updated = packs.map((pack) => {
+      if (pack.id !== packId) return pack;
+      return {
+        ...pack,
+        words: pack.words.map((w) => {
+          if (w.id !== wordId) return w;
+          const newStatus: MasteryStatus = w.status === 'mastered' ? 'learning' : 'mastered';
+          return { ...w, status: newStatus, boxLevel: newStatus === 'mastered' ? 5 : 1 };
+        })
+      };
+    });
+    onUpdatePacks(updated);
+  };
+
+  const formatDate = (d?: string) => {
+    if (!d) return 'Без дедлайну';
+    return new Date(d).toLocaleDateString('uk-UA', { day: '2-digit', month: 'short' });
+  };
+
+  return (
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">📦 Призначені модулі від вчителя</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Пакети слів, які вам задав викладач</p>
+        </div>
+        <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full">
+          {packs.length} пакетів
+        </span>
+      </div>
+
+      <div className="space-y-3">
+        {packs.map((pack) => {
+          const masteredCount = pack.words.filter((w) => w.status === 'mastered').length;
+          const progress = pack.words.length > 0 ? Math.round((masteredCount / pack.words.length) * 100) : 0;
+          const isExpanded = expandedPackId === pack.id;
+
+          return (
+            <div key={pack.id} className="border border-gray-100 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setExpandedPackId(isExpanded ? null : pack.id)}
+                className="w-full flex items-center justify-between gap-3 p-4 hover:bg-gray-50 transition-colors text-left"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-lg flex-shrink-0">📚</div>
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-gray-900 text-sm truncate">{pack.title}</h3>
+                    <p className="text-xs text-gray-500">
+                      {pack.targetLanguage} • {masteredCount}/{pack.words.length} слів • Дедлайн: {formatDate(pack.dueDate)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${progress === 100 ? 'bg-emerald-500' : 'bg-purple-500'}`}
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <span className={`text-xs font-bold ${progress === 100 ? 'text-emerald-600' : 'text-purple-600'}`}>
+                    {progress}%
+                  </span>
+                  <span className="text-gray-400 text-xs">{isExpanded ? '▲' : '▼'}</span>
+                </div>
+              </button>
+
+              {isExpanded && (
+                <div className="px-4 pb-4 border-t border-gray-50 pt-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {pack.words.map((word) => (
+                      <div
+                        key={word.id}
+                        className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs border ${
+                          word.status === 'mastered'
+                            ? 'bg-emerald-50 border-emerald-100'
+                            : 'bg-gray-50 border-gray-100'
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <span className={`font-semibold ${word.status === 'mastered' ? 'text-emerald-800 line-through' : 'text-gray-900'}`}>
+                            {word.word}
+                          </span>
+                          <span className="text-gray-500 ml-2">{word.primaryTranslation}</span>
+                        </div>
+                        <button
+                          onClick={() => handleToggleWord(pack.id, word.id)}
+                          className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs transition-colors ${
+                            word.status === 'mastered'
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-gray-200 text-gray-500 hover:bg-emerald-100 hover:text-emerald-600'
+                          }`}
+                          title={word.status === 'mastered' ? 'Повернути у вивчення' : 'Позначити як вивчене'}
+                        >
+                          ✓
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+   MASTERED VOCABULARY ARCHIVE
+============================================================================ */
+function MasteredArchiveSection({
+  items,
+  searchQuery,
+  setSearchQuery
+}: {
+  items: VocabularyItem[];
+  searchQuery: string;
+  setSearchQuery: (s: string) => void;
+}) {
+  const masteredItems = useMemo(() => {
+    return items.filter((item) => item.status === 'mastered');
+  }, [items]);
+
+  const filteredMastered = useMemo(() => {
+    if (!searchQuery.trim()) return masteredItems;
+    const q = searchQuery.toLowerCase();
+    return masteredItems.filter(
+      (item) =>
+        item.word.toLowerCase().includes(q) ||
+        item.primaryTranslation.toLowerCase().includes(q)
+    );
+  }, [masteredItems, searchQuery]);
+
+  return (
+    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 className="text-lg font-bold text-gray-900">🏆 Архів вивченого</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Усі слова, які ви засвоїли за весь час</p>
+        </div>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="🔍 Пошук в архіві..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full sm:w-56 pl-8 pr-3 py-2 bg-gray-50 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs font-medium text-gray-900"
+          />
+        </div>
+      </div>
+
+      {filteredMastered.length === 0 ? (
+        <div className="text-center py-8 text-gray-400">
+          <div className="text-3xl mb-2">📭</div>
+          <p className="text-sm">Поки немає вивчених слів. Позначте слова як вивчені, щоб вони з'явилися тут.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          {filteredMastered.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center justify-between gap-2 rounded-lg px-3 py-2 bg-emerald-50/50 border border-emerald-100/50 hover:bg-emerald-50 transition-colors"
+            >
+              <div className="min-w-0">
+                <span className="font-semibold text-gray-900 text-sm">{item.word}</span>
+                <span className="text-gray-500 text-xs ml-2">— {item.primaryTranslation}</span>
+              </div>
+              <span className="flex-shrink-0 px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded-full">
+                {item.cefrLevel}
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>

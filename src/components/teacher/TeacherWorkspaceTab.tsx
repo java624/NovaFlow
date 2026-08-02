@@ -6,6 +6,9 @@ import { StudentProfile, Homework, Lesson } from './types';
 import TeacherReviewCanvas from '@/components/dashboard/TeacherReviewCanvas';
 import PdfTeacherReviewCanvas from './PdfTeacherReviewCanvas';
 import { isPdfUrl } from '@/lib/pdf-utils';
+import AssignVocabularyModal from './AssignVocabularyModal';
+import { AssignedWordpack } from '@/types/vocabulary';
+import { getStoredAssignedPacks, saveAssignedPacks } from '@/lib/mockVocabularyData';
 
 interface TeacherWorkspaceTabProps {
   selectedStudent: StudentProfile;
@@ -37,6 +40,21 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
   const [previewModal, setPreviewModal] = useState<{
     visible: boolean; title: string; desc: string; imgUrl: string;
   }>({ visible: false, title: '', desc: '', imgUrl: '' });
+
+  // Assign Vocabulary Modal
+  const [showAssignVocab, setShowAssignVocab] = useState(false);
+  const [assignedPacks, setAssignedPacks] = useState<AssignedWordpack[]>([]);
+
+  useEffect(() => {
+    setAssignedPacks(getStoredAssignedPacks());
+  }, []);
+
+  const handlePackAssigned = useCallback((pack: AssignedWordpack) => {
+    const updated = [...assignedPacks, pack];
+    setAssignedPacks(updated);
+    saveAssignedPacks(updated);
+    alert(`✅ Модуль "${pack.title}" призначено учню ${selectedStudent.full_name}!`);
+  }, [assignedPacks, selectedStudent.full_name]);
 
   const studentId = selectedStudent.id;
 
@@ -473,9 +491,17 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
               Призначайте нові набори слів (Wordpacks) або додавайте персональні слова через ШІ до словника учня.
             </p>
           </div>
-          <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full">
-            🧠 Smart Vocabulary Active
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowAssignVocab(true)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 rounded-xl shadow-sm transition-all"
+            >
+              ✨ Задати модуль слів
+            </button>
+            <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full">
+              🧠 Smart Vocabulary Active
+            </span>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
@@ -528,6 +554,16 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
           </div>
         </div>
       </div>
+
+      {/* Assign Vocabulary Modal */}
+      {showAssignVocab && (
+        <AssignVocabularyModal
+          student={selectedStudent}
+          visible={showAssignVocab}
+          onClose={() => setShowAssignVocab(false)}
+          onAssigned={handlePackAssigned}
+        />
+      )}
 
       {/* Teacher Review Canvas */}
       {currentReviewHwId && (

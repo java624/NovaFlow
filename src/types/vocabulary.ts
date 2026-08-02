@@ -49,6 +49,17 @@ export interface Wordpack {
   createdAt: string;
 }
 
+export interface AssignedWordpack {
+  id: string;
+  title: string;
+  targetLanguage: string;
+  createdAt: string;
+  dueDate?: string;
+  assignedStudentIds: string[];
+  createdByTeacherId: string;
+  words: VocabularyItem[];
+}
+
 export interface VocabularyStats {
   totalWords: number;
   masteredWords: number;
