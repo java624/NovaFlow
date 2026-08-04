@@ -12,6 +12,7 @@ import { WordPacket } from '@/types/vocabulary';
 import { calculateAssignedProgress } from '@/lib/mockVocabularyData';
 import {
   loadTeacherStudentPacks,
+  deletePacketAssignment,
   getWordStatusEmoji,
   getWordStatusLabel,
 } from '@/lib/vocabularySupabase';
@@ -66,6 +67,18 @@ export default function TeacherWorkspaceTab({ selectedStudent, teacherId, onStud
   const handlePackAssigned = useCallback((pack: WordPacket) => {
     setAssignedPacks((prev) => [...prev, pack]);
   }, []);
+
+  const handleDeletePackFromStudent = useCallback(async (packId: string) => {
+    if (!confirm('Видалити пакет у цього учня? Пакет залишиться у бібліотеці.')) return;
+    const { error } = await deletePacketAssignment(supabase, selectedStudent.id, packId);
+    if (error) {
+      console.error('Failed to delete packet assignment:', error);
+      toast.error('Не вдалося видалити призначення пакета.');
+      return;
+    }
+    toast.success('✅ Пакет видалено у цього учня');
+    setAssignedPacks((prev) => prev.filter((p) => p.id !== packId));
+  }, [supabase, selectedStudent.id]);
 
   const assignedProgress = calculateAssignedProgress(assignedPacks);
 
@@ -551,6 +564,25 @@ export default function TeacherWorkspaceTab({ selectedStudent, teacherId, onStud
                         />
                       </div>
                       <span className="text-xs font-bold text-purple-600 w-8">{pct}%</span>
+                      <span
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Видалити пакет у учня`}
+                        title="Видалити пакет у цього учня"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePackFromStudent(pack.id);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.stopPropagation();
+                            handleDeletePackFromStudent(pack.id);
+                          }
+                        }}
+                        className="text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg p-1.5 text-sm transition-colors"
+                      >
+                        🗑️
+                      </span>
                       <span className="text-gray-400 text-xs">{isExpanded ? '▲' : '▼'}</span>
                     </div>
                   </div>

@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { StudentProfile } from './types';
-import { loadTeacherPackLibrary, TeacherLibraryPack } from '@/lib/vocabularySupabase';
+import { loadTeacherPackLibrary, deleteWordPacket, TeacherLibraryPack } from '@/lib/vocabularySupabase';
 import AssignVocabularyModal from './AssignVocabularyModal';
 import AssignPacketModal from './AssignPacketModal';
 
@@ -25,6 +26,19 @@ export default function TeacherPackLibraryTab({ teacherId, students }: TeacherPa
     setPacks(data);
     setLoading(false);
   }, [supabase, teacherId]);
+
+  const handleDeletePack = useCallback(async (pack: TeacherLibraryPack) => {
+    const msg = `Ви дійсно хочете видалити пакет «${pack.title}» остаточно?\n\nЦе також видалить усі слова пакета та призначення цього пакета всім учням.`;
+    if (!confirm(msg)) return;
+    const { error } = await deleteWordPacket(supabase, pack.id);
+    if (error) {
+      console.error('Failed to delete word packet permanently:', error);
+      toast.error('Не вдалося видалити пакет.');
+      return;
+    }
+    toast.success('✅ Пакет видалено остаточно');
+    setPacks((prev) => prev.filter((p) => p.id !== pack.id));
+  }, [supabase]);
 
   useEffect(() => {
     loadPacks();
@@ -86,12 +100,22 @@ export default function TeacherPackLibraryTab({ teacherId, students }: TeacherPa
                 </div>
                 <span className="text-2xl flex-shrink-0">📦</span>
               </div>
-              <button
-                onClick={() => setAssignPacket(pack)}
-                className="w-full mt-4 py-2.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-100 rounded-xl transition-colors"
-              >
-                👤 Задати учневі
-              </button>
+              <div className="flex gap-2 mt-4">
+                <button
+                  onClick={() => setAssignPacket(pack)}
+                  className="flex-1 py-2.5 text-xs font-semibold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-100 rounded-xl transition-colors"
+                >
+                  👤 Задати учневі
+                </button>
+                <button
+                  onClick={() => handleDeletePack(pack)}
+                  title="Видалити остаточно"
+                  aria-label={`Видалити пакет «${pack.title}» остаточно`}
+                  className="px-3 py-2.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-100 rounded-xl transition-colors"
+                >
+                  🗑️
+                </button>
+              </div>
             </div>
           ))}
         </div>

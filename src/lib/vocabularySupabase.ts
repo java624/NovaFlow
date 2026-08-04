@@ -369,3 +369,59 @@ export async function loadTeacherPackLibrary(
     assignedCount: assignCountByPacket.get(p.id)?.size || 0,
   }));
 }
+
+export async function deletePacketAssignment(
+  supabase: SupabaseClient,
+  studentId: string,
+  packetId: string
+): Promise<{ error: Error | null }> {
+  const { error } = await supabase
+    .from('packet_assignments')
+    .delete()
+    .eq('packet_id', packetId)
+    .eq('student_id', studentId);
+
+  if (error) {
+    console.error('deletePacketAssignment: failed to delete assignment:', error);
+    return { error: new Error(error.message) };
+  }
+
+  return { error: null };
+}
+
+export async function deleteWordPacket(
+  supabase: SupabaseClient,
+  packetId: string
+): Promise<{ error: Error | null }> {
+  // Deleting from word_packets cascades to packet_assignments and words via FK ON DELETE CASCADE,
+  // but we also delete related rows explicitly for robustness.
+
+  const { error: assignError } = await supabase
+    .from('packet_assignments')
+    .delete()
+    .eq('packet_id', packetId);
+  if (assignError) {
+    console.error('deleteWordPacket: failed to delete assignments:', assignError);
+    return { error: new Error(assignError.message) };
+  }
+
+  const { error: wordsError } = await supabase
+    .from('words')
+    .delete()
+    .eq('packet_id', packetId);
+  if (wordsError) {
+    console.error('deleteWordPacket: failed to delete words:', wordsError);
+    return { error: new Error(wordsError.message) };
+  }
+
+  const { error: packetError } = await supabase
+    .from('word_packets')
+    .delete()
+    .eq('id', packetId);
+  if (packetError) {
+    console.error('deleteWordPacket: failed to delete packet:', packetError);
+    return { error: new Error(packetError.message) };
+  }
+
+  return { error: null };
+}
