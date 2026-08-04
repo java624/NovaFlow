@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script"; // 👈 1. Додали імпорт Script
+import { Toaster } from 'sonner';
 import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 
@@ -68,6 +69,7 @@ export default function RootLayout({
         className={`${inter.variable} font-sans antialiased bg-white text-gray-900`}
       >
         <LanguageProvider>
+          <Toaster position="bottom-right" richColors theme="dark" />
           {children}
         </LanguageProvider>
       </body>

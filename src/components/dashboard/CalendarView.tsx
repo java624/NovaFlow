@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Lesson } from './types';
 
 interface CalendarViewProps {
@@ -88,7 +89,7 @@ export default function CalendarView({ lessons }: CalendarViewProps) {
           events,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           eventClick: (info: any) => {
-            alert(`📌 Заплановане заняття:\nТема: ${info.event.title}\nЧас початку: ${info.event.start.toLocaleString('uk-UA')}`);
+            toast.success(`📌 Заплановане заняття: ${info.event.title} — ${info.event.start.toLocaleString('uk-UA')}`);
           },
         });
 

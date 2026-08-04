@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { StudentProfile } from './types';
 import DeleteStudentModal from './DeleteStudentModal';
@@ -59,7 +60,7 @@ export default function StudentProfileModal({
   }, [form, supabase, student.id, onSaved, onClose]);
 
   const uploadAvatar = useCallback(async (file: File) => {
-    if (file.size > 3145728) { alert('Максимум 3 МБ.'); return; }
+    if (file.size > 3145728) { toast.warning('Максимум 3 МБ.'); return; }
     try {
       const fp = `${student.id}_avatar.${file.name.split('.').pop()}`;
       const { error: ue } = await supabase.storage.from('avatars').upload(fp, file, { cacheControl: '3600', upsert: true });

@@ -1,36 +1,100 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { createClient } from '@/lib/supabase/client';
 import {
   VocabularyItem,
   CEFRLevel,
   StudyMode,
   MasteryStatus,
-  AssignedWordpack
+  WordPacket,
 } from '@/types/vocabulary';
 import {
-  getStoredVocabulary,
-  saveVocabulary,
   calculateVocabularyStats,
-  getAssignedPacksForStudent,
-  saveAssignedPacks,
-  getStoredAssignedPacks,
   calculateAssignedProgress,
 } from '@/lib/mockVocabularyData';
+import PackStudyView from '@/components/vocabulary/PackStudyView';
 
 interface VocabularyTabProps {
   studentId?: string;
 }
+// Alias available to all components in this module
+type AssignedWordpack = WordPacket;
 
 export default function VocabularyTab({ studentId }: VocabularyTabProps) {
+  const supabase = useMemo(() => createClient(), []);
   const [items, setItems] = useState<VocabularyItem[]>([]);
-  const [assignedPacks, setAssignedPacks] = useState<AssignedWordpack[]>([]);
+  const [assignedPacks, setAssignedPacks] = useState<WordPacket[]>([]);
   const [activeMode, setActiveMode] = useState<StudyMode>('browse');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLevel, setSelectedLevel] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
   const [selectedWordCard, setSelectedWordCard] = useState<VocabularyItem | null>(null);
   const [archiveSearch, setArchiveSearch] = useState('');
+  const [selectedPacketId, setSelectedPacketId] = useState<string | null>(null);
+  const [studyPack, setStudyPack] = useState<WordPacket | null>(null);
+
+  const activeStudyItems = useMemo(() => {
+    if (!selectedPacketId) return items;
+    return items.filter((item) => item.wordpackId === selectedPacketId);
+  }, [items, selectedPacketId]);
+
+  const handleStartStudyPacket = (packId: string, mode: StudyMode) => {
+    const pack = assignedPacks.find((p) => p.id === packId);
+    if (pack) {
+      setStudyPack(pack);
+      setSelectedPacketId(packId);
+      setActiveMode(mode);
+    }
+  };
+
+  const handleCloseStudyPack = () => {
+    setStudyPack(null);
+    setSelectedPacketId(null);
+    setActiveMode('browse');
+  };
+
+  const handleStudyWordsUpdated = useCallback(
+    (updatedWords: VocabularyItem[]) => {
+      setAssignedPacks((prev) =>
+        prev.map((p) =>
+          p.id === studyPack?.id ? { ...p, words: updatedWords } : p
+        )
+      );
+      setItems((prev) => {
+        const updatedById = new Map(updatedWords.map((w) => [w.id, w]));
+        return prev.map((item) => updatedById.get(item.id) || item);
+      });
+    },
+    [studyPack?.id]
+  );
+
+  const handleSaveProgress = useCallback(
+    async (wordId: string, status: MasteryStatus, boxLevel: number = 1) => {
+      if (!studentId) return;
+      const wordIdNum = Number(wordId);
+      if (Number.isNaN(wordIdNum)) return;
+
+      const { error } = await supabase.from('student_word_progress').upsert(
+        {
+          student_id: studentId,
+          word_id: wordIdNum,
+          status,
+          box_level: boxLevel,
+          next_review_date: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'student_id,word_id' }
+      );
+
+      if (error) {
+        console.error('Failed to update student word progress', error);
+      }
+    },
+    [studentId, supabase]
+  );
+
+  
 
   // Modal State for adding new word
   const [showAddModal, setShowAddModal] = useState(false);
@@ -38,50 +102,133 @@ export default function VocabularyTab({ studentId }: VocabularyTabProps) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
 
-  // Load vocabulary from storage on mount
-  useEffect(() => {
-    if (studentId) {
-      setItems(getStoredVocabulary(studentId));
-      setAssignedPacks(getAssignedPacksForStudent(studentId));
-    } else {
-      setItems(getStoredVocabulary());
-      setAssignedPacks(getStoredAssignedPacks());
+  const loadVocabulary = useCallback(async () => {
+    if (!studentId) return;
+
+    const { data: assignments, error: assignError } = await supabase
+      .from('packet_assignments')
+      .select('packet_id, due_date')
+      .eq('student_id', studentId);
+
+    if (assignError) {
+      console.error('Failed to load vocabulary assignments', assignError);
+      return;
     }
-  }, [studentId]);
 
-  // Listen for localStorage changes (when teacher assigns a new pack)
+    if (!assignments?.length) {
+      setItems([]);
+      setAssignedPacks([]);
+      return;
+    }
+
+    const packetIds = assignments.map((a) => a.packet_id);
+    const dueDateByPacket = new Map(assignments.map((a) => [a.packet_id, a.due_date]));
+
+    const { data: packets, error: packetError } = await supabase
+      .from('word_packets')
+      .select('id, teacher_id, title, target_language, level, created_at')
+      .in('id', packetIds);
+
+    if (packetError) {
+      console.error('Failed to load word packets', packetError);
+      return;
+    }
+
+    const { data: words, error: wordsError } = await supabase
+      .from('words')
+      .select('id, packet_id, word, phonetic, part_of_speech, cefr_level, primary_translation, alternative_translations, definition, mnemonic_hint, collocations, context_examples, synonyms, antonyms, quiz, created_at')
+      .in('packet_id', packetIds);
+
+    if (wordsError) {
+      console.error('Failed to load words', wordsError);
+      return;
+    }
+
+    const progressRows = await supabase
+      .from('student_word_progress')
+      .select('word_id, status, box_level, next_review_date')
+      .eq('student_id', studentId);
+
+    const progressMap = new Map<string, { status: MasteryStatus; boxLevel: number; nextReviewDate: string }>();
+    if (!progressRows.error && progressRows.data) {
+      progressRows.data.forEach((row) => {
+        progressMap.set(String(row.word_id), {
+          status: (row.status as MasteryStatus) || 'learning',
+          boxLevel: row.box_level || 1,
+          nextReviewDate: row.next_review_date || new Date().toISOString(),
+        });
+      });
+    }
+
+    const wordsByPacket = new Map<number, NonNullable<typeof words>>();
+    (words || []).forEach((w) => {
+      const list = wordsByPacket.get(w.packet_id) || [];
+      list.push(w);
+      wordsByPacket.set(w.packet_id, list);
+    });
+
+    const fetchedItems: VocabularyItem[] = [];
+    const assigned: WordPacket[] = [];
+
+    (packets || []).forEach((packet) => {
+      const packetWords = (wordsByPacket.get(packet.id) || []).map((word) => {
+        const progress = progressMap.get(String(word.id)) || {
+          status: 'learning' as MasteryStatus,
+          boxLevel: 1,
+          nextReviewDate: new Date().toISOString(),
+        };
+        return {
+          id: String(word.id),
+          word: word.word,
+          phonetic: word.phonetic || '',
+          partOfSpeech: word.part_of_speech || 'noun',
+          cefrLevel: word.cefr_level || 'B1',
+          primaryTranslation: word.primary_translation || '',
+          alternativeTranslations: word.alternative_translations || [],
+          definition: word.definition || '',
+          mnemonicHint: word.mnemonic_hint || '',
+          collocations: word.collocations || [],
+          contextExamples: word.context_examples || [],
+          synonyms: word.synonyms || [],
+          antonyms: word.antonyms || [],
+          quiz: word.quiz || { question: '', options: [], correctIndex: 0 },
+          status: progress.status,
+          boxLevel: progress.boxLevel,
+          nextReviewDate: progress.nextReviewDate,
+          addedBy: 'teacher',
+          wordpackId: String(packet.id),
+          createdAt: word.created_at || new Date().toISOString(),
+        } as VocabularyItem;
+      });
+
+      fetchedItems.push(...packetWords);
+      assigned.push({
+        id: String(packet.id),
+        teacherId: packet.teacher_id || '',
+        title: packet.title,
+        targetLanguage: packet.target_language,
+        level: packet.level,
+        createdAt: packet.created_at || new Date().toISOString(),
+        dueDate: dueDateByPacket.get(packet.id) || undefined,
+        assignedStudentIds: [studentId],
+        words: packetWords,
+      });
+    });
+
+    setItems(fetchedItems);
+    setAssignedPacks(assigned);
+  }, [studentId, supabase]);
+
   useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'novaflow_assigned_packs_v1' || e.key === null) {
-        setAssignedPacks(
-          studentId ? getAssignedPacksForStudent(studentId) : getStoredAssignedPacks()
-        );
-      }
-      const vocabKey = studentId
-        ? `novaflow_vocabulary_items_v1_${studentId}`
-        : 'novaflow_vocabulary_items_v1';
-      if (e.key === vocabKey || e.key === null) {
-        setItems(getStoredVocabulary(studentId));
-      }
-    };
+    loadVocabulary();
+  }, [loadVocabulary]);
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [studentId]);
-
-  // Update storage whenever items change
   const updateItems = (newItems: VocabularyItem[]) => {
     setItems(newItems);
-    saveVocabulary(newItems, studentId);
   };
 
-  const updateAssignedPacks = (packs: AssignedWordpack[]) => {
+  const updateAssignedPacks = (packs: WordPacket[]) => {
     setAssignedPacks(packs);
-    const allPacks = getStoredAssignedPacks();
-    const otherPacks = studentId
-      ? allPacks.filter((p) => !p.assignedStudentIds.includes(studentId))
-      : [];
-    saveAssignedPacks([...otherPacks, ...packs]);
   };
 
   // Calculated Statistics
@@ -151,10 +298,10 @@ export default function VocabularyTab({ studentId }: VocabularyTabProps) {
   };
 
   // Update mastery status
-  const handleToggleMastery = (id: string, e?: React.MouseEvent) => {
+  const handleToggleMastery = async (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     const target = items.find((item) => item.id === id);
-    if (!target) return;
+    if (!target || !studentId) return;
 
     const newStatus: MasteryStatus = target.status === 'mastered' ? 'learning' : 'mastered';
     const toggledItem: VocabularyItem = {
@@ -166,17 +313,17 @@ export default function VocabularyTab({ studentId }: VocabularyTabProps) {
     const nextItems = items.map((item) => (item.id === id ? toggledItem : item));
     updateItems(nextItems);
 
-    const wordText = toggledItem.word.toLowerCase();
-    const syncedPacks = assignedPacks.map((pack) => ({
-      ...pack,
-      words: pack.words.map((w) =>
-        w.word.toLowerCase() === wordText
-          ? { ...w, status: toggledItem.status, boxLevel: toggledItem.boxLevel }
-          : w
-      ),
-    }));
-    if (syncedPacks.some((p, i) => p.words !== assignedPacks[i]?.words)) {
-      updateAssignedPacks(syncedPacks);
+    const { error } = await supabase.from('student_word_progress').upsert({
+      student_id: studentId,
+      word_id: id,
+      status: newStatus,
+      box_level: toggledItem.boxLevel,
+      next_review_date: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'student_id,word_id' });
+
+    if (error) {
+      console.error('Failed to update progress', error);
     }
   };
 
@@ -264,7 +411,27 @@ export default function VocabularyTab({ studentId }: VocabularyTabProps) {
           personalItems={items}
           onUpdatePacks={updateAssignedPacks}
           onSyncPersonalItems={updateItems}
+          onToggleMastery={handleToggleMastery}
+          onStartStudyPacket={handleStartStudyPacket}
         />
+      )}
+
+      {/* Selected Packet Banner */}
+      {selectedPacketId && activeMode !== 'browse' && (
+        <div className="bg-purple-50 border border-purple-200 rounded-2xl p-3.5 flex items-center justify-between text-xs text-purple-950 font-medium shadow-2xs">
+          <div className="flex items-center gap-2">
+            <span>📚</span>
+            <span>
+              Режим вивчення пакета: <strong>{assignedPacks.find((p) => p.id === selectedPacketId)?.title || 'Пакет'}</strong> ({activeStudyItems.length} слів)
+            </span>
+          </div>
+          <button
+            onClick={() => setSelectedPacketId(null)}
+            className="px-3 py-1 bg-white hover:bg-purple-100 rounded-lg text-purple-700 font-bold border border-purple-200 transition-colors text-xs"
+          >
+            Показати всі слова
+          </button>
+        </div>
       )}
 
       {/* Mastered Vocabulary Archive */}
@@ -281,7 +448,7 @@ export default function VocabularyTab({ studentId }: VocabularyTabProps) {
             { id: 'browse', label: '📖 Мої слова', icon: '📖' },
             { id: 'flashcards', label: '🗂 Картки (3D)', icon: '🗂' },
             { id: 'match', label: '⚡ З’єднай пари', icon: '⚡' },
-            { id: 'quiz', label: '✍️ Тести & Контекст', icon: '✍️' },
+            { id: 'quiz', label: '✍️ Практика / Тест', icon: '✍️' },
             { id: 'ai_chat', label: '💬 AI-Практика', icon: '💬' }
           ].map((mode) => (
             <button
@@ -325,19 +492,30 @@ export default function VocabularyTab({ studentId }: VocabularyTabProps) {
 
       {activeMode === 'flashcards' && (
         <FlashcardsStudyMode
-          items={items}
+          items={activeStudyItems}
           onUpdateItems={updateItems}
           onSpeak={handleSpeak}
-          onBack={() => setActiveMode('browse')}
+          onSaveProgress={handleSaveProgress}
+          onBack={() => {
+            setActiveMode('browse');
+            setSelectedPacketId(null);
+          }}
         />
       )}
 
       {activeMode === 'match' && (
-        <MatchPairsStudyMode items={items} onBack={() => setActiveMode('browse')} />
+        <MatchPairsStudyMode items={activeStudyItems} onBack={() => setActiveMode('browse')} />
       )}
 
       {activeMode === 'quiz' && (
-        <QuizStudyMode items={items} onBack={() => setActiveMode('browse')} />
+        <QuizStudyMode
+          items={activeStudyItems}
+          onSaveProgress={handleSaveProgress}
+          onBack={() => {
+            setActiveMode('browse');
+            setSelectedPacketId(null);
+          }}
+        />
       )}
 
       {activeMode === 'ai_chat' && (
@@ -352,6 +530,16 @@ export default function VocabularyTab({ studentId }: VocabularyTabProps) {
           onSpeak={handleSpeak}
           onToggleMastery={handleToggleMastery}
           onDeleteWord={handleDeleteWord}
+        />
+      )}
+
+      {/* PACK STUDY MODAL (from Assigned Packs — Знаю / Ще вчу + Практика) */}
+      {studyPack && studentId && (
+        <PackStudyView
+          pack={studyPack}
+          studentId={studentId}
+          onClose={handleCloseStudyPack}
+          onWordsUpdated={handleStudyWordsUpdated}
         />
       )}
 
@@ -439,15 +627,19 @@ function AssignedPacksSection({
   personalItems,
   onUpdatePacks,
   onSyncPersonalItems,
+  onToggleMastery,
+  onStartStudyPacket,
 }: {
   packs: AssignedWordpack[];
   personalItems: VocabularyItem[];
   onUpdatePacks: (packs: AssignedWordpack[]) => void;
   onSyncPersonalItems: (items: VocabularyItem[]) => void;
+  onToggleMastery: (wordId: string, e?: React.MouseEvent) => void;
+  onStartStudyPacket?: (packId: string, mode: StudyMode) => void;
 }) {
   const [expandedPackId, setExpandedPackId] = useState<string | null>(null);
 
-  const handleToggleWord = (packId: string, wordId: string) => {
+  const handleToggleWord = (packId: string, wordId: string, e?: React.MouseEvent) => {
     const pack = packs.find((p) => p.id === packId);
     const target = pack?.words.find((w) => w.id === wordId);
     if (!target) return;
@@ -475,6 +667,14 @@ function AssignedPacksSection({
         : item
     );
     onSyncPersonalItems(synced);
+
+    // Persist via parent handler (which upserts to student_word_progress)
+    try {
+      onToggleMastery(wordId, e);
+    } catch (err) {
+      // swallow — UI already updated optimistically
+      console.error('Failed to persist mastery toggle', err);
+    }
   };
 
   const formatDate = (d?: string) => {
@@ -530,7 +730,24 @@ function AssignedPacksSection({
               </button>
 
               {isExpanded && (
-                <div className="px-4 pb-4 border-t border-gray-50 pt-3">
+                <div className="px-4 pb-4 border-t border-gray-50 pt-3 space-y-3">
+                  {onStartStudyPacket && (
+                    <div className="flex flex-wrap items-center gap-2 pb-2 border-b border-gray-100">
+                      <span className="text-xs font-semibold text-gray-500 mr-1">Режими вивчення:</span>
+                      <button
+                        onClick={() => onStartStudyPacket(pack.id, 'flashcards')}
+                        className="px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-800 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors shadow-2xs"
+                      >
+                        🗂 Флеш-картки
+                      </button>
+                      <button
+                        onClick={() => onStartStudyPacket(pack.id, 'quiz')}
+                        className="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold rounded-xl text-xs flex items-center gap-1.5 transition-colors shadow-2xs"
+                      >
+                        ✍️ Практика / Тест
+                      </button>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {pack.words.map((word) => (
                       <div
@@ -548,7 +765,7 @@ function AssignedPacksSection({
                           <span className="text-gray-500 ml-2">{word.primaryTranslation}</span>
                         </div>
                         <button
-                          onClick={() => handleToggleWord(pack.id, word.id)}
+                          onClick={(e) => handleToggleWord(pack.id, word.id, e)}
                           className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs transition-colors ${
                             word.status === 'mastered'
                               ? 'bg-emerald-500 text-white'
@@ -819,11 +1036,13 @@ function FlashcardsStudyMode({
   items,
   onUpdateItems,
   onSpeak,
+  onSaveProgress,
   onBack
 }: {
   items: VocabularyItem[];
   onUpdateItems: (items: VocabularyItem[]) => void;
   onSpeak: (text: string) => void;
+  onSaveProgress: (wordId: string, status: MasteryStatus, boxLevel?: number) => Promise<void>;
   onBack: () => void;
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -840,26 +1059,37 @@ function FlashcardsStudyMode({
     );
   }
 
-  const currentItem = items[currentIndex % items.length];
+  // Only cycle through words that are not yet mastered, so the learner
+  // focuses on remaining items. When everything is mastered the whole pack
+  // is used so the UI can show completion.
+  const studyPool = useMemo(() => {
+    const remaining = items.filter((it) => it.status !== 'mastered');
+    return remaining.length > 0 ? remaining : items;
+  }, [items]);
+
+  const currentItem = studyPool[currentIndex % studyPool.length];
 
   const handleNext = (remembered: boolean) => {
     setIsFlipped(false);
-    // Update Leitner Box level
+    // Update Leitner Box level (persist via student_word_progress)
+    const newBox = remembered ? Math.min(5, currentItem.boxLevel + 1) : Math.max(1, currentItem.boxLevel - 1);
+    const newStatus: MasteryStatus = newBox === 5 ? 'mastered' : 'learning';
+
     const updated = items.map((it) => {
       if (it.id === currentItem.id) {
-        const newBox = remembered ? Math.min(5, it.boxLevel + 1) : Math.max(1, it.boxLevel - 1);
         return {
           ...it,
           boxLevel: newBox,
-          status: (newBox === 5 ? 'mastered' : 'learning') as MasteryStatus
+          status: newStatus
         };
       }
       return it;
     });
     onUpdateItems(updated);
+    onSaveProgress(currentItem.id, newStatus, newBox);
 
     setTimeout(() => {
-      setCurrentIndex((prev) => (prev + 1) % items.length);
+      setCurrentIndex((prev) => (prev + 1) % studyPool.length);
     }, 150);
   };
 
@@ -870,7 +1100,7 @@ function FlashcardsStudyMode({
           ← Назад до словника
         </button>
         <span className="text-xs font-bold text-gray-400">
-          Картка {currentIndex + 1} з {items.length}
+          Картка {currentIndex + 1} з {studyPool.length}
         </span>
       </div>
 
@@ -923,15 +1153,15 @@ function FlashcardsStudyMode({
       <div className="grid grid-cols-2 gap-4">
         <button
           onClick={() => handleNext(false)}
-          className="py-3.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-2xl border border-rose-200 text-sm shadow-sm transition-all"
+          className="py-3.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold rounded-2xl border border-amber-200 text-sm shadow-sm transition-all"
         >
-          ❌ Не пам’ятаю (-1 Box)
+          🔄 Ще вчу
         </button>
         <button
           onClick={() => handleNext(true)}
-          className="py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-md text-sm transition-all"
+          className="py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl shadow-md text-sm transition-all"
         >
-          ✅ Пам’ятаю! (+1 Box)
+          ✅ Знаю ✓
         </button>
       </div>
     </div>
@@ -1059,7 +1289,7 @@ function MatchPairsStudyMode({ items, onBack }: { items: VocabularyItem[]; onBac
 /* ============================================================================
    QUIZ STUDY MODE
 ============================================================================ */
-function QuizStudyMode({ items, onBack }: { items: VocabularyItem[]; onBack: () => void }) {
+function QuizStudyMode({ items, onSaveProgress, onBack }: { items: VocabularyItem[]; onSaveProgress: (wordId: string, status: MasteryStatus, boxLevel?: number) => Promise<void>; onBack: () => void }) {
   const [quizIndex, setQuizIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [score, setScore] = useState(0);
@@ -1074,6 +1304,8 @@ function QuizStudyMode({ items, onBack }: { items: VocabularyItem[]; onBack: () 
     setSelectedOption(idx);
     if (idx === quiz.correctIndex) {
       setScore((prev) => prev + 1);
+      // Correct answer → mark word as mastered and persist progress
+      onSaveProgress(currentItem.id, 'mastered', 5);
     }
   };
 

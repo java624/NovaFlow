@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { Tab, StudentProfile, Homework } from '../types';
@@ -61,7 +62,7 @@ export function useDashboardActions({
     const lockedTabs: Tab[] = ['lessons', 'homework', 'materials'];
 
     if (!hasLessons && lockedTabs.includes(tab)) {
-      alert('Оплати курс, щоб розблокувати цей розділ!');
+      toast.warning('⚠️ Оплати курс, щоб розблокувати цей розділ!');
       setActiveTab('payments');
     } else {
       setActiveTab(tab);
@@ -101,7 +102,7 @@ export function useDashboardActions({
   // =========================================================================
   const uploadAvatar = useCallback(async (file: File) => {
     if (!profile) return;
-    if (file.size > 3145728) { alert('Максимум 3 МБ.'); return; }
+    if (file.size > 3145728) { toast.warning('Максимум 3 МБ.'); return; }
 
     try {
       const fp = `${profile.id}_avatar.${file.name.split('.').pop()}`;
@@ -156,10 +157,10 @@ export function useDashboardActions({
         setShowCheckoutOverlay(true);
         window.location.href = url;
       } else {
-        alert('Не вдалося створити платіж. Спробуйте ще раз.');
+        toast.error('Не вдалося створити платіж. Спробуйте ще раз.');
       }
     } catch (err: unknown) {
-      alert(`Помилка: ${err instanceof Error ? err.message : ''}`);
+      toast.error(`Помилка: ${err instanceof Error ? err.message : ''}`);
     } finally {
       setPurchasing(false);
     }

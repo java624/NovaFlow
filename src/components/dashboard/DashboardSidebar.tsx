@@ -1,6 +1,7 @@
 'use client';
 
 import { Tab } from './types';
+import { toast } from 'sonner';
 
 interface DashboardSidebarProps {
   activeTab: Tab;
@@ -61,7 +62,7 @@ export default function DashboardSidebar({
                 key={tab.id}
                 onClick={() => {
                   if (isLocked) {
-                    alert('Оплати курс, щоб розблокувати цей розділ!');
+                    toast.warning('⚠️ Оплати курс, щоб розблокувати цей розділ!');
                     onTabChange('payments');
                   } else {
                     onTabChange(tab.id);

@@ -30,34 +30,31 @@ export interface VocabularyItem {
   antonyms: string[];
   quiz: QuizItem;
   status: MasteryStatus;
-  boxLevel: number; // 1 to 5 for Leitner System
+  boxLevel: number;
   nextReviewDate: string;
   addedBy: 'teacher' | 'student' | 'ai';
   wordpackId?: string | null;
   createdAt: string;
 }
 
-export interface Wordpack {
+export interface WordPacket {
   id: string;
-  title: string;
-  description: string;
-  level: CEFRLevel;
-  icon: string;
-  wordsCount: number;
-  wordIds: string[];
-  assignedToStudentIds?: string[];
-  createdAt: string;
-}
-
-export interface AssignedWordpack {
-  id: string;
+  teacherId: string;
   title: string;
   targetLanguage: string;
+  level?: string;
   createdAt: string;
   dueDate?: string;
   assignedStudentIds: string[];
-  createdByTeacherId: string;
   words: VocabularyItem[];
+}
+
+export interface PacketAssignment {
+  id: string;
+  packetId: string;
+  studentId: string;
+  dueDate?: string;
+  assignedAt: string;
 }
 
 export interface VocabularyStats {

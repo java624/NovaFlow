@@ -26,7 +26,8 @@
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^6.1.200",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "sonner": "^2.0.7"
   },
   "devDependencies": {
     "@types/node": "^20",

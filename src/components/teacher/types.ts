@@ -1,4 +1,4 @@
-export type Tab = 'dashboard' | 'students' | 'workspace' | 'comments';
+export type Tab = 'dashboard' | 'students' | 'workspace' | 'pack-library' | 'comments';
 
 export interface StudentProfile {
   id: string;

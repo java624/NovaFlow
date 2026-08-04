@@ -1,20 +1,17 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { VocabularyItem, AssignedWordpack } from '@/types/vocabulary';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { toast } from 'sonner';
+import { createClient } from '@/lib/supabase/client';
+import { VocabularyItem, WordPacket } from '@/types/vocabulary';
 import { StudentProfile } from './types';
-import {
-  getStoredAssignedPacks,
-  saveAssignedPacks,
-  getStoredVocabulary,
-  saveVocabulary,
-} from '@/lib/mockVocabularyData';
 
 interface AssignVocabularyModalProps {
-  student: StudentProfile;
+  students?: StudentProfile[];
+  student?: StudentProfile;
   visible: boolean;
   onClose: () => void;
-  onAssigned: (pack: AssignedWordpack) => void;
+  onAssigned: (pack: WordPacket) => void;
   teacherId?: string;
 }
 
@@ -31,12 +28,14 @@ const TARGET_LANGUAGES = [
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
 export default function AssignVocabularyModal({
+  students,
   student,
   visible,
   onClose,
   onAssigned,
-  teacherId = 'teacher',
+  teacherId,
 }: AssignVocabularyModalProps) {
+  const supabase = useMemo(() => createClient(), []);
   const [rawInput, setRawInput] = useState('');
   const [targetLanguage, setTargetLanguage] = useState('English');
   const [level, setLevel] = useState('B1');
@@ -46,6 +45,21 @@ export default function AssignVocabularyModal({
   const [error, setError] = useState<string | null>(null);
   const [previewItems, setPreviewItems] = useState<VocabularyItem[] | null>(null);
   const [expandedPreviewId, setExpandedPreviewId] = useState<string | null>(null);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+
+  const availableStudents = useMemo(() => {
+    if (students && students.length > 0) return students;
+    return student ? [student] : [];
+  }, [students, student]);
+
+  const isSingleStudentMode = Boolean(student && (!students || students.length === 0));
+  const noStudents = availableStudents.length === 0;
+
+  useEffect(() => {
+    if (isSingleStudentMode && availableStudents.length === 1) {
+      setSelectedStudentIds([availableStudents[0].id]);
+    }
+  }, [availableStudents, isSingleStudentMode]);
 
   const handleGenerate = useCallback(async () => {
     if (!rawInput.trim()) {
@@ -76,11 +90,30 @@ export default function AssignVocabularyModal({
     }
   }, [rawInput, targetLanguage, level]);
 
-  const handleAssign = useCallback(() => {
+  const handleAssign = useCallback(async () => {
     if (!previewItems || previewItems.length === 0) return;
+    if (selectedStudentIds.length === 0) {
+      setError('Оберіть хоча б одного учня для призначення пакету.');
+      return;
+    }
 
-    const now = new Date().toISOString();
-    const packId = `pack-${Date.now()}`;
+    // Ensure we have teacherId: prefer prop, otherwise read from session
+    let effectiveTeacherId = teacherId;
+    if (!effectiveTeacherId) {
+      try {
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError || !userData?.user) {
+          setError('Не вдалося визначити ID вчителя з сесії.');
+          return;
+        }
+        effectiveTeacherId = userData.user.id;
+      } catch (err) {
+        console.error('Failed to resolve teacher ID from session:', err);
+        setError('Не вдалося визначити ID вчителя з сесії.');
+        return;
+      }
+    }
+
     const autoTitle =
       title.trim() ||
       `Пакет: ${previewItems
@@ -88,41 +121,193 @@ export default function AssignVocabularyModal({
         .map((w) => w.primaryTranslation || w.word)
         .join(', ')}${previewItems.length > 3 ? '...' : ''}`;
 
-    const wordsWithPackId = previewItems.map((w) => ({
-      ...w,
-      wordpackId: packId,
-      addedBy: 'teacher' as const,
-    }));
+    // 1) Insert packet (with RLS fallback to localStorage)
+    let packetId = '';
+    let packetData: any = null;
+    try {
+      const insertRes = await supabase
+        .from('word_packets')
+        .insert({
+          teacher_id: effectiveTeacherId,
+          title: autoTitle,
+          target_language: targetLanguage,
+          level,
+        })
+        .select()
+        .single();
 
-    const pack: AssignedWordpack = {
-      id: packId,
-      title: autoTitle,
-      targetLanguage,
-      createdAt: now,
-      dueDate: dueDate || undefined,
-      assignedStudentIds: [student.id],
-      createdByTeacherId: teacherId,
-      words: wordsWithPackId,
-    };
+      if (insertRes.error || !insertRes.data) {
+        throw insertRes.error || new Error('Unknown insert error');
+      }
 
-    const existingPacks = getStoredAssignedPacks();
-    saveAssignedPacks([...existingPacks, pack]);
+      packetData = insertRes.data;
+      packetId = String(packetData.id);
+    } catch (err: any) {
+      console.error('Failed to insert word_packets:', err);
+      const isRlsError =
+        (err && (err.code === '42P17' || err.status === 500)) ||
+        (err && typeof err.message === 'string' && err.message.toLowerCase().includes('infinite recursion'));
 
-    const studentVocab = getStoredVocabulary(student.id);
-    const existingWords = new Set(studentVocab.map((v) => v.word.toLowerCase()));
-    const newWords = wordsWithPackId.filter((w) => !existingWords.has(w.word.toLowerCase()));
-    if (newWords.length > 0) {
-      saveVocabulary([...newWords, ...studentVocab], student.id);
+      if (isRlsError) {
+        // Fallback: persist locally so UI remains usable while RLS is fixed.
+        const localPackId = `pack_${Date.now()}`;
+        const createdAt = new Date().toISOString();
+
+        const localWords: VocabularyItem[] = previewItems.map((item, index) => ({
+          ...item,
+          id: `localword_${Date.now()}_${index}`,
+          wordpackId: localPackId,
+          addedBy: 'teacher',
+          status: item.status || 'learning',
+          boxLevel: item.boxLevel || 1,
+          nextReviewDate: item.nextReviewDate || new Date().toISOString(),
+          createdAt: item.createdAt || createdAt,
+        }));
+
+        const localPack: WordPacket = {
+          id: localPackId,
+          teacherId: effectiveTeacherId!,
+          title: autoTitle,
+          targetLanguage,
+          level,
+          createdAt,
+          dueDate: dueDate || undefined,
+          assignedStudentIds: selectedStudentIds,
+          words: localWords,
+        };
+
+        try {
+          const existingPacks = JSON.parse(localStorage.getItem('novaflow_assigned_packs_v1') || '[]');
+          existingPacks.push(localPack);
+          localStorage.setItem('novaflow_assigned_packs_v1', JSON.stringify(existingPacks));
+
+          const existingWords = JSON.parse(localStorage.getItem('novaflow_vocabulary_items_v1') || '[]');
+          const toSaveWords = localWords.map((w) => ({ ...w }));
+          localStorage.setItem('novaflow_vocabulary_items_v1', JSON.stringify(existingWords.concat(toSaveWords)));
+        } catch (e) {
+          console.error('Failed to save local pack/words', e);
+        }
+
+        try {
+          // notify user and parent via toast
+          toast.success('✨ Пакет призначено (збережено локально)');
+        } catch (e) {
+          console.error('Toast notify failed', e);
+        }
+
+        onAssigned(localPack);
+        onClose();
+        setRawInput('');
+        setTitle('');
+        setDueDate('');
+        setPreviewItems(null);
+        setExpandedPreviewId(null);
+        setSelectedStudentIds([]);
+        return;
+      }
+
+      setError('Не вдалося створити пакет у базі даних.');
+      return;
     }
 
-    onAssigned(pack);
+    // 2) Insert words (single batch)
+    const wordsToInsert = previewItems.map((item) => ({
+      packet_id: packetId,
+      owner_student_id: null,
+      word: item.word,
+      phonetic: item.phonetic || '',
+      part_of_speech: item.partOfSpeech,
+      cefr_level: item.cefrLevel,
+      primary_translation: item.primaryTranslation,
+      alternative_translations: item.alternativeTranslations || [],
+      definition: item.definition || '',
+      mnemonic_hint: item.mnemonicHint || '',
+      collocations: item.collocations || [],
+      context_examples: item.contextExamples || [],
+      synonyms: item.synonyms || [],
+      antonyms: item.antonyms || [],
+      quiz: item.quiz || { question: '', options: [], correctIndex: 0 },
+    }));
+
+    const { data: createdWords, error: wordsError } = await supabase
+      .from('words')
+      .insert(wordsToInsert)
+      .select('id');
+
+    if (wordsError || !createdWords) {
+      console.error('Failed to insert words:', wordsError);
+      setError('Пакет створено, але слова не вдалося зберегти.');
+      return;
+    }
+
+    // 3) Insert assignments. Try bulk first; on failure try per-student to find failures.
+    const assignments = selectedStudentIds.map((studentId) => ({
+      packet_id: packetId,
+      student_id: studentId,
+      due_date: dueDate || null,
+    }));
+
+    const { error: assignmentError } = await supabase.from('packet_assignments').insert(assignments);
+
+    let failedStudentIds: string[] = [];
+    if (assignmentError) {
+      console.error('Failed to insert packet_assignments (bulk):', assignmentError);
+      // Try per-student to collect which failed
+      for (const studentId of selectedStudentIds) {
+        try {
+          const { error: singleErr } = await supabase.from('packet_assignments').insert({
+            packet_id: packetId,
+            student_id: studentId,
+            due_date: dueDate || null,
+          });
+          if (singleErr) {
+            console.error(`Failed to assign packet to student ${studentId}:`, singleErr);
+            failedStudentIds.push(studentId);
+          }
+        } catch (e) {
+          console.error(`Failed to assign packet to student ${studentId}:`, e);
+          failedStudentIds.push(studentId);
+        }
+      }
+    }
+
+    // Build packet object to return
+    const packet: WordPacket = {
+      id: packetId,
+      teacherId: effectiveTeacherId!,
+      title: autoTitle,
+      targetLanguage,
+      level,
+      createdAt: packetData.created_at || new Date().toISOString(),
+      dueDate: dueDate || undefined,
+      assignedStudentIds: selectedStudentIds.filter((id) => !failedStudentIds.includes(id)),
+      words: previewItems.map((item, index) => ({
+        ...item,
+        id: String(createdWords[index]?.id || item.id),
+        wordpackId: packetId,
+        addedBy: 'teacher' as const,
+      })),
+    };
+
+    if (failedStudentIds.length > 0) {
+      const idToName = new Map(availableStudents.map((s) => [s.id, s.full_name]));
+      const failedNames = failedStudentIds.map((id) => idToName.get(id) || id);
+      setError(`Пакет створено, але не вдалося призначити наступним учням: ${failedNames.join(', ')}`);
+      // still notify parent about partial success
+      onAssigned(packet);
+      return;
+    }
+
+    // Success
+    onAssigned(packet);
     onClose();
     setRawInput('');
     setTitle('');
     setDueDate('');
     setPreviewItems(null);
     setExpandedPreviewId(null);
-  }, [previewItems, title, targetLanguage, dueDate, student.id, teacherId, onAssigned, onClose]);
+    setSelectedStudentIds([]);
+  }, [previewItems, title, targetLanguage, level, dueDate, selectedStudentIds, teacherId, onAssigned, onClose, supabase, availableStudents]);
 
   const handleBackToEdit = () => {
     setPreviewItems(null);
@@ -152,13 +337,56 @@ export default function AssignVocabularyModal({
           <div>
             <h2 className="text-xl font-bold text-gray-900">Задати пакет слів</h2>
             <p className="text-sm text-gray-500">
-              Учень: <span className="font-semibold text-purple-700">{student.full_name}</span>
+              {isSingleStudentMode ? (
+                <>Учень: <span className="font-semibold text-purple-700">{availableStudents[0]?.full_name}</span></>
+              ) : (
+                'Оберіть учнів для пакету'
+              )}
             </p>
           </div>
         </div>
 
+        {noStudents ? (
+          <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            Не знайдено жодного учня для призначення. Закрийте модальне вікно та виберіть учня.
+          </div>
+        ) : null}
+
         {!previewItems ? (
           <>
+            {isSingleStudentMode ? (
+              <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-700">
+                Учитель призначає пакет одному учню: <span className="font-semibold text-purple-700">{availableStudents[0]?.full_name}</span>
+              </div>
+            ) : (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  👥 Обрати учнів
+                </label>
+                <div className="flex flex-wrap gap-2 rounded-xl border border-gray-200 p-3 bg-gray-50">
+                  {availableStudents.map((studentItem) => {
+                    const checked = selectedStudentIds.includes(studentItem.id);
+                    return (
+                      <button
+                        key={studentItem.id}
+                        type="button"
+                        onClick={() =>
+                          setSelectedStudentIds((prev) =>
+                            checked ? prev.filter((id) => id !== studentItem.id) : [...prev, studentItem.id]
+                          )
+                        }
+                        className={`rounded-full px-3 py-1.5 text-sm font-medium border transition-all ${
+                          checked ? 'bg-purple-600 text-white border-purple-600' : 'bg-white text-gray-700 border-gray-200 hover:border-purple-300'
+                        }`}
+                      >
+                        {studentItem.full_name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 📝 Слова українською (через кому, пробіл або новий рядок)
@@ -309,7 +537,7 @@ export default function AssignVocabularyModal({
           {!previewItems ? (
             <button
               onClick={handleGenerate}
-              disabled={isGenerating || !rawInput.trim()}
+              disabled={isGenerating || !rawInput.trim() || selectedStudentIds.length === 0}
               className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 rounded-xl shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {isGenerating ? (
@@ -326,7 +554,7 @@ export default function AssignVocabularyModal({
               onClick={handleAssign}
               className="flex-1 inline-flex items-center justify-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md transition-all"
             >
-              📤 Надіслати учню
+              📤 Надіслати {selectedStudentIds.length} учням
             </button>
           )}
         </div>

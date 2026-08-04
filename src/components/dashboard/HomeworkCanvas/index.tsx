@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import { Tool, HomeworkCanvasProps } from './types';
 import { useCanvasState } from './useCanvasState';
 import { useCanvasTools } from './useCanvasTools';
@@ -129,11 +130,11 @@ export default function HomeworkCanvas({ imageUrl, homeworkId, onSave }: Homewor
       if (dbError) throw dbError;
 
       localStorage.removeItem(storageKey);
-      alert('🎉 Роботу успішно збережено та надіслано вчителю!');
+      toast.success('🎉 Роботу успішно збережено та надіслано вчителю!');
       onSave?.();
     } catch (err: unknown) {
       console.error('Save error:', err);
-      alert(`❌ Помилка: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`❌ Помилка: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsSaving(false);
     }

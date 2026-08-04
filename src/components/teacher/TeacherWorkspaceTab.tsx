@@ -1,25 +1,29 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { StudentProfile, Homework, Lesson } from './types';
 import TeacherReviewCanvas from '@/components/dashboard/TeacherReviewCanvas';
 import PdfTeacherReviewCanvas from './PdfTeacherReviewCanvas';
 import { isPdfUrl } from '@/lib/pdf-utils';
 import AssignVocabularyModal from './AssignVocabularyModal';
-import { AssignedWordpack } from '@/types/vocabulary';
+import { WordPacket } from '@/types/vocabulary';
+import { calculateAssignedProgress } from '@/lib/mockVocabularyData';
 import {
-  getAssignedPacksForStudent,
-  calculateAssignedProgress,
-} from '@/lib/mockVocabularyData';
+  loadTeacherStudentPacks,
+  getWordStatusEmoji,
+  getWordStatusLabel,
+} from '@/lib/vocabularySupabase';
 
 interface TeacherWorkspaceTabProps {
   selectedStudent: StudentProfile;
+  teacherId?: string | null;
   onStudentsChange: () => void;
   onEnterLesson: (channelName: string) => void;
 }
 
-export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange, onEnterLesson }: TeacherWorkspaceTabProps) {
+export default function TeacherWorkspaceTab({ selectedStudent, teacherId, onStudentsChange, onEnterLesson }: TeacherWorkspaceTabProps) {
   const supabase = createClient();
   const [studentLessons, setStudentLessons] = useState<Lesson[]>([]);
   const [homeworks, setHomeworks] = useState<Homework[]>([]);
@@ -46,18 +50,22 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
 
   // Assign Vocabulary Modal
   const [showAssignVocab, setShowAssignVocab] = useState(false);
-  const [assignedPacks, setAssignedPacks] = useState<AssignedWordpack[]>([]);
+  const [assignedPacks, setAssignedPacks] = useState<WordPacket[]>([]);
+
+  const [expandedPackId, setExpandedPackId] = useState<string | null>(null);
+
+  const loadAssignedPacks = useCallback(async () => {
+    const packs = await loadTeacherStudentPacks(supabase, selectedStudent.id);
+    setAssignedPacks(packs);
+  }, [selectedStudent.id, supabase]);
 
   useEffect(() => {
-    setAssignedPacks(getAssignedPacksForStudent(selectedStudent.id));
-  }, [selectedStudent.id]);
+    loadAssignedPacks();
+  }, [loadAssignedPacks]);
 
-  const handlePackAssigned = useCallback(
-    (pack: AssignedWordpack) => {
-      setAssignedPacks((prev) => [...prev, pack]);
-    },
-    []
-  );
+  const handlePackAssigned = useCallback((pack: WordPacket) => {
+    setAssignedPacks((prev) => [...prev, pack]);
+  }, []);
 
   const assignedProgress = calculateAssignedProgress(assignedPacks);
 
@@ -181,8 +189,8 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
               }]).select().single();
               if (nl) {
                 setStudentLessons((prev) => [...prev, nl]);
-                alert('Урок додано!');
-              } else alert('Помилка бази даних');
+                toast.success('Урок додано!');
+              } else toast.error('Помилка бази даних');
             }
           },
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -197,17 +205,17 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
                 .maybeSingle();
 
               if (fetchError || !lesson) {
-                alert('Помилка: урок не знайдено в базі даних');
+                toast.error('Помилка: урок не знайдено в базі даних');
                 return;
               }
 
               if (lesson.status?.toLowerCase() === 'completed') {
-                alert('⚠️ Цей урок ВЖЕ має статус "completed" (проведений). Повторне списування балансу заборонено!');
+                toast.warning('⚠️ Цей урок ВЖЕ має статус "completed" (проведений). Повторне списування балансу заборонено!');
                 return;
               }
 
               if (lesson.status?.toLowerCase() === 'cancelled') {
-                alert('⚠️ Цей урок вже скасований!');
+                toast.warning('⚠️ Цей урок вже скасований!');
                 return;
               }
 
@@ -218,7 +226,7 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
                 .eq('id', info.event.id);
 
               if (lessonUpdateError) {
-                alert('Помилка при оновленні статусу уроку: ' + lessonUpdateError.message);
+                toast.error('Помилка при оновленні статусу уроку: ' + lessonUpdateError.message);
                 return;
               }
 
@@ -229,21 +237,21 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
               if (!ue) {
                 info.event.remove();
                 setStudentLessons((prev) => prev.filter((l) => l.id !== info.event.id));
-                alert(`✅ Урок успішно проведено! Новий баланс: ${nb}`);
+                toast.success(`✅ Урок успішно проведено! Новий баланс: ${nb}`);
                 onStudentsChange();
-              } else alert('Помилка списування балансу: ' + ue.message);
+              } else toast.error('Помилка списування балансу: ' + ue.message);
             } else if (action === '2' && confirm('Скасувати урок?')) {
               const { error: cancelError } = await supabase
                 .from('lessons')
                 .update({ status: 'cancelled' })
                 .eq('id', info.event.id);
 
-              if (!cancelError) {
+                if (!cancelError) {
                 info.event.remove();
                 setStudentLessons((prev) => prev.filter((l) => l.id !== info.event.id));
-                alert('Урок скасовано.');
+                toast.success('Урок скасовано.');
                 onStudentsChange();
-              } else alert('Помилка: ' + cancelError.message);
+              } else toast.error('Помилка: ' + cancelError.message);
             }
           },
         });
@@ -257,7 +265,7 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
 
   const handleHomeworkSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!hwTitle || !hwDesc || !hwDeadline) { alert('Заповніть всі поля!'); return; }
+    if (!hwTitle || !hwDesc || !hwDeadline) { toast.warning('Заповніть всі поля!'); return; }
     setHwSubmitting(true);
     let uplUrl: string | null = null;
     if (hwFile) {
@@ -275,7 +283,7 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
       deadline: hwDeadline, attachment_url: uplUrl, status: 'pending',
     }]);
     if (!dbError) {
-      alert('✅ ДЗ опубліковано!');
+      toast.success('✅ ДЗ опубліковано!');
       setHwTitle(''); setHwDesc(''); setHwFile(null); setHwDeadline('');
       loadHomeworks();
     }
@@ -289,7 +297,7 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
       if (segs.length > 1) await supabase.storage.from('homework-attachments').remove([segs[1]]);
     }
     const { error } = await supabase.from('homeworks').delete().eq('id', hwId);
-    if (!error) { alert('✅ Видалено!'); loadHomeworks(); }
+    if (!error) { toast.success('✅ Видалено!'); loadHomeworks(); }
   }, [supabase, loadHomeworks]);
 
   const openTeacherReview = useCallback((hw: Homework) => {
@@ -378,7 +386,7 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
               >
                 {isCalendarFullscreen ? '🔽 Згорнути' : '⛶ Повний екран'}
               </button>
-              <button onClick={() => alert("Виділіть час у сітці календаря!")}
+              <button onClick={() => toast.warning("Виділіть час у сітці календаря!")}
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-purple-600 to-purple-500 rounded-xl">
                 ➕ Додати урок
               </button>
@@ -520,24 +528,60 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
             {assignedPacks.map((pack) => {
               const mastered = pack.words.filter((w) => w.status === 'mastered').length;
               const pct = pack.words.length > 0 ? Math.round((mastered / pack.words.length) * 100) : 0;
+              const isExpanded = expandedPackId === pack.id;
+
               return (
-                <div key={pack.id} className="flex items-center justify-between gap-3 p-3 border border-gray-100 rounded-xl">
-                  <div className="min-w-0">
-                    <h4 className="font-semibold text-gray-900 text-sm truncate">{pack.title}</h4>
-                    <p className="text-xs text-gray-500">
-                      {pack.targetLanguage} • {mastered}/{pack.words.length} слів
-                      {pack.dueDate && ` • до ${new Date(pack.dueDate).toLocaleDateString('uk-UA')}`}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${pct === 100 ? 'bg-emerald-500' : 'bg-purple-500'}`}
-                        style={{ width: `${pct}%` }}
-                      />
+                <div key={pack.id} className="border border-gray-100 rounded-xl overflow-hidden bg-white">
+                  <div
+                    onClick={() => setExpandedPackId(isExpanded ? null : pack.id)}
+                    className="flex items-center justify-between gap-3 p-3.5 hover:bg-gray-50/70 transition-colors cursor-pointer"
+                  >
+                    <div className="min-w-0">
+                      <h4 className="font-semibold text-gray-900 text-sm truncate">{pack.title}</h4>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {pack.targetLanguage} • {mastered}/{pack.words.length} слів
+                        {pack.dueDate && ` • до ${new Date(pack.dueDate).toLocaleDateString('uk-UA')}`}
+                      </p>
                     </div>
-                    <span className="text-xs font-bold text-purple-600 w-8">{pct}%</span>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${pct === 100 ? 'bg-emerald-500' : 'bg-purple-500'}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-bold text-purple-600 w-8">{pct}%</span>
+                      <span className="text-gray-400 text-xs">{isExpanded ? '▲' : '▼'}</span>
+                    </div>
                   </div>
+
+                  {isExpanded && (
+                    <div className="p-3.5 border-t border-gray-100 bg-gray-50/50 space-y-2">
+                      <div className="text-[11px] font-medium text-gray-500 mb-2">
+                        Слова у пакеті (статус засвоєння):
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {pack.words.map((word) => {
+                          const emoji = getWordStatusEmoji(word.status);
+                          const label = getWordStatusLabel(word.status);
+                          return (
+                            <div
+                              key={word.id}
+                              className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-gray-100 text-xs shadow-2xs"
+                            >
+                              <div className="min-w-0 pr-2">
+                                <span className="font-semibold text-gray-900 mr-1.5">{word.word}</span>
+                                <span className="text-gray-500">— {word.primaryTranslation}</span>
+                              </div>
+                              <span className="flex-shrink-0 text-[11px] font-medium text-gray-700 bg-gray-50 px-2 py-1 rounded-md border border-gray-100">
+                                {emoji} {label}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -555,6 +599,7 @@ export default function TeacherWorkspaceTab({ selectedStudent, onStudentsChange,
         <AssignVocabularyModal
           student={selectedStudent}
           visible={showAssignVocab}
+          teacherId={teacherId ?? undefined}
           onClose={() => setShowAssignVocab(false)}
           onAssigned={handlePackAssigned}
         />

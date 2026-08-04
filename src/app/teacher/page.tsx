@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { Tab, StudentProfile, Lesson, Comment } from '@/components/teacher/types';
@@ -8,6 +9,7 @@ import TeacherSidebar from '@/components/teacher/TeacherSidebar';
 import TeacherDashboardTab from '@/components/teacher/TeacherDashboardTab';
 import TeacherStudentsTab from '@/components/teacher/TeacherStudentsTab';
 import TeacherWorkspaceTab from '@/components/teacher/TeacherWorkspaceTab';
+import TeacherPackLibraryTab from '@/components/teacher/TeacherPackLibraryTab';
 import TeacherCommentsTab from '@/components/teacher/TeacherCommentsTab';
 import dynamic from 'next/dynamic';
 import StudentProfileModal from '@/components/teacher/StudentProfileModal';
@@ -40,7 +42,7 @@ export default function TeacherDashboardPage() {
   const [showAssignVocabModal, setShowAssignVocabModal] = useState(false);
   const [assignVocabStudent, setAssignVocabStudent] = useState<StudentProfile | null>(null);
   const [activeLessonChannel, setActiveLessonChannel] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
+  const [pageToast, setPageToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const toastTimerRef = useRef<NodeJS.Timeout | null>(null);
 
 // =========================================================================
@@ -239,7 +241,7 @@ export default function TeacherDashboardPage() {
   }, [supabase, router]);
 
   const switchTab = useCallback((tab: Tab) => {
-    if (tab === 'workspace' && !selectedStudent) { alert('Спершу оберіть учня!'); return; }
+    if (tab === 'workspace' && !selectedStudent) { toast.warning('⚠️ Спершу оберіть учня!'); return; }
     if (tab === 'comments') loadComments();
     setActiveTab(tab);
     setSidebarOpen(false);
@@ -272,8 +274,8 @@ export default function TeacherDashboardPage() {
 
   const showToast = useCallback((msg: string, type: 'success' | 'error' = 'success') => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToast({ msg, type });
-    toastTimerRef.current = setTimeout(() => setToast(null), 5000);
+    setPageToast({ msg, type });
+    toastTimerRef.current = setTimeout(() => setPageToast(null), 5000);
   }, []);
 
   const handleStudentDeleted = useCallback((studentId: string) => {
@@ -405,8 +407,16 @@ export default function TeacherDashboardPage() {
               {activeTab === 'workspace' && selectedStudent && (
                 <TeacherWorkspaceTab
                   selectedStudent={selectedStudent}
+                  teacherId={profile?.id}
                   onStudentsChange={loadStudents}
                   onEnterLesson={handleEnterLesson}
+                />
+              )}
+
+              {activeTab === 'pack-library' && profile && (
+                <TeacherPackLibraryTab
+                  teacherId={profile.id}
+                  students={students}
                 />
               )}
 
@@ -464,21 +474,21 @@ export default function TeacherDashboardPage() {
             setAssignVocabStudent(null);
           }}
           onAssigned={(pack) => {
-            setToast({
+            setPageToast({
               msg: `✅ Пакет слів "${pack.title}" надіслано учню!`,
               type: 'success'
             });
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-            toastTimerRef.current = setTimeout(() => setToast(null), 3000);
+            toastTimerRef.current = setTimeout(() => setPageToast(null), 3000);
           }}
         />
       )}
 
       {/* Toast Notification */}
-      {toast && (
+      {pageToast && (
         <div
           className={`fixed bottom-6 left-1/2 z-[70] -translate-x-1/2 flex items-center gap-3 w-[calc(100%-2rem)] max-w-md rounded-2xl shadow-2xl px-5 py-4 border animate-toast-in ${
-            toast.type === 'success'
+            pageToast.type === 'success'
               ? 'bg-white border-green-200'
               : 'bg-white border-red-200'
           }`}
@@ -487,12 +497,12 @@ export default function TeacherDashboardPage() {
         >
           <span
             className={`flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center mt-0.5 ${
-              toast.type === 'success'
+              pageToast.type === 'success'
                 ? 'bg-gradient-to-br from-green-600 to-green-400'
                 : 'bg-gradient-to-br from-red-600 to-red-400'
             }`}
           >
-            {toast.type === 'success' ? (
+            {pageToast.type === 'success' ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
@@ -503,9 +513,9 @@ export default function TeacherDashboardPage() {
               </svg>
             )}
           </span>
-          <p className="flex-1 text-sm font-medium text-gray-800 leading-relaxed">{toast.msg}</p>
+          <p className="flex-1 text-sm font-medium text-gray-800 leading-relaxed">{pageToast.msg}</p>
           <button
-            onClick={() => setToast(null)}
+            onClick={() => setPageToast(null)}
             className="flex-shrink-0 w-7 h-7 rounded-full hover:bg-gray-100 flex items-center justify-center transition-colors text-gray-400 hover:text-gray-700"
             aria-label="Закрити сповіщення"
           >

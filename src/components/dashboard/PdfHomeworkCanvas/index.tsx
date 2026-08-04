@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { PdfTool, PdfHomeworkCanvasProps, PdfTextAnnotation } from './types';
 import { PdfCanvasToolbar } from './PdfCanvasToolbar';
 import { renderPdfPageToCanvas } from '@/lib/pdf-utils';
@@ -467,11 +468,11 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
       if (dbError) throw dbError;
 
       localStorage.removeItem(storageKey);
-      alert('🎉 Виконане PDF-завдання успішно збережено та надіслано вчителю!');
+        toast.success('🎉 Виконане PDF-завдання успішно збережено та надіслано вчителю!');
       onSave?.();
     } catch (err: any) {
       console.error('PDF save error:', err);
-      alert(`❌ Помилка збереження: ${err?.message || err}`);
+        toast.error(`❌ Помилка збереження: ${err?.message || err}`);
     } finally {
       setIsSaving(false);
     }

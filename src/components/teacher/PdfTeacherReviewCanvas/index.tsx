@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { PdfCanvasToolbar } from '@/components/dashboard/PdfHomeworkCanvas/PdfCanvasToolbar';
 import { PdfTool } from '@/components/dashboard/PdfHomeworkCanvas/types';
@@ -382,11 +383,11 @@ export default function PdfTeacherReviewCanvas({
 
       if (dbError) throw dbError;
 
-      alert('✅ Рецензію PDF-завдання успішно збережено та відправлено учню!');
+      toast.success('✅ Рецензію PDF-завдання успішно збережено та відправлено учню!');
       onSave();
     } catch (err: any) {
       console.error('Save review error:', err);
-      alert(`❌ Помилка збереження: ${err?.message || err}`);
+      toast.error(`❌ Помилка збереження: ${err?.message || err}`);
     } finally {
       setIsSaving(false);
     }

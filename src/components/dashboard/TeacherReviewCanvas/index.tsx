@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { Tool, TeacherReviewCanvasProps } from './types';
 import { useReviewCanvasState } from './useReviewCanvasState';
@@ -126,11 +127,11 @@ export default function TeacherReviewCanvas({
         .eq('id', homeworkId);
       if (dbError) throw dbError;
 
-      alert('✅ Рецензію збережено та відправлено учню!');
+      toast.success('✅ Рецензію збережено та відправлено учню!');
       onSave();
     } catch (err: unknown) {
       console.error('Save review error:', err);
-      alert(`❌ Помилка: ${err instanceof Error ? err.message : String(err)}`);
+      toast.error(`❌ Помилка: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsSaving(false);
     }
