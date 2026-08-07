@@ -4,6 +4,7 @@ import Script from "next/script";
 import { Toaster } from 'sonner';
 import "@/app/globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -62,6 +63,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const gaId = process.env.NEXT_PUBLIC_GA_ID;
+  const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID;
+
   return (
     <html lang="en" className="scroll-smooth">
       <head>
@@ -70,6 +74,22 @@ export default function RootLayout({
           src="https://telegram.org/js/telegram-web-app.js"
           strategy="beforeInteractive"
         />
+        {/* Microsoft Clarity Analytics */}
+        {clarityId && (
+          <Script
+            id="microsoft-clarity"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function(c,l,a,r,i,t,y){
+                    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+                })(window, document, "clarity", "script", "${clarityId}");
+              `,
+            }}
+          />
+        )}
       </head>
       <body
         className={`${inter.variable} font-sans antialiased bg-white text-gray-900`}
@@ -79,6 +99,8 @@ export default function RootLayout({
           {children}
         </LanguageProvider>
       </body>
+      {/* Google Analytics 4 */}
+      {gaId && <GoogleAnalytics gaId={gaId} />}
     </html>
   );
 }
