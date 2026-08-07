@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import Script from "next/script"; // 👈 1. Додали імпорт Script
+import Script from "next/script"; 
 import { Toaster } from 'sonner';
-import "./globals.css";
+import "@/app/globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 
 const inter = Inter({
@@ -12,15 +12,16 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://novaflow-school.com'),
-  title: "NovaFlow — Language School",
+  title: "NovaFlow — Інтерактивна онлайн-школа іноземних мов",
   description:
-    "Build your language flow. Change your life. Personalized learning paths, flexible schedules, real-world speaking practice.",
+    "Онлайн-школа іноземних мов NovaFlow. Індивідуальні заняття, інтерактивні курси, гнучкий графік та розмовна практика. Запишіться на безкоштовний пробний урок!",
   icons: {
     icon: "/img/logo.svg",
   },
   openGraph: {
-    title: "NovaFlow — Language School",
-    description: "Build your language flow. Change your life. Personalized learning paths, flexible schedules, real-world speaking practice.",
+    title: "NovaFlow — Інтерактивна онлайн-школа іноземних мов",
+    description:
+      "Онлайн-школа іноземних мов NovaFlow. Індивідуальні заняття, інтерактивні курси, гнучкий графік та розмовна практика. Запишіться на безкоштовний пробний урок!",
     url: "https://novaflow-school.com",
     siteName: "NovaFlow Language School",
     images: [
@@ -28,26 +29,31 @@ export const metadata: Metadata = {
         url: "/img/og-image.png",
         width: 1200,
         height: 630,
-        alt: "NovaFlow Language School - Build your language flow",
+        alt: "NovaFlow — Інтерактивна онлайн-школа іноземних мов",
       },
     ],
-    locale: "en_US",
+    locale: "uk_UA",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "NovaFlow — Language School",
-    description: "Build your language flow. Change your life. Personalized learning paths, flexible schedules, real-world speaking practice.",
+    title: "NovaFlow — Інтерактивна онлайн-школа іноземних мов",
+    description:
+      "Онлайн-школа іноземних мов NovaFlow. Індивідуальні заняття, інтерактивні курси, гнучкий графік та розмовна практика.",
     images: ["/img/og-image.png"],
   },
   alternates: {
     canonical: "https://novaflow-school.com",
     languages: {
       "x-default": "https://novaflow-school.com",
-      "en": "https://novaflow-school.com",
-      "uk": "https://novaflow-school.com/languages/uk",
-      "de": "https://novaflow-school.com/languages/de",
+      "uk": "https://novaflow-school.com/languages/ukrainian",
+      "en": "https://novaflow-school.com/languages/english",
+      "de": "https://novaflow-school.com/languages/german",
     },
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 
