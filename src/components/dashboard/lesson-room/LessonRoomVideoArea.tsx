@@ -3,6 +3,9 @@
 import React, { useEffect, useRef } from 'react';
 import { RemoteUser, ICameraVideoTrack, ILocalVideoTrack, IAgoraRTCRemoteUser } from 'agora-rtc-react';
 import { ParticipantProfile } from './types';
+import { SCREEN_UID_OFFSET, isScreenShareUser } from './utils';
+
+export { SCREEN_UID_OFFSET, isScreenShareUser };
 
 interface LessonRoomVideoAreaProps {
   layoutMode: 'grid' | 'focus';
@@ -22,13 +25,6 @@ interface LessonRoomVideoAreaProps {
   // (and a teacher badge) instead of the generic "Співрозмовник" label.
   // Optional — falls back to old behavior if not provided.
   participantProfiles?: Record<string, ParticipantProfile>;
-}
-
-const SCREEN_UID_OFFSET = 1_000_000_000;
-
-export function isScreenShareUser(uid: number | string): boolean {
-  const numericUid = Number(uid);
-  return Number.isFinite(numericUid) && numericUid >= SCREEN_UID_OFFSET;
 }
 
 function getRemoteLabel(
@@ -104,7 +100,7 @@ export default function LessonRoomVideoArea({
                     : ''
                 }`}
               >
-                <RemoteUser user={featuredRemoteUser} playVideo playAudio />
+                <RemoteUser user={featuredRemoteUser} playVideo playAudio={false} />
                 {(() => {
                   const { name, isTeacher, isScreenShare } = getRemoteLabel(featuredRemoteUser, participantProfiles);
                   return (
@@ -197,7 +193,7 @@ export default function LessonRoomVideoArea({
                         activeSpeakerUid === ru.uid ? 'border-indigo-500' : 'border-white/15'
                       }`}
                     >
-                      <RemoteUser user={ru} playVideo playAudio />
+                      <RemoteUser user={ru} playVideo playAudio={false} />
                       <div className="absolute bottom-0 left-0 right-0 px-1.5 py-0.5 bg-zinc-950/70 backdrop-blur-md text-[9px] text-zinc-200 truncate flex items-center gap-1">
                         {!isScreenShare && !ru.hasAudio && <span className="text-rose-400">🔇</span>}
                         <span className="truncate">{name}</span>
@@ -257,7 +253,7 @@ export default function LessonRoomVideoArea({
                     }`}
                   >
                     <div className="w-full h-full relative">
-                      <RemoteUser user={ru} playVideo playAudio />
+                      <RemoteUser user={ru} playVideo playAudio={false} />
                       <div className="absolute bottom-4 left-4 bg-zinc-900/80 backdrop-blur-md border border-white/10 px-3 py-1 rounded-xl text-xs font-medium text-white flex items-center gap-2">
                         <span>{name}</span>
                         {isScreenShare && (

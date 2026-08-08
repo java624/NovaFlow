@@ -14,7 +14,7 @@ import AgoraRTC, {
 } from 'agora-rtc-react';
 
 import { LessonRoomProps, ChatMessage } from './types';
-import { getInitials, generateUid } from './utils';
+import { getInitials, generateUid, SCREEN_UID_OFFSET, isScreenShareUser } from './utils';
 import LessonRoomHeader from './LessonRoomHeader';
 import LessonRoomFloatingControls from './LessonRoomFloatingControls';
 import LessonRoomChatSidebar from './LessonRoomChatSidebar';
@@ -30,7 +30,6 @@ import VirtualBackgroundControls from './VirtualBackgroundControls';
 import { useVirtualBackground } from './useVirtualBackground';
 import { useLessonRecording } from './useLessonRecording';
 
-const SCREEN_UID_OFFSET = 1_000_000_000;
 const CLASSROOM_DATA_CHANNEL_ID = 7;
 
 interface AgoraTokenResponse {
@@ -193,7 +192,15 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
         try { await screenClient.leave(); } catch (error) { console.warn('[Agora] Error leaving screen client:', error); }
       }
     }
-  }, []);
+    if (micTrackRef.current && !micMuted) {
+      try {
+        await micTrackRef.current.setEnabled(true);
+        await micTrackRef.current.setMuted(false);
+      } catch (e) {
+        console.warn('[Agora] Mic re-enable warning after screen share stop:', e);
+      }
+    }
+  }, [micMuted]);
 
   // NEW: virtual background hook, driven off the local camera track
   const {
@@ -413,6 +420,13 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
           return;
         }
         await client.subscribe(user, mediaType);
+        if (mediaType === 'audio' && user.audioTrack && !isScreenShareUser(user.uid)) {
+          try {
+            user.audioTrack.play();
+          } catch (audioPlayErr) {
+            console.warn('[Agora] Failed to play remote audio track on publish:', audioPlayErr);
+          }
+        }
       } catch (err) {
         console.error('[Agora] Subscribe error:', err);
       }
@@ -628,6 +642,42 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kickedNotice]);
 
+  // Continuous background audio manager for remote users.
+  // Decouples audio playback from UI video container mounting/unmounting (e.g. when screen share starts).
+  useEffect(() => {
+    if (!client) return;
+    remoteUsers.forEach((remoteUser) => {
+      if (remoteUser.hasAudio && remoteUser.audioTrack && !isScreenShareUser(remoteUser.uid)) {
+        if (!remoteUser.audioTrack.isPlaying) {
+          try {
+            remoteUser.audioTrack.play();
+          } catch (err) {
+            console.warn('[Agora] Background audio play retry warning:', err);
+          }
+        }
+      }
+    });
+  }, [remoteUsers, client]);
+
+  // Autoplay recovery: resume remote audio playback upon any user click/touch gesture
+  useEffect(() => {
+    const handleUnlockAudio = () => {
+      remoteUsers.forEach((remoteUser) => {
+        if (remoteUser.hasAudio && remoteUser.audioTrack && !remoteUser.audioTrack.isPlaying && !isScreenShareUser(remoteUser.uid)) {
+          try {
+            remoteUser.audioTrack.play();
+          } catch {}
+        }
+      });
+    };
+    window.addEventListener('click', handleUnlockAudio);
+    window.addEventListener('touchstart', handleUnlockAudio);
+    return () => {
+      window.removeEventListener('click', handleUnlockAudio);
+      window.removeEventListener('touchstart', handleUnlockAudio);
+    };
+  }, [remoteUsers]);
+
   // 3. Media Devices
   const refreshDevices = useCallback(async () => {
     try {
@@ -774,6 +824,16 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
       setScreenTrack(screenVideoTrack);
       setScreenSharing(true);
       screenVideoTrack.on('track-ended', () => { void stopScreenShare(); });
+
+      // Re-verify local mic track state after getDisplayMedia / screen publish
+      if (micTrackRef.current && !micMuted) {
+        try {
+          await micTrackRef.current.setEnabled(true);
+          await micTrackRef.current.setMuted(false);
+        } catch (e) {
+          console.warn('[Agora] Mic re-enable warning after screen share start:', e);
+        }
+      }
     } catch (error) {
       console.warn('[Agora] Screen share cancelled or failed:', error);
       if (screenClientRef.current === screenClient) await stopScreenShare();

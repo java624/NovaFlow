@@ -21,3 +21,12 @@ export function generateUid(userName?: string): number {
   }
   return Math.floor(Math.random() * 2147483647);
 }
+
+// Screen share UID constant and detection helper
+export const SCREEN_UID_OFFSET = 1_000_000_000;
+
+export function isScreenShareUser(uid: number | string): boolean {
+  const numericUid = Number(uid);
+  return Number.isFinite(numericUid) && numericUid >= SCREEN_UID_OFFSET;
+}
+
