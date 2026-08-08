@@ -618,8 +618,19 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
       }
     };
 
+    const handleUserMuteUpdated = (user: any, mediaType: 'audio' | 'video', isMuted: boolean) => {
+      if (mediaType === 'audio' && !isMuted && user.audioTrack && !isScreenShareUser(user.uid)) {
+        try {
+          user.audioTrack.play();
+        } catch (err) {
+          console.warn('[Agora] Error playing audio on user-mute-updated:', err);
+        }
+      }
+    };
+
     client.on('user-published', handleUserPublished);
     client.on('user-joined', handleUserJoined);
+    client.on('user-mute-updated', handleUserMuteUpdated);
     client.on('volume-indicator', handleVolumeIndicator);
     client.on('network-quality', handleNetworkQuality);
     client.on('stream-message', handleStreamMessage);
@@ -627,6 +638,7 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
     return () => {
       client.off('user-published', handleUserPublished);
       client.off('user-joined', handleUserJoined);
+      client.off('user-mute-updated', handleUserMuteUpdated);
       client.off('volume-indicator', handleVolumeIndicator);
       client.off('network-quality', handleNetworkQuality);
       client.off('stream-message', handleStreamMessage);
@@ -724,7 +736,13 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
     if (micTrackRef.current) {
       try {
         const nextMuted = !micMuted;
-        await micTrackRef.current.setMuted(nextMuted);
+        if (nextMuted) {
+          await micTrackRef.current.setMuted(true);
+          try { await micTrackRef.current.setEnabled(false); } catch (e) {}
+        } else {
+          try { await micTrackRef.current.setEnabled(true); } catch (e) {}
+          await micTrackRef.current.setMuted(false);
+        }
         setMicMuted(nextMuted);
         if (!nextMuted) setIsForceMuted(false);
       } catch (err) {
@@ -1328,13 +1346,30 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
 
 function RemoteAudioPlayer({ user }: { user: IAgoraRTCRemoteUser }) {
   useEffect(() => {
-    if (user.hasAudio && user.audioTrack && !isScreenShareUser(user.uid)) {
-      try {
-        user.audioTrack.play();
-      } catch (err) {
-        console.warn('[Agora] Background audio play error for user:', user.uid, err);
+    if (isScreenShareUser(user.uid)) return;
+
+    const playAudioIfNeeded = () => {
+      if (user.hasAudio && user.audioTrack) {
+        try {
+          user.audioTrack.play();
+        } catch (err) {
+          console.warn('[Agora] Background audio play error for user:', user.uid, err);
+        }
       }
-    }
+    };
+
+    playAudioIfNeeded();
+
+    // Periodically ensure audio is playing when user is not muted
+    const interval = setInterval(() => {
+      if (user.hasAudio && user.audioTrack && !user.audioTrack.isPlaying) {
+        playAudioIfNeeded();
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, [user.uid, user.hasAudio, user.audioTrack]);
 
   return null;
