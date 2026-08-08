@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { RemoteUser, ICameraVideoTrack, ILocalVideoTrack, IAgoraRTCRemoteUser } from 'agora-rtc-react';
 import { ParticipantProfile } from './types';
-import { SCREEN_UID_OFFSET, isScreenShareUser } from './utils';
+import { SCREEN_UID_OFFSET, isScreenShareUser, getInitials } from './utils';
 
 export { SCREEN_UID_OFFSET, isScreenShareUser };
 
@@ -100,7 +100,18 @@ export default function LessonRoomVideoArea({
                     : ''
                 }`}
               >
-                <RemoteUser user={featuredRemoteUser} playVideo playAudio={false} />
+                {featuredRemoteUser.hasVideo && featuredRemoteUser.videoTrack ? (
+                  <RemoteVideoRenderer user={featuredRemoteUser} />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-900">
+                    <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-indigo-600 to-purple-700 flex items-center justify-center text-white font-bold text-2xl shadow-xl shadow-indigo-500/30 mb-2">
+                      {getInitials(getRemoteLabel(featuredRemoteUser, participantProfiles).name)}
+                    </div>
+                    <span className="text-sm font-semibold text-zinc-200">
+                      {getRemoteLabel(featuredRemoteUser, participantProfiles).name}
+                    </span>
+                  </div>
+                )}
                 {(() => {
                   const { name, isTeacher, isScreenShare } = getRemoteLabel(featuredRemoteUser, participantProfiles);
                   return (
@@ -193,7 +204,13 @@ export default function LessonRoomVideoArea({
                         activeSpeakerUid === ru.uid ? 'border-indigo-500' : 'border-white/15'
                       }`}
                     >
-                      <RemoteUser user={ru} playVideo playAudio={false} />
+                      {ru.hasVideo && ru.videoTrack ? (
+                        <RemoteVideoRenderer user={ru} />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-zinc-900 text-[10px] font-bold text-zinc-400">
+                          {getInitials(name)}
+                        </div>
+                      )}
                       <div className="absolute bottom-0 left-0 right-0 px-1.5 py-0.5 bg-zinc-950/70 backdrop-blur-md text-[9px] text-zinc-200 truncate flex items-center gap-1">
                         {!isScreenShare && !ru.hasAudio && <span className="text-rose-400">🔇</span>}
                         <span className="truncate">{name}</span>
@@ -253,7 +270,18 @@ export default function LessonRoomVideoArea({
                     }`}
                   >
                     <div className="w-full h-full relative">
-                      <RemoteUser user={ru} playVideo playAudio={false} />
+                      {ru.hasVideo && ru.videoTrack ? (
+                        <RemoteVideoRenderer user={ru} />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-zinc-800 via-zinc-900 to-indigo-950 p-2">
+                          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-700 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-indigo-500/30 mb-2">
+                            {getInitials(name)}
+                          </div>
+                          <span className="text-xs font-semibold text-zinc-300">
+                            {name}
+                          </span>
+                        </div>
+                      )}
                       <div className="absolute bottom-4 left-4 bg-zinc-900/80 backdrop-blur-md border border-white/10 px-3 py-1 rounded-xl text-xs font-medium text-white flex items-center gap-2">
                         <span>{name}</span>
                         {isScreenShare && (
@@ -301,6 +329,26 @@ export function LocalVideoRenderer({ track }: { track: ILocalVideoTrack }) {
       }
     };
   }, [track]);
+
+  return <div ref={containerRef} className="w-full h-full object-cover" />;
+}
+
+export function RemoteVideoRenderer({ user }: { user: IAgoraRTCRemoteUser }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!user.hasVideo || !user.videoTrack || !containerRef.current) return;
+    try {
+      user.videoTrack.play(containerRef.current);
+    } catch (err) {
+      console.warn('[Agora] Remote video play error for user:', user.uid, err);
+    }
+    return () => {
+      if (containerRef.current) {
+        containerRef.current.innerHTML = '';
+      }
+    };
+  }, [user.hasVideo, user.videoTrack]);
 
   return <div ref={containerRef} className="w-full h-full object-cover" />;
 }

@@ -9,6 +9,7 @@ import AgoraRTC, {
   ICameraVideoTrack,
   ILocalVideoTrack,
   IAgoraRTCClient,
+  IAgoraRTCRemoteUser,
   ILocalDataChannel,
   IRemoteDataChannel,
 } from 'agora-rtc-react';
@@ -1166,6 +1167,13 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
         </div>
       )}
 
+      {/* Permanent Background Audio Players for Remote Participants */}
+      <div className="hidden" aria-hidden="true">
+        {remoteUsers.map((remoteUser) => (
+          <RemoteAudioPlayer key={String(remoteUser.uid)} user={remoteUser} />
+        ))}
+      </div>
+
       {/* Video Layout Area */}
       <LessonRoomVideoArea
         layoutMode={layoutMode}
@@ -1316,6 +1324,20 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
       />
     </div>
   );
+}
+
+function RemoteAudioPlayer({ user }: { user: IAgoraRTCRemoteUser }) {
+  useEffect(() => {
+    if (user.hasAudio && user.audioTrack && !isScreenShareUser(user.uid)) {
+      try {
+        user.audioTrack.play();
+      } catch (err) {
+        console.warn('[Agora] Background audio play error for user:', user.uid, err);
+      }
+    }
+  }, [user.uid, user.hasAudio, user.audioTrack]);
+
+  return null;
 }
 
 // ------------------------------------------------------------------ Main Exported Component
