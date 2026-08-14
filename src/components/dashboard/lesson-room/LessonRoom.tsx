@@ -195,7 +195,6 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
     }
     if (micTrackRef.current && !micMuted) {
       try {
-        await micTrackRef.current.setEnabled(true);
         await micTrackRef.current.setMuted(false);
       } catch (e) {
         console.warn('[Agora] Mic re-enable warning after screen share stop:', e);
@@ -291,14 +290,23 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
 
         // Audio track
         try {
-          const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+          const audioTrack = await AgoraRTC.createMicrophoneAudioTrack({
+            AEC: true,
+            ANS: true,
+            AGC: true,
+          });
           if (!isMounted) {
             audioTrack.close();
             return;
           }
+          try {
+            audioTrack.setVolume(100);
+            await audioTrack.setMuted(false);
+          } catch (e) {}
           micTrackRef.current = audioTrack;
           setLocalMicrophoneTrack(audioTrack);
           await client.publish(audioTrack);
+          console.log('[Agora] Microphone track created and published successfully.');
         } catch (audioErr) {
           console.error('[Agora] Microphone creation error:', audioErr);
         }
@@ -420,12 +428,16 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
           announceProfile();
           return;
         }
-        await client.subscribe(user, mediaType);
-        if (mediaType === 'audio' && user.audioTrack && !isScreenShareUser(user.uid)) {
-          try {
-            user.audioTrack.play();
-          } catch (audioPlayErr) {
-            console.warn('[Agora] Failed to play remote audio track on publish:', audioPlayErr);
+        const subscribedTrack = await client.subscribe(user, mediaType);
+        if (mediaType === 'audio' && !isScreenShareUser(user.uid)) {
+          const audioTrack = (subscribedTrack as any) || user.audioTrack;
+          if (audioTrack) {
+            try {
+              audioTrack.play();
+              console.log('[Agora] Remote audio track playing for user:', user.uid);
+            } catch (audioPlayErr) {
+              console.warn('[Agora] Failed to play remote audio track on publish:', audioPlayErr);
+            }
           }
         }
       } catch (err) {
@@ -672,22 +684,35 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
     });
   }, [remoteUsers, client]);
 
-  // Autoplay recovery: resume remote audio playback upon any user click/touch gesture
+  // Autoplay recovery & AudioContext resume: resume remote audio playback upon any user interaction
   useEffect(() => {
-    const handleUnlockAudio = () => {
+    const handleUnlockAudio = async () => {
+      try {
+        const audioCtx = (AgoraRTC as any).getAudioContext?.();
+        if (audioCtx && audioCtx.state === 'suspended') {
+          await audioCtx.resume();
+        }
+      } catch (e) {}
+
       remoteUsers.forEach((remoteUser) => {
-        if (remoteUser.hasAudio && remoteUser.audioTrack && !remoteUser.audioTrack.isPlaying && !isScreenShareUser(remoteUser.uid)) {
+        if (remoteUser.hasAudio && remoteUser.audioTrack && !isScreenShareUser(remoteUser.uid)) {
           try {
-            remoteUser.audioTrack.play();
-          } catch {}
+            if (!remoteUser.audioTrack.isPlaying) {
+              remoteUser.audioTrack.play();
+            }
+          } catch (err) {
+            console.warn('[Agora] Autoplay unlock play error:', err);
+          }
         }
       });
     };
     window.addEventListener('click', handleUnlockAudio);
     window.addEventListener('touchstart', handleUnlockAudio);
+    window.addEventListener('keydown', handleUnlockAudio);
     return () => {
       window.removeEventListener('click', handleUnlockAudio);
       window.removeEventListener('touchstart', handleUnlockAudio);
+      window.removeEventListener('keydown', handleUnlockAudio);
     };
   }, [remoteUsers]);
 
@@ -736,13 +761,7 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
     if (micTrackRef.current) {
       try {
         const nextMuted = !micMuted;
-        if (nextMuted) {
-          await micTrackRef.current.setMuted(true);
-          try { await micTrackRef.current.setEnabled(false); } catch (e) {}
-        } else {
-          try { await micTrackRef.current.setEnabled(true); } catch (e) {}
-          await micTrackRef.current.setMuted(false);
-        }
+        await micTrackRef.current.setMuted(nextMuted);
         setMicMuted(nextMuted);
         if (!nextMuted) setIsForceMuted(false);
       } catch (err) {
@@ -750,7 +769,15 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
       }
     } else {
       try {
-        const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+        const audioTrack = await AgoraRTC.createMicrophoneAudioTrack({
+          AEC: true,
+          ANS: true,
+          AGC: true,
+        });
+        try {
+          audioTrack.setVolume(100);
+          await audioTrack.setMuted(false);
+        } catch (e) {}
         micTrackRef.current = audioTrack;
         setLocalMicrophoneTrack(audioTrack);
         setMicMuted(false);
@@ -847,7 +874,6 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
       // Re-verify local mic track state after getDisplayMedia / screen publish
       if (micTrackRef.current && !micMuted) {
         try {
-          await micTrackRef.current.setEnabled(true);
           await micTrackRef.current.setMuted(false);
         } catch (e) {
           console.warn('[Agora] Mic re-enable warning after screen share start:', e);
@@ -1351,7 +1377,9 @@ function RemoteAudioPlayer({ user }: { user: IAgoraRTCRemoteUser }) {
     const playAudioIfNeeded = () => {
       if (user.hasAudio && user.audioTrack) {
         try {
-          user.audioTrack.play();
+          if (!user.audioTrack.isPlaying) {
+            user.audioTrack.play();
+          }
         } catch (err) {
           console.warn('[Agora] Background audio play error for user:', user.uid, err);
         }
@@ -1362,15 +1390,13 @@ function RemoteAudioPlayer({ user }: { user: IAgoraRTCRemoteUser }) {
 
     // Periodically ensure audio is playing when user is not muted
     const interval = setInterval(() => {
-      if (user.hasAudio && user.audioTrack && !user.audioTrack.isPlaying) {
-        playAudioIfNeeded();
-      }
+      playAudioIfNeeded();
     }, 1000);
 
     return () => {
       clearInterval(interval);
     };
-  }, [user.uid, user.hasAudio, user.audioTrack]);
+  }, [user]);
 
   return null;
 }
