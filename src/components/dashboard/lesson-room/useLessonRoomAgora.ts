@@ -114,6 +114,9 @@ export function useLessonRoomAgora({
 
         setIsConnected(true);
 
+        // Create local tracks
+        const tracksToPublish: (IMicrophoneAudioTrack | ICameraVideoTrack)[] = [];
+
         // Audio track
         try {
           const audioTrack = await AgoraRTC.createMicrophoneAudioTrack({
@@ -131,7 +134,7 @@ export function useLessonRoomAgora({
           } catch (e) {}
           micTrackRef.current = audioTrack;
           setLocalMicrophoneTrack(audioTrack);
-          await client.publish(audioTrack);
+          tracksToPublish.push(audioTrack);
         } catch (audioErr) {
           console.error('[Agora] Microphone creation error:', audioErr);
           if (isMounted) {
@@ -150,12 +153,21 @@ export function useLessonRoomAgora({
           }
           camTrackRef.current = videoTrack;
           setLocalCameraTrack(videoTrack);
-          await client.publish(videoTrack);
+          tracksToPublish.push(videoTrack);
         } catch (camErr: any) {
           console.warn('[Agora] Camera error:', camErr);
           if (isMounted) {
             setCameraError('Камера недоступна або зайнята іншим додатком');
             setCameraOff(true);
+          }
+        }
+
+        // Publish media tracks atomically in a single WebRTC negotiation
+        if (tracksToPublish.length > 0 && isMounted) {
+          try {
+            await client.publish(tracksToPublish);
+          } catch (pubErr) {
+            console.error('[Agora] Atomic track publish error:', pubErr);
           }
         }
 
@@ -208,21 +220,33 @@ export function useLessonRoomAgora({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, safeChannel, uid]);
 
+  const subscribingKeysRef = useRef<Set<string>>(new Set());
+
   // Synchronize subscriptions for existing remote users
   useEffect(() => {
     if (!client || client.connectionState !== 'CONNECTED') return;
 
     remoteUsers.forEach(async (remoteUser) => {
       if (remoteUser.hasVideo && !remoteUser.videoTrack) {
-        try { await client.subscribe(remoteUser, 'video'); } catch (e) {}
+        const key = `${remoteUser.uid}-video`;
+        if (!subscribingKeysRef.current.has(key)) {
+          subscribingKeysRef.current.add(key);
+          try { await client.subscribe(remoteUser, 'video'); } catch (e) {}
+          finally { subscribingKeysRef.current.delete(key); }
+        }
       }
       if (remoteUser.hasAudio && !isScreenShareUser(remoteUser.uid)) {
         if (!remoteUser.audioTrack) {
-          try {
-            const track = await client.subscribe(remoteUser, 'audio');
-            (track as any)?.setVolume?.(100);
-            (track as any)?.play();
-          } catch (e) {}
+          const key = `${remoteUser.uid}-audio`;
+          if (!subscribingKeysRef.current.has(key)) {
+            subscribingKeysRef.current.add(key);
+            try {
+              const track = await client.subscribe(remoteUser, 'audio');
+              (track as any)?.setVolume?.(100);
+              (track as any)?.play();
+            } catch (e) {}
+            finally { subscribingKeysRef.current.delete(key); }
+          }
         } else if (!remoteUser.audioTrack.isPlaying) {
           try {
             remoteUser.audioTrack.setVolume?.(100);
