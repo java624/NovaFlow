@@ -5,6 +5,7 @@ import AgoraRTC, {
   AgoraRTCProvider,
   useRTCClient,
   useRemoteUsers,
+  useRemoteAudioTracks,
   IMicrophoneAudioTrack,
   ICameraVideoTrack,
   ILocalVideoTrack,
@@ -80,6 +81,7 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
   const [token, setToken] = useState<string | null>(null);
   const [tokenError, setTokenError] = useState<string | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
+  const [micError, setMicError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   // NEW: kicked flag (shown briefly before leave fires)
@@ -141,6 +143,29 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
 
   const client = useRTCClient();
   const remoteUsers = useRemoteUsers();
+
+  // Automatically manage subscription and audio playback for remote participants
+  const audioRemoteUsers = useMemo(
+    () => remoteUsers.filter((ru) => !isScreenShareUser(ru.uid)),
+    [remoteUsers]
+  );
+  const { audioTracks: remoteAudioTrackObjects } = useRemoteAudioTracks(audioRemoteUsers);
+
+  useEffect(() => {
+    remoteAudioTrackObjects.forEach((track) => {
+      if (track) {
+        try {
+          track.setVolume(100);
+          if (!track.isPlaying) {
+            track.play();
+            console.log('[Agora] Played remote audio track via useRemoteAudioTracks');
+          }
+        } catch (err) {
+          console.warn('[Agora] Error playing remote audio track:', err);
+        }
+      }
+    });
+  }, [remoteAudioTrackObjects]);
 
   // Build remote audio tracks array for recording mixing
   const remoteAudioTracks = useMemo(() => {
@@ -290,6 +315,7 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
 
         // Audio track
         try {
+          setMicError(null);
           const audioTrack = await AgoraRTC.createMicrophoneAudioTrack({
             AEC: true,
             ANS: true,
@@ -307,8 +333,11 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
           setLocalMicrophoneTrack(audioTrack);
           await client.publish(audioTrack);
           console.log('[Agora] Microphone track created and published successfully.');
-        } catch (audioErr) {
+        } catch (audioErr: any) {
           console.error('[Agora] Microphone creation error:', audioErr);
+          if (isMounted) {
+            setMicError('Мікрофон недоступний або в браузері вимкнено дозвіл на аудіо');
+          }
         }
 
         // Video track
@@ -428,20 +457,8 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
           announceProfile();
           return;
         }
-        const subscribedTrack = await client.subscribe(user, mediaType);
-        if (mediaType === 'audio' && !isScreenShareUser(user.uid)) {
-          const audioTrack = (subscribedTrack as any) || user.audioTrack;
-          if (audioTrack) {
-            try {
-              audioTrack.play();
-              console.log('[Agora] Remote audio track playing for user:', user.uid);
-            } catch (audioPlayErr) {
-              console.warn('[Agora] Failed to play remote audio track on publish:', audioPlayErr);
-            }
-          }
-        }
       } catch (err) {
-        console.error('[Agora] Subscribe error:', err);
+        console.error('[Agora] DataChannel subscribe error:', err);
       }
     };
 
@@ -769,6 +786,7 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
       }
     } else {
       try {
+        setMicError(null);
         const audioTrack = await AgoraRTC.createMicrophoneAudioTrack({
           AEC: true,
           ANS: true,
@@ -787,6 +805,7 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
         }
       } catch (audioErr) {
         console.error('[Agora] Microphone creation error:', audioErr);
+        setMicError('Не вдалося увімкнути мікрофон');
       }
     }
   }, [micMuted, client]);
@@ -1195,6 +1214,22 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
         </div>
       )}
 
+      {/* Microphone Error Banner */}
+      {micError && (
+        <div className="bg-amber-950/90 border-b border-amber-700/50 text-white p-3 px-6 text-xs flex items-center justify-between gap-2 z-40">
+          <div className="flex items-center gap-2">
+            <span className="text-base">🎙️</span>
+            <span>{micError}</span>
+          </div>
+          <button
+            onClick={() => setMicError(null)}
+            className="px-2 py-0.5 bg-amber-800 hover:bg-amber-700 rounded text-xs text-white"
+          >
+            Закрити
+          </button>
+        </div>
+      )}
+
       {/* Error Banner */}
       {tokenError && (
         <div className="bg-rose-950/90 border-b border-rose-700/50 text-white p-3 px-6 text-xs flex flex-col sm:flex-row items-center justify-between gap-2 z-40">
@@ -1210,13 +1245,6 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
           </button>
         </div>
       )}
-
-      {/* Permanent Background Audio Players for Remote Participants */}
-      <div className="hidden" aria-hidden="true">
-        {remoteUsers.map((remoteUser) => (
-          <RemoteAudioPlayer key={String(remoteUser.uid)} user={remoteUser} />
-        ))}
-      </div>
 
       {/* Video Layout Area */}
       <LessonRoomVideoArea
@@ -1370,36 +1398,6 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
   );
 }
 
-function RemoteAudioPlayer({ user }: { user: IAgoraRTCRemoteUser }) {
-  useEffect(() => {
-    if (isScreenShareUser(user.uid)) return;
-
-    const playAudioIfNeeded = () => {
-      if (user.hasAudio && user.audioTrack) {
-        try {
-          if (!user.audioTrack.isPlaying) {
-            user.audioTrack.play();
-          }
-        } catch (err) {
-          console.warn('[Agora] Background audio play error for user:', user.uid, err);
-        }
-      }
-    };
-
-    playAudioIfNeeded();
-
-    // Periodically ensure audio is playing when user is not muted
-    const interval = setInterval(() => {
-      playAudioIfNeeded();
-    }, 1000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [user]);
-
-  return null;
-}
 
 // ------------------------------------------------------------------ Main Exported Component
 export default function LessonRoom(props: LessonRoomProps) {

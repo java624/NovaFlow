@@ -137,6 +137,9 @@ export function useLessonRecording(
             gain.gain.value = 1.0;
             source.connect(gain);
             gain.connect(dest);
+            try {
+              gain.connect(audioContext.destination);
+            } catch (e) {}
           } catch {
             // skip problematic tracks
           }
