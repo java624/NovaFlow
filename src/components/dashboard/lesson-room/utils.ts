@@ -1,3 +1,6 @@
+// Classroom DataChannel constant
+export const CLASSROOM_DATA_CHANNEL_ID = 7;
+
 // Helper to generate initials from username
 export function getInitials(name?: string): string {
   if (!name) return 'U';
@@ -30,3 +33,15 @@ export function isScreenShareUser(uid: number | string): boolean {
   return Number.isFinite(numericUid) && numericUid >= SCREEN_UID_OFFSET;
 }
 
+interface AgoraTokenResponse {
+  rtcToken?: string | null;
+  error?: string;
+}
+
+export async function requestRtcToken(channelName: string, uid: number): Promise<string | null> {
+  const response = await fetch(`/api/agora-token?channelName=${encodeURIComponent(channelName)}&uid=${uid}`);
+  if (!response.ok) throw new Error(`Помилка сервера токенів (статус ${response.status}).`);
+  const data = (await response.json()) as AgoraTokenResponse;
+  if (data.error) throw new Error(data.error);
+  return data.rtcToken ?? null;
+}
