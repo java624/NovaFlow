@@ -18,6 +18,7 @@ import VirtualBackgroundControls from './VirtualBackgroundControls';
 import LessonRoomRecordingModal from './LessonRoomRecordingModal';
 import { useVirtualBackground } from './useVirtualBackground';
 import { useLessonRecording } from './useLessonRecording';
+import RemoteAudioStreamPlayer from './RemoteAudioStreamPlayer';
 import { useLessonRoomAgora } from './useLessonRoomAgora';
 import { useLessonRoomSignaling } from './useLessonRoomSignaling';
 
@@ -249,6 +250,11 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
           </button>
         </div>
       )}
+
+      {/* Native Dual-Mode Audio Players for Remote Participants */}
+      {agora.remoteUsers.map((ru) => (
+        <RemoteAudioStreamPlayer key={String(ru.uid)} user={ru} />
+      ))}
 
       {/* Video Layout Area */}
       <LessonRoomVideoArea
