@@ -6,9 +6,13 @@ import { isScreenShareUser } from './utils';
 
 interface RemoteAudioStreamPlayerProps {
   user: IAgoraRTCRemoteUser;
+  selectedSpeakerId?: string;
 }
 
-export default function RemoteAudioStreamPlayer({ user }: RemoteAudioStreamPlayerProps) {
+export default function RemoteAudioStreamPlayer({
+  user,
+  selectedSpeakerId,
+}: RemoteAudioStreamPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -16,9 +20,12 @@ export default function RemoteAudioStreamPlayer({ user }: RemoteAudioStreamPlaye
 
     const audioTrack = user.audioTrack;
 
-    // 1. Agora SDK play call
+    // 1. Agora SDK play call & playback device set
     try {
       audioTrack.setVolume?.(100);
+      if (selectedSpeakerId && (audioTrack as any).setPlaybackDevice) {
+        (audioTrack as any).setPlaybackDevice(selectedSpeakerId).catch(() => {});
+      }
       if (!audioTrack.isPlaying) {
         audioTrack.play();
       }
@@ -30,6 +37,9 @@ export default function RemoteAudioStreamPlayer({ user }: RemoteAudioStreamPlaye
     const audioEl = audioRef.current;
     if (audioEl) {
       try {
+        if (selectedSpeakerId && (audioEl as any).setSinkId) {
+          (audioEl as any).setSinkId(selectedSpeakerId).catch(() => {});
+        }
         const mediaStreamTrack = audioTrack.getMediaStreamTrack();
         if (mediaStreamTrack) {
           const stream = new MediaStream([mediaStreamTrack]);
@@ -68,7 +78,7 @@ export default function RemoteAudioStreamPlayer({ user }: RemoteAudioStreamPlaye
       window.removeEventListener('keydown', handleGesture);
       clearInterval(interval);
     };
-  }, [user, user.uid, user.hasAudio, user.audioTrack]);
+  }, [user, user.uid, user.hasAudio, user.audioTrack, selectedSpeakerId]);
 
   if (isScreenShareUser(user.uid) || !user.hasAudio) return null;
 

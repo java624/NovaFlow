@@ -253,7 +253,7 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
 
       {/* Native Dual-Mode Audio Players for Remote Participants */}
       {agora.remoteUsers.map((ru) => (
-        <RemoteAudioStreamPlayer key={String(ru.uid)} user={ru} />
+        <RemoteAudioStreamPlayer key={String(ru.uid)} user={ru} selectedSpeakerId={agora.selectedSpeakerId} />
       ))}
 
       {/* Video Layout Area */}
@@ -327,8 +327,10 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
         onClose={() => setIsSettingsOpen(false)}
         cameras={agora.cameras}
         microphones={agora.microphones}
+        speakers={agora.speakers}
         selectedCamId={agora.selectedCamId}
         selectedMicId={agora.selectedMicId}
+        selectedSpeakerId={agora.selectedSpeakerId}
         onDeviceChange={agora.handleDeviceChange}
       />
 
