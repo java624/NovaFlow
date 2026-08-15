@@ -12,7 +12,7 @@ import AgoraRTC, {
 import { generateUid, isScreenShareUser, requestRtcToken, CLASSROOM_DATA_CHANNEL_ID } from './utils';
 import { useLessonRoomDevices } from './useLessonRoomDevices';
 import { useLessonRoomScreenShare } from './useLessonRoomScreenShare';
-import { useLessonRoomAudioUnlock } from './useLessonRoomAudioUnlock';
+import { resumeAgoraAudioContext, useLessonRoomAudioUnlock } from './useLessonRoomAudioUnlock';
 import { useLessonRoomAgoraEvents } from './useLessonRoomAgoraEvents';
 
 interface UseLessonRoomAgoraProps {
@@ -258,6 +258,7 @@ export function useLessonRoomAgora({
   }, [remoteUsers, client, isConnected]);
 
   const handleMicToggle = useCallback(async () => {
+    await resumeAgoraAudioContext();
     if (micTrackRef.current) {
       try {
         const nextMuted = !micMuted;

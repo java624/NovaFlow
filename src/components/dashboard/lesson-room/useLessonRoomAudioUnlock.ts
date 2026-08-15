@@ -4,15 +4,24 @@ import { useEffect } from 'react';
 import AgoraRTC, { IAgoraRTCRemoteUser } from 'agora-rtc-react';
 import { isScreenShareUser } from './utils';
 
+/**
+ * Resumes Agora RTC AudioContext if suspended (Autoplay restriction bypass)
+ */
+export async function resumeAgoraAudioContext() {
+  try {
+    const audioCtx = (AgoraRTC as any).audioContext || (AgoraRTC as any).getAudioContext?.();
+    if (audioCtx && audioCtx.state === 'suspended') {
+      await audioCtx.resume();
+    }
+  } catch (e) {
+    console.warn('[Agora Audio] Failed to resume AudioContext:', e);
+  }
+}
+
 export function useLessonRoomAudioUnlock(remoteUsers: IAgoraRTCRemoteUser[]) {
   useEffect(() => {
     const handleUnlockAudio = async () => {
-      try {
-        const audioCtx = (AgoraRTC as any).getAudioContext?.();
-        if (audioCtx && audioCtx.state === 'suspended') {
-          await audioCtx.resume();
-        }
-      } catch (e) {}
+      await resumeAgoraAudioContext();
 
       remoteUsers.forEach((remoteUser) => {
         if (remoteUser.hasAudio && remoteUser.audioTrack && !isScreenShareUser(remoteUser.uid)) {
@@ -31,7 +40,7 @@ export function useLessonRoomAudioUnlock(remoteUsers: IAgoraRTCRemoteUser[]) {
     window.addEventListener('keydown', handleUnlockAudio);
     window.addEventListener('pointerdown', handleUnlockAudio);
 
-    // Run immediate check
+    // Immediate attempt
     handleUnlockAudio();
 
     return () => {

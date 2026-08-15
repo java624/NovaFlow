@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { IAgoraRTCClient, IRemoteDataChannel } from 'agora-rtc-react';
+import { IAgoraRTCClient, IRemoteDataChannel, IAgoraRTCRemoteUser } from 'agora-rtc-react';
 import { CLASSROOM_DATA_CHANNEL_ID, isScreenShareUser } from './utils';
+import { resumeAgoraAudioContext } from './useLessonRoomAudioUnlock';
 
 interface UseLessonRoomAgoraEventsProps {
   client: IAgoraRTCClient;
@@ -28,7 +29,11 @@ export function useLessonRoomAgoraEvents({
 
     try { client.enableAudioVolumeIndicator(); } catch (e) {}
 
-    const handleUserPublished = async (user: any, mediaType: 'video' | 'audio' | 'datachannel', config?: { id: number }) => {
+    const handleUserPublished = async (
+      user: IAgoraRTCRemoteUser,
+      mediaType: 'video' | 'audio' | 'datachannel',
+      config?: { id: number }
+    ) => {
       try {
         if (mediaType === 'datachannel') {
           const remoteChannel = (await client.subscribe(
@@ -54,14 +59,15 @@ export function useLessonRoomAgoraEvents({
         }
 
         if (mediaType === 'audio' && !isScreenShareUser(user.uid)) {
+          await resumeAgoraAudioContext();
           const audioTrack = (track as any) || user.audioTrack;
           if (audioTrack) {
             try {
               audioTrack.setVolume?.(100);
-              if (!audioTrack.isPlaying) {
-                audioTrack.play();
-              }
-            } catch (e) {}
+              audioTrack.play();
+            } catch (e) {
+              console.warn('[Agora Audio] Play error in user-published:', e);
+            }
           }
         }
       } catch (err) {
@@ -88,15 +94,16 @@ export function useLessonRoomAgoraEvents({
       setNetworkQuality(q);
     };
 
-    const handleUserMuteUpdated = (user: any, mediaType: 'audio' | 'video', isMuted: boolean) => {
+    const handleUserMuteUpdated = async (user: IAgoraRTCRemoteUser, mediaType: 'audio' | 'video', isMuted: boolean) => {
       if (mediaType === 'audio' && !isMuted && !isScreenShareUser(user.uid)) {
+        await resumeAgoraAudioContext();
         if (user.audioTrack) {
           try {
             user.audioTrack.setVolume?.(100);
-            if (!user.audioTrack.isPlaying) {
-              user.audioTrack.play();
-            }
-          } catch (err) {}
+            user.audioTrack.play();
+          } catch (err) {
+            console.warn('[Agora Audio] Play error in user-mute-updated:', err);
+          }
         }
       }
     };
