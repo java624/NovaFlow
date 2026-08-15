@@ -11,7 +11,8 @@ export function getInitials(name?: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-// Generate stable unique UID
+// Generate stable unique UID in the safe range [1, MAX_REGULAR_UID].
+// Values >= SCREEN_UID_OFFSET are reserved for screen-share secondary clients.
 export function generateUid(userName?: string): number {
   if (userName) {
     let hash = 0;
@@ -20,16 +21,20 @@ export function generateUid(userName?: string): number {
       hash = ((hash << 5) - hash) + char;
       hash |= 0;
     }
-    return Math.abs(hash) % 2147483647;
+    return (Math.abs(hash) % MAX_REGULAR_UID) + 1;
   }
-  return Math.floor(Math.random() * 2147483647);
+  return Math.floor(Math.random() * MAX_REGULAR_UID) + 1;
 }
 
 // Screen share UID constant and detection helper
 export const SCREEN_UID_OFFSET = 1_000_000_000;
+/** Regular participants must stay below this so they are never mistaken for screen-share clients. */
+export const MAX_REGULAR_UID = SCREEN_UID_OFFSET - 1;
 
 export function isScreenShareUser(uid: number | string): boolean {
   const numericUid = Number(uid);
+  // Screen-share clients join as baseUid + SCREEN_UID_OFFSET (always >= 1_000_000_000).
+  // Regular UIDs are constrained to [1, MAX_REGULAR_UID] in generateUid().
   return Number.isFinite(numericUid) && numericUid >= SCREEN_UID_OFFSET;
 }
 
