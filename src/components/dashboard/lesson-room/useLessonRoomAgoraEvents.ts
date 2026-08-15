@@ -45,13 +45,22 @@ export function useLessonRoomAgoraEvents({
           return;
         }
 
-        const track = await client.subscribe(user, mediaType);
+        let track: any = null;
+        try {
+          track = await client.subscribe(user, mediaType);
+        } catch (subErr: any) {
+          if (mediaType === 'audio') track = user.audioTrack;
+          if (mediaType === 'video') track = user.videoTrack;
+        }
+
         if (mediaType === 'audio' && !isScreenShareUser(user.uid)) {
           const audioTrack = (track as any) || user.audioTrack;
           if (audioTrack) {
             try {
               audioTrack.setVolume?.(100);
-              audioTrack.play();
+              if (!audioTrack.isPlaying) {
+                audioTrack.play();
+              }
             } catch (e) {}
           }
         }
@@ -82,7 +91,12 @@ export function useLessonRoomAgoraEvents({
     const handleUserMuteUpdated = (user: any, mediaType: 'audio' | 'video', isMuted: boolean) => {
       if (mediaType === 'audio' && !isMuted && !isScreenShareUser(user.uid)) {
         if (user.audioTrack) {
-          try { user.audioTrack.play(); } catch (err) {}
+          try {
+            user.audioTrack.setVolume?.(100);
+            if (!user.audioTrack.isPlaying) {
+              user.audioTrack.play();
+            }
+          } catch (err) {}
         }
       }
     };

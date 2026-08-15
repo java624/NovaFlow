@@ -17,6 +17,7 @@ export function useLessonRoomAudioUnlock(remoteUsers: IAgoraRTCRemoteUser[]) {
       remoteUsers.forEach((remoteUser) => {
         if (remoteUser.hasAudio && remoteUser.audioTrack && !isScreenShareUser(remoteUser.uid)) {
           try {
+            remoteUser.audioTrack.setVolume?.(100);
             if (!remoteUser.audioTrack.isPlaying) {
               remoteUser.audioTrack.play();
             }
@@ -24,13 +25,20 @@ export function useLessonRoomAudioUnlock(remoteUsers: IAgoraRTCRemoteUser[]) {
         }
       });
     };
+
     window.addEventListener('click', handleUnlockAudio);
     window.addEventListener('touchstart', handleUnlockAudio);
     window.addEventListener('keydown', handleUnlockAudio);
+    window.addEventListener('pointerdown', handleUnlockAudio);
+
+    // Run immediate check
+    handleUnlockAudio();
+
     return () => {
       window.removeEventListener('click', handleUnlockAudio);
       window.removeEventListener('touchstart', handleUnlockAudio);
       window.removeEventListener('keydown', handleUnlockAudio);
+      window.removeEventListener('pointerdown', handleUnlockAudio);
     };
   }, [remoteUsers]);
 }

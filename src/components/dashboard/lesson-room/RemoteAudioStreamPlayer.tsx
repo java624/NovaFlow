@@ -33,7 +33,7 @@ export default function RemoteAudioStreamPlayer({
       console.warn('[Agora Audio] Track play warning for user:', user.uid, e);
     }
 
-    // 2. Native HTML5 Audio Element fallback attachment
+    // 2. Native HTML5 Audio Element fallback attachment (only update srcObject if track ID changed)
     const audioEl = audioRef.current;
     if (audioEl) {
       try {
@@ -42,8 +42,10 @@ export default function RemoteAudioStreamPlayer({
         }
         const mediaStreamTrack = audioTrack.getMediaStreamTrack();
         if (mediaStreamTrack) {
-          const stream = new MediaStream([mediaStreamTrack]);
-          if (audioEl.srcObject !== stream) {
+          const currentStream = audioEl.srcObject as MediaStream | null;
+          const currentTrack = currentStream?.getAudioTracks()?.[0];
+          if (!currentTrack || currentTrack.id !== mediaStreamTrack.id) {
+            const stream = new MediaStream([mediaStreamTrack]);
             audioEl.srcObject = stream;
             audioEl.volume = 1.0;
             audioEl.play().catch((err) => {
@@ -58,8 +60,13 @@ export default function RemoteAudioStreamPlayer({
 
     // 3. Autoplay unlock listeners
     const handleGesture = () => {
-      if (user.audioTrack && !user.audioTrack.isPlaying) {
-        try { user.audioTrack.play(); } catch (e) {}
+      if (user.audioTrack) {
+        try {
+          user.audioTrack.setVolume?.(100);
+          if (!user.audioTrack.isPlaying) {
+            user.audioTrack.play();
+          }
+        } catch (e) {}
       }
       if (audioEl && audioEl.paused) {
         audioEl.play().catch(() => {});
@@ -69,6 +76,7 @@ export default function RemoteAudioStreamPlayer({
     window.addEventListener('click', handleGesture);
     window.addEventListener('touchstart', handleGesture);
     window.addEventListener('keydown', handleGesture);
+    window.addEventListener('pointerdown', handleGesture);
 
     const interval = setInterval(handleGesture, 1500);
 
@@ -76,6 +84,7 @@ export default function RemoteAudioStreamPlayer({
       window.removeEventListener('click', handleGesture);
       window.removeEventListener('touchstart', handleGesture);
       window.removeEventListener('keydown', handleGesture);
+      window.removeEventListener('pointerdown', handleGesture);
       clearInterval(interval);
     };
   }, [user, user.uid, user.hasAudio, user.audioTrack, selectedSpeakerId]);
