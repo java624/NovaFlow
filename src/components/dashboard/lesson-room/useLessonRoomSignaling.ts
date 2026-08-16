@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { IAgoraRTCClient, ILocalDataChannel, IRemoteDataChannel } from 'agora-rtc-react';
+import { createClient } from '@/lib/supabase/client';
 import { ChatMessage } from './types';
 import { FlyingReaction } from './ReactionsOverlay';
 import { useLessonRoomPolls } from './useLessonRoomPolls';
 import { useLessonRoomTimerSync } from './useLessonRoomTimerSync';
 
 interface UseLessonRoomSignalingProps {
-  client: IAgoraRTCClient;
+  channelName: string;
+  client?: IAgoraRTCClient | null;
   uid: number;
   userName?: string;
   userRole: 'teacher' | 'student';
@@ -19,6 +21,7 @@ interface UseLessonRoomSignalingProps {
 }
 
 export function useLessonRoomSignaling({
+  channelName,
   client,
   uid,
   userName,
@@ -29,6 +32,8 @@ export function useLessonRoomSignaling({
   onLeave,
 }: UseLessonRoomSignalingProps) {
   const isTeacher = userRole === 'teacher';
+  const supabase = useMemo(() => createClient(), []);
+  const realtimeChannelRef = useRef<any>(null);
 
   const dataChannelRef = useRef<ILocalDataChannel | null>(null);
   const remoteDataChannelsRef = useRef<IRemoteDataChannel[]>([]);
@@ -60,26 +65,33 @@ export function useLessonRoomSignaling({
 
   const broadcast = useCallback(
     async (payload: Record<string, any>) => {
-      if (!client || client.connectionState !== 'CONNECTED') return;
-      try {
-        const bytes = new TextEncoder().encode(JSON.stringify(payload));
-        const channel = dataChannelRef.current;
-        if (channel?.readyState === 'open') {
-          channel.send(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
-          return;
-        }
+      const fullPayload = { uid, ...payload };
 
-        const legacyClient = client as unknown as {
-          sendStreamMessage?: (message: Uint8Array) => Promise<void>;
-        };
-        if (legacyClient.sendStreamMessage) {
-          await legacyClient.sendStreamMessage(bytes);
+      if (realtimeChannelRef.current) {
+        try {
+          await realtimeChannelRef.current.send({
+            type: 'broadcast',
+            event: 'signal',
+            payload: fullPayload,
+          });
+        } catch (err) {
+          console.warn('[Realtime Broadcast warning]:', err, payload);
         }
-      } catch (err) {
-        console.warn('[Agora] Broadcast warning:', err, payload);
+      }
+
+      if (client && client.connectionState === 'CONNECTED') {
+        try {
+          const bytes = new TextEncoder().encode(JSON.stringify(fullPayload));
+          const channel = dataChannelRef.current;
+          if (channel?.readyState === 'open') {
+            channel.send(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+          }
+        } catch (err) {
+          // ignore
+        }
       }
     },
-    [client]
+    [client, uid]
   );
 
   const polls = useLessonRoomPolls({ uid, isTeacher, broadcast });
@@ -92,29 +104,33 @@ export function useLessonRoomSignaling({
   const handleStreamMessage = useCallback(
     (remoteUid: any, data: any) => {
       try {
-        let rawText = '';
+        let parsed: any = null;
         if (typeof data === 'string') {
-          rawText = data;
+          parsed = JSON.parse(data);
         } else if (data instanceof Uint8Array || ArrayBuffer.isView(data)) {
-          rawText = new TextDecoder('utf-8').decode(data);
-        } else if (data && typeof data === 'object' && (data as any).payload) {
-          const payload = (data as any).payload;
-          rawText = typeof payload === 'string' ? payload : new TextDecoder('utf-8').decode(payload);
+          const rawText = new TextDecoder('utf-8').decode(data);
+          parsed = JSON.parse(rawText);
+        } else if (typeof data === 'object' && data !== null) {
+          parsed = data.payload || data;
         }
 
-        if (!rawText) return;
-        const parsed = JSON.parse(rawText);
+        if (!parsed || !parsed.type) return;
+
+        if (parsed.uid && String(parsed.uid) === String(uid)) return;
 
         switch (parsed.type) {
           case 'CHAT_MSG': {
             const incomingMsg: ChatMessage = {
-              id: parsed.id || Date.now().toString(),
-              sender: parsed.sender || `Учасник ${remoteUid}`,
+              id: parsed.id || `${remoteUid}-${Date.now()}`,
+              sender: parsed.sender || participantProfiles[String(parsed.uid)]?.name || `Учасник ${remoteUid}`,
               text: parsed.text,
               time: parsed.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               isSelf: false,
             };
-            setChatMessages((prev) => [...prev, incomingMsg]);
+            setChatMessages((prev) => {
+              if (prev.some((m) => m.id === incomingMsg.id)) return prev;
+              return [...prev, incomingMsg];
+            });
             setIsChatOpen((open) => {
               if (!open) setUnreadCount((count) => count + 1);
               return open;
@@ -128,15 +144,24 @@ export function useLessonRoomSignaling({
           }
 
           case 'PROFILE': {
-            setParticipantProfiles((prev) => ({
-              ...prev,
-              [String(parsed.uid)]: { name: parsed.name, role: parsed.role },
-            }));
+            const remoteUidStr = String(parsed.uid);
+            setParticipantProfiles((prev) => {
+              const isNew = !prev[remoteUidStr];
+              if (isNew) {
+                setTimeout(() => {
+                  broadcast({ type: 'PROFILE', uid, name: userName || 'Учасник', role: userRole });
+                }, 300);
+              }
+              return {
+                ...prev,
+                [remoteUidStr]: { name: parsed.name, role: parsed.role },
+              };
+            });
             break;
           }
 
           case 'REACTION': {
-            const reactionId = `${parsed.uid}-${Date.now()}-${Math.random()}`;
+            const reactionId = parsed.id || `${parsed.uid}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
             setReactions((prev) => [...prev, { id: reactionId, emoji: parsed.emoji, x: 10 + Math.random() * 80 }]);
             setTimeout(() => {
               setReactions((prev) => prev.filter((r) => r.id !== reactionId));
@@ -232,11 +257,41 @@ export function useLessonRoomSignaling({
             break;
         }
       } catch (err) {
-        console.error('[Agora Chat] Error parsing incoming stream message:', err);
+        console.error('[Lesson Room] Error parsing incoming realtime message:', err);
       }
     },
-    [isTeacher, micTrackRef, setMicMuted, setIsForceMuted, uid, broadcast, polls, timer]
+    [isTeacher, micTrackRef, setMicMuted, setIsForceMuted, uid, broadcast, polls, timer, userName, userRole, participantProfiles]
   );
+
+  useEffect(() => {
+    if (!channelName) return;
+    const roomChannelName = `lesson-room-${channelName.trim()}`;
+    const channel = supabase.channel(roomChannelName, {
+      config: {
+        broadcast: {
+          self: false,
+        },
+      },
+    });
+
+    channel
+      .on('broadcast', { event: 'signal' }, ({ payload }: { payload: any }) => {
+        if (!payload) return;
+        handleStreamMessage(payload.uid, payload);
+      })
+      .subscribe((status: string) => {
+        if (status === 'SUBSCRIBED') {
+          broadcast({ type: 'PROFILE', uid, name: userName || 'Учасник', role: userRole });
+        }
+      });
+
+    realtimeChannelRef.current = channel;
+
+    return () => {
+      channel.unsubscribe();
+      realtimeChannelRef.current = null;
+    };
+  }, [channelName, supabase, handleStreamMessage, broadcast, uid, userName, userRole]);
 
   useEffect(() => {
     if (!kickedNotice) return;
@@ -253,7 +308,7 @@ export function useLessonRoomSignaling({
 
       const textToSend = inputMessage.trim();
       const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const msgId = Date.now().toString();
+      const msgId = `${uid}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
       const newMsg: ChatMessage = {
         id: msgId,
@@ -274,7 +329,7 @@ export function useLessonRoomSignaling({
         time: timeStr,
       });
     },
-    [inputMessage, userName, broadcast]
+    [inputMessage, userName, uid, broadcast]
   );
 
   const toggleChat = useCallback(() => {
@@ -286,7 +341,7 @@ export function useLessonRoomSignaling({
 
   const handleSendReaction = useCallback(
     (emoji: string) => {
-      const reactionId = `${uid}-${Date.now()}-${Math.random()}`;
+      const reactionId = `${uid}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
       setReactions((prev) => [...prev, { id: reactionId, emoji, x: 10 + Math.random() * 80 }]);
       setTimeout(() => {
         setReactions((prev) => prev.filter((r) => r.id !== reactionId));
@@ -323,6 +378,10 @@ export function useLessonRoomSignaling({
   );
 
   const cleanupSignaling = useCallback(() => {
+    if (realtimeChannelRef.current) {
+      realtimeChannelRef.current.unsubscribe();
+      realtimeChannelRef.current = null;
+    }
     dataChannelRef.current = null;
     remoteDataChannelsRef.current.forEach((ch) => ch.removeAllListeners());
     remoteDataChannelsRef.current = [];
@@ -366,3 +425,4 @@ export function useLessonRoomSignaling({
     cleanupSignaling,
   };
 }
+

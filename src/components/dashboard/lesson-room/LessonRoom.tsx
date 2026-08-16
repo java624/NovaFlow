@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import AgoraRTC, { AgoraRTCProvider } from 'agora-rtc-react';
 
 import { LessonRoomProps } from './types';
-import { getInitials, isScreenShareUser } from './utils';
+import { getInitials, isScreenShareUser, generateUid } from './utils';
 import LessonRoomHeader from './LessonRoomHeader';
 import LessonRoomFloatingControls from './LessonRoomFloatingControls';
 import LessonRoomChatSidebar from './LessonRoomChatSidebar';
@@ -37,13 +37,16 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
 
   const chatBottomRef = useRef<HTMLDivElement>(null);
 
+  const uid = useMemo(() => generateUid(userName), [userName]);
+  const micTrackRef = useRef<any>(null);
+
   // 1. Signaling Hook
   const signaling = useLessonRoomSignaling({
-    client: null as any, // lazy bound after agora hook
-    uid: 0,
+    channelName,
+    uid,
     userName,
     userRole,
-    micTrackRef: { current: null },
+    micTrackRef,
     setMicMuted: () => {},
     setIsForceMuted: () => {},
     onLeave,
@@ -52,6 +55,7 @@ function RoomInner({ channelName, onLeave, userName, userRole = 'student' }: Les
   // 2. Agora RTC Hook
   const agora = useLessonRoomAgora({
     channelName,
+    uid,
     userName,
     onLeave,
     announceProfile: signaling.announceProfile,

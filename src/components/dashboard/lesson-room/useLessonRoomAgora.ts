@@ -17,6 +17,7 @@ import { useLessonRoomAgoraEvents } from './useLessonRoomAgoraEvents';
 
 interface UseLessonRoomAgoraProps {
   channelName: string;
+  uid?: number;
   userName?: string;
   onLeave: () => void;
   announceProfile: () => void;
@@ -27,6 +28,7 @@ interface UseLessonRoomAgoraProps {
 
 export function useLessonRoomAgora({
   channelName,
+  uid: propUid,
   userName,
   onLeave,
   announceProfile,
@@ -37,7 +39,7 @@ export function useLessonRoomAgora({
   const client = useRTCClient();
   const remoteUsers = useRemoteUsers();
 
-  const uid = useMemo(() => generateUid(userName), [userName]);
+  const uid = useMemo(() => propUid || generateUid(userName), [propUid, userName]);
   const safeChannel = useMemo(() => String(channelName), [channelName]);
 
   // States
