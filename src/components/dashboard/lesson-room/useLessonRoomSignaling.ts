@@ -9,7 +9,7 @@ import { useLessonRoomPolls } from './useLessonRoomPolls';
 import { useLessonRoomTimerSync } from './useLessonRoomTimerSync';
 
 interface UseLessonRoomSignalingProps {
-  channelName: string;
+  channelName: string | number;
   client?: IAgoraRTCClient | null;
   uid: number;
   userName?: string;
@@ -264,8 +264,9 @@ export function useLessonRoomSignaling({
   );
 
   useEffect(() => {
-    if (!channelName) return;
-    const roomChannelName = `lesson-room-${channelName.trim()}`;
+    const safeChannel = String(channelName || '').trim();
+    if (!safeChannel) return;
+    const roomChannelName = `lesson-room-${safeChannel}`;
     const channel = supabase.channel(roomChannelName, {
       config: {
         broadcast: {

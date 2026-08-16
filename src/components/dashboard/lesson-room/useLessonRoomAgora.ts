@@ -16,7 +16,7 @@ import { resumeAgoraAudioContext, useLessonRoomAudioUnlock } from './useLessonRo
 import { useLessonRoomAgoraEvents } from './useLessonRoomAgoraEvents';
 
 interface UseLessonRoomAgoraProps {
-  channelName: string;
+  channelName: string | number;
   uid?: number;
   userName?: string;
   onLeave: () => void;
@@ -40,7 +40,7 @@ export function useLessonRoomAgora({
   const remoteUsers = useRemoteUsers();
 
   const uid = useMemo(() => propUid || generateUid(userName), [propUid, userName]);
-  const safeChannel = useMemo(() => String(channelName), [channelName]);
+  const safeChannel = useMemo(() => String(channelName || '').trim(), [channelName]);
 
   // States
   const [micMuted, setMicMuted] = useState(false);

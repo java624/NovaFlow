@@ -1,5 +1,5 @@
 export interface LessonRoomProps {
-  channelName: string;
+  channelName: string | number;
   onLeave: () => void;
   userName?: string;
   /** NEW: 'teacher' unlocks moderation (mute all / mute one / kick) and poll creation. Defaults to 'student'. */
