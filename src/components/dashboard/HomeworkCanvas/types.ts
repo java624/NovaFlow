@@ -16,8 +16,8 @@ export interface HomeworkCanvasProps {
 /** Префікс ключа в localStorage для збереження стану canvas */
 export const STORAGE_KEY_PREFIX = 'novaflow_canvas_';
 
-/** Максимальна ширина canvas (px) */
-export const CANVAS_MAX_WIDTH = 850;
+/** Максимальна ширина canvas (px) для кришталево чіткого HD зображення */
+export const CANVAS_MAX_WIDTH = 1920;
 
 /** Розмір шрифту на canvas: brushSize 1..20 → fontSize 10..80px */
 export function calcBaseFontSize(brushSize: number): number {

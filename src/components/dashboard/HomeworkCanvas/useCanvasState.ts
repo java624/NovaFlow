@@ -59,6 +59,8 @@ export function useCanvasState({ imageUrl, homeworkId }: UseCanvasStateOptions) 
     img.src = dataUrl;
     img.onload = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0);
     };
   }, []);
@@ -79,6 +81,8 @@ export function useCanvasState({ imageUrl, homeworkId }: UseCanvasStateOptions) 
       const scale = canvas.width / img.width;
       canvas.height = img.height * scale;
 
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -89,6 +93,8 @@ export function useCanvasState({ imageUrl, homeworkId }: UseCanvasStateOptions) 
         savedImg.src = saved;
         savedImg.onload = () => {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(savedImg, 0, 0);
           undoStack.current = [saved];
           redoStack.current = [];
@@ -125,6 +131,8 @@ export function useCanvasState({ imageUrl, homeworkId }: UseCanvasStateOptions) 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(bgImageRef.current, 0, 0, canvas.width, canvas.height);
     saveCanvasState();
     localStorage.removeItem(storageKey);

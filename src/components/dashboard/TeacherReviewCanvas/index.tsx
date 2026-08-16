@@ -100,16 +100,22 @@ export default function TeacherReviewCanvas({
 
     setIsSaving(true);
     try {
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, 'image/png')
+      let blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, 'image/webp', 0.90)
       );
+      if (!blob) {
+        blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob(resolve, 'image/png')
+        );
+      }
       if (!blob) throw new Error('Failed to create image');
 
-      const fileName = `reviews/review_${homeworkId}_${Date.now()}.png`;
+      const ext = blob.type.includes('webp') ? 'webp' : 'png';
+      const fileName = `reviews/review_${homeworkId}_${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('homework-attachments')
-        .upload(fileName, blob, { contentType: 'image/png', upsert: true });
+        .upload(fileName, blob, { contentType: blob.type, upsert: true });
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage

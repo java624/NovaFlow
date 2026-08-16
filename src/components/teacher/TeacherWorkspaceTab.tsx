@@ -7,6 +7,7 @@ import { StudentProfile, Homework, Lesson } from './types';
 import TeacherReviewCanvas from '@/components/dashboard/TeacherReviewCanvas';
 import PdfTeacherReviewCanvas from './PdfTeacherReviewCanvas';
 import { isPdfUrl } from '@/lib/pdf-utils';
+import { optimizeHomeworkImage } from '@/lib/image-utils';
 import AssignVocabularyModal from './AssignVocabularyModal';
 import { WordPacket } from '@/types/vocabulary';
 import { calculateAssignedProgress } from '@/lib/mockVocabularyData';
@@ -283,8 +284,15 @@ export default function TeacherWorkspaceTab({ selectedStudent, teacherId, onStud
     let uplUrl: string | null = null;
     if (hwFile) {
       try {
-        const fp = `hw_${studentId}_${Date.now()}.${hwFile.name.split('.').pop()}`;
-        const { error: ue } = await supabase.storage.from('homework-attachments').upload(fp, hwFile);
+        const fileToUpload = await optimizeHomeworkImage(hwFile);
+        const ext = fileToUpload.type.includes('webp')
+          ? 'webp'
+          : hwFile.name.split('.').pop() || 'jpg';
+        const fp = `hw_${studentId}_${Date.now()}.${ext}`;
+        const { error: ue } = await supabase.storage.from('homework-attachments').upload(fp, fileToUpload, {
+          contentType: fileToUpload.type || 'image/webp',
+          upsert: true,
+        });
         if (ue) throw ue;
         uplUrl = supabase.storage.from('homework-attachments').getPublicUrl(fp).data.publicUrl;
       } catch {

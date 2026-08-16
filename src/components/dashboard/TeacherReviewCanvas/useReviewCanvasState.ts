@@ -57,6 +57,8 @@ export function useReviewCanvasState({ imageUrl, homeworkId }: UseReviewCanvasSt
     img.src = dataUrl;
     img.onload = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0);
     };
   }, []);
@@ -96,6 +98,8 @@ export function useReviewCanvasState({ imageUrl, homeworkId }: UseReviewCanvasSt
       const scale = canvas.width / img.width;
       canvas.height = img.height * scale;
 
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
@@ -107,6 +111,8 @@ export function useReviewCanvasState({ imageUrl, homeworkId }: UseReviewCanvasSt
         savedImg.src = saved;
         savedImg.onload = () => {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
           ctx.drawImage(savedImg, 0, 0);
           undoStack.current = [saved];
         };
