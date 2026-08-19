@@ -55,8 +55,7 @@ export async function ensureTelegramWebhook(baseUrl?: string): Promise<string> {
         return;
       }
 
-      await bot.api.setWebhook({
-        url: webhookUrl,
+      await bot.api.setWebhook(webhookUrl, {
         drop_pending_updates: true,
         allowed_updates: ["message", "callback_query"],
       });
