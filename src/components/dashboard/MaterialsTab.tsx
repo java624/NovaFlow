@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { BookOpen } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { MaterialItem } from '@/types/materials';
 import { fetchMaterialsForStudent } from '@/lib/materialsSupabase';
@@ -81,15 +83,20 @@ export default function MaterialsTab({ studentId }: MaterialsTabProps) {
   }
 
   return (
-    <div className="space-y-6 animate-fadeIn pb-12">
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6 pb-12"
+    >
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-purple-900 via-indigo-900 to-purple-800 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
         <div className="absolute right-0 top-0 translate-x-4 -translate-y-4 opacity-10 text-9xl font-extrabold select-none pointer-events-none">
           LIBRARY
         </div>
         <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-semibold mb-3 border border-white/10">
-            <span>📚</span>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/10 backdrop-blur-md rounded-full text-xs font-semibold mb-3 border border-white/15">
+            <BookOpen className="w-3.5 h-3.5" />
             <span>База знань & Ресурси</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight mb-2">
@@ -110,27 +117,33 @@ export default function MaterialsTab({ studentId }: MaterialsTabProps) {
         totalCount={filteredMaterials.length}
       />
 
-      {/* Grid List */}
+      {/* Animated Grid List */}
       {filteredMaterials.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredMaterials.map((material) => (
-            <MaterialCard
-              key={material.id}
-              material={material}
-              onPreview={(item) => setActivePreviewMaterial(item)}
-              onToggleFavorite={handleToggleFavorite}
-              isFavorite={favorites.includes(material.id)}
-            />
-          ))}
-        </div>
+        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <AnimatePresence mode="popLayout">
+            {filteredMaterials.map((material) => (
+              <MaterialCard
+                key={material.id}
+                material={material}
+                onPreview={(item) => setActivePreviewMaterial(item)}
+                onToggleFavorite={handleToggleFavorite}
+                isFavorite={favorites.includes(material.id)}
+              />
+            ))}
+          </AnimatePresence>
+        </motion.div>
       ) : (
-        <div className="bg-white rounded-3xl p-12 text-center border border-gray-100 shadow-sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-white/80 backdrop-blur-md rounded-3xl p-12 text-center border border-white/60 shadow-sm"
+        >
           <div className="text-5xl mb-3">🔍</div>
           <h3 className="text-lg font-bold text-gray-900 mb-1">Нічого не знайдено</h3>
           <p className="text-xs text-gray-500 max-w-sm mx-auto">
             Спробуйте змінити категорію або категоріальний фільтр для пошуку матеріалів.
           </p>
-        </div>
+        </motion.div>
       )}
 
       {/* Preview Modal */}
@@ -138,6 +151,6 @@ export default function MaterialsTab({ studentId }: MaterialsTabProps) {
         material={activePreviewMaterial}
         onClose={() => setActivePreviewMaterial(null)}
       />
-    </div>
+    </motion.div>
   );
 }

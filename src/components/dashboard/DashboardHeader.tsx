@@ -12,15 +12,12 @@ export function getAvatarUrl(profile: StudentProfile | null): string {
     `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name || 'User')}&background=5e077e&color=fff&size=158`;
 }
 
-export default function DashboardHeader({ profile, onMenuToggle }: DashboardHeaderProps) {
+export default function DashboardHeader({ profile }: DashboardHeaderProps) {
   const avatarUrl = getAvatarUrl(profile);
 
   return (
     <header className="bg-white/95 backdrop-blur-sm border-b border-gray-100 px-4 sm:px-6 lg:px-8 py-4 sticky top-0 z-20">
       <div className="flex items-center justify-between max-w-7xl mx-auto">
-        {/* Mobile hamburger */}
-
-
         <div>
           <h1 className="text-lg sm:text-xl font-bold text-gray-900">
             {profile?.full_name ? `Welcome back, ${profile.full_name} 👋` : 'Welcome back! 👋'}
