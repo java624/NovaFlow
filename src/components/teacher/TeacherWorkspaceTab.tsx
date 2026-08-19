@@ -9,6 +9,7 @@ import PdfTeacherReviewCanvas from './PdfTeacherReviewCanvas';
 import { isPdfUrl } from '@/lib/pdf-utils';
 import { optimizeHomeworkImage } from '@/lib/image-utils';
 import AssignVocabularyModal from './AssignVocabularyModal';
+import TeacherWorkspaceMaterialsSection from './materials/TeacherWorkspaceMaterialsSection';
 import { WordPacket } from '@/types/vocabulary';
 import { calculateAssignedProgress } from '@/lib/mockVocabularyData';
 import {
@@ -633,6 +634,12 @@ export default function TeacherWorkspaceTab({ selectedStudent, teacherId, onStud
           </div>
         )}
       </div>
+
+      {/* 📂 Student Materials Section */}
+      <TeacherWorkspaceMaterialsSection
+        selectedStudent={selectedStudent}
+        teacherId={teacherId}
+      />
 
       {/* Assign Vocabulary Modal */}
       {showAssignVocab && (

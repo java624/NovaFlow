@@ -271,7 +271,7 @@ export default function DashboardPage() {
                 />
               )}
 
-              {activeTab === 'materials' && <MaterialsTab />}
+              {activeTab === 'materials' && <MaterialsTab studentId={profile?.id} />}
 
               {activeTab === 'vocabulary' && <VocabularyTab studentId={profile?.id} />}
             </div>

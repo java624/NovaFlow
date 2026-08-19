@@ -26,7 +26,8 @@ export default function TeacherSidebar({
     { id: 'dashboard', label: 'Головна', icon: '📊' },
     { id: 'students', label: 'Мої Учні', icon: '👥' },
     { id: 'workspace', label: 'Робоча зона', icon: '🎯' },
-    { id: 'pack-library', label: 'Бібліотека пакетів', icon: '📚' },
+    { id: 'materials', label: 'Матеріали', icon: '📂' },
+    { id: 'pack-library', label: 'Словник', icon: '📚' },
     { id: 'comments', label: 'Відгуки сайту', icon: '💬' },
   ];
 

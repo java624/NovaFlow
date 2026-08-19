@@ -10,6 +10,7 @@ import TeacherDashboardTab from '@/components/teacher/TeacherDashboardTab';
 import TeacherStudentsTab from '@/components/teacher/TeacherStudentsTab';
 import TeacherWorkspaceTab from '@/components/teacher/TeacherWorkspaceTab';
 import TeacherPackLibraryTab from '@/components/teacher/TeacherPackLibraryTab';
+import TeacherMaterialsTab from '@/components/teacher/TeacherMaterialsTab';
 import TeacherCommentsTab from '@/components/teacher/TeacherCommentsTab';
 import dynamic from 'next/dynamic';
 import StudentProfileModal from '@/components/teacher/StudentProfileModal';
@@ -410,6 +411,14 @@ export default function TeacherDashboardPage() {
                   teacherId={profile?.id}
                   onStudentsChange={loadStudents}
                   onEnterLesson={handleEnterLesson}
+                />
+              )}
+
+              {activeTab === 'materials' && (
+                <TeacherMaterialsTab
+                  teacherId={profile?.id}
+                  students={students}
+                  selectedStudent={selectedStudent}
                 />
               )}
 

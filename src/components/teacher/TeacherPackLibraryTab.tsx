@@ -48,7 +48,7 @@ export default function TeacherPackLibraryTab({ teacherId, students }: TeacherPa
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">📚 Бібліотека пакетів слів</h2>
+          <h2 className="text-xl font-bold text-gray-900">📚 Словник</h2>
           <p className="text-sm text-gray-500 mt-1">
             Усі створені вами пакети. Призначайте їх учням одним кліком.
           </p>
