@@ -8,6 +8,7 @@ import { fetchMaterialsForTeacher, deleteMaterial } from '@/lib/materialsSupabas
 import { StudentProfile } from './types';
 import TeacherMaterialCard from './materials/TeacherMaterialCard';
 import CreateMaterialModal from './materials/CreateMaterialModal';
+import StorageUsageWidget from './materials/StorageUsageWidget';
 import MaterialPreviewModal from '../dashboard/materials/MaterialPreviewModal';
 
 interface TeacherMaterialsTabProps {
@@ -98,6 +99,9 @@ export default function TeacherMaterialsTab({
           <span>Додати матеріал</span>
         </button>
       </div>
+
+      {/* Storage Usage Widget */}
+      <StorageUsageWidget />
 
       {/* Filters Bar */}
       <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm grid grid-cols-1 sm:grid-cols-3 gap-3">

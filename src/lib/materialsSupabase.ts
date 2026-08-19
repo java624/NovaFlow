@@ -175,3 +175,30 @@ export async function uploadMaterialFile(
     return null;
   }
 }
+
+export async function getStorageStats(supabase: SupabaseClient) {
+  const FREE_LIMIT_BYTES = 1024 * 1024 * 1024; // 1 GB (1024 MB)
+
+  try {
+    const { data, error } = await supabase.rpc('get_storage_usage');
+
+    if (error || !data || data.length === 0) {
+      return { usedMb: '0', usedPercent: 0, totalFiles: 0 };
+    }
+
+    const totalBytes = Number(data[0].total_bytes || 0);
+    const fileCount = Number(data[0].file_count || 0);
+
+    const usedMb = (totalBytes / (1024 * 1024)).toFixed(1);
+    const usedPercent = Math.min(100, Math.round((totalBytes / FREE_LIMIT_BYTES) * 100));
+
+    return {
+      usedMb,
+      usedPercent,
+      totalFiles: fileCount,
+    };
+  } catch (err) {
+    console.error('[StorageStats] Error fetching storage stats:', err);
+    return { usedMb: '0', usedPercent: 0, totalFiles: 0 };
+  }
+}
