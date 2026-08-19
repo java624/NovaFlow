@@ -17,7 +17,11 @@ export const metadata: Metadata = {
   description:
     "Онлайн-школа іноземних мов NovaFlow. Індивідуальні заняття, інтерактивні курси, гнучкий графік та розмовна практика. Запишіться на безкоштовний пробний урок!",
   icons: {
-    icon: "/img/logo.svg",
+    icon: [
+      { url: "/img/logo.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/img/logo.svg",
+    apple: "/img/logo.svg",
   },
   openGraph: {
     title: "NovaFlow — Інтерактивна онлайн-школа іноземних мов",
