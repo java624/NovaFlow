@@ -4,6 +4,7 @@ import Script from "next/script";
 import { Toaster } from 'sonner';
 import "@/app/globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
+import InstallPWA from "@/components/common/InstallPWA";
 import { GoogleAnalytics } from "@next/third-parties/google";
 
 const inter = Inter({
@@ -101,6 +102,7 @@ export default function RootLayout({
         <LanguageProvider>
           <Toaster position="bottom-right" richColors theme="dark" />
           {children}
+          <InstallPWA />
         </LanguageProvider>
       </body>
       {/* Google Analytics 4 */}
