@@ -147,7 +147,7 @@ export default function PdfTeacherReviewCanvas({
         const savedPageData = pageDrawingsRef.current[currentPage];
         if (savedPageData) {
           const img = new Image();
-          img.onload = () => ctx.drawImage(img, 0, 0);
+          img.onload = () => ctx.drawImage(img, 0, 0, drawCanvas.width, drawCanvas.height);
           img.src = savedPageData;
         } else {
           saveCurrentPageState();
@@ -189,19 +189,20 @@ export default function PdfTeacherReviewCanvas({
     if (text) {
       const ctx = drawCanvasRef.current.getContext('2d');
       if (ctx) {
-        const fontSize = Math.max(16, brushSize * 4);
+        const outputScale = drawCanvasRef.current.width / (pageDimensions.width || 1);
+        const fontSize = Math.max(16, brushSize * 4) * outputScale;
         ctx.font = `bold ${fontSize}px sans-serif`;
         ctx.fillStyle = color;
         ctx.textBaseline = 'top';
 
         const lines = text.split('\n');
         lines.forEach((line, index) => {
-          ctx.fillText(line, x, y + index * (fontSize * 1.2));
+          ctx.fillText(line, x, y + index * (fontSize * 1.3));
         });
         saveCurrentPageState();
       }
     }
-  }, [brushSize, saveCurrentPageState]);
+  }, [brushSize, pageDimensions.width, saveCurrentPageState]);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
     if (currentTool === 'hand') return;

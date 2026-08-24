@@ -158,7 +158,8 @@ export async function generateAnnotatedPdf(
           if (!ann.text || !ann.text.trim()) return;
           const xPx = ann.xRatio * overlayCanvas.width;
           const yPx = ann.yRatio * overlayCanvas.height;
-          const fontPx = Math.max(16, ann.fontSize * renderScale);
+          const fontScaleFactor = renderScale / 1.5; // 2.0 / 1.5 = 1.3333 scale relative to screen BASE_RENDER_SCALE (1.5)
+          const fontPx = Math.max(12, ann.fontSize * fontScaleFactor);
 
           ctx.font = `bold ${fontPx}px sans-serif`;
           ctx.fillStyle = ann.color;
@@ -166,7 +167,7 @@ export async function generateAnnotatedPdf(
 
           const lines = ann.text.split('\n');
           lines.forEach((line: string, idx: number) => {
-            ctx.fillText(line, xPx, yPx + idx * (fontPx * 1.25));
+            ctx.fillText(line, xPx, yPx + idx * (fontPx * 1.3));
           });
         });
 

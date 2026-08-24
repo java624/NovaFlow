@@ -165,7 +165,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
         const savedPageData = pageDrawingsRef.current[currentPage];
         if (savedPageData) {
           const img = new Image();
-          img.onload = () => ctx.drawImage(img, 0, 0);
+          img.onload = () => ctx.drawImage(img, 0, 0, drawCanvas.width, drawCanvas.height);
           img.src = savedPageData;
         } else {
           saveCurrentPageState();
@@ -319,7 +319,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
 
     // Offset clickY by 10px so text baseline aligns EXACTLY where clicked!
     const xRatio = Math.max(0.01, Math.min(0.92, clickX / pageDimensions.width));
-    const yRatio = Math.max(0.01, Math.min(0.92, (clickY - 10) / pageDimensions.height));
+    const yRatio = Math.max(0.01, Math.min(0.92, clickY / pageDimensions.height));
 
     const newAnn: PdfTextAnnotation = {
       id: `txt_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
@@ -627,7 +627,7 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
                   return (
                     <div
                       key={ann.id}
-                      className="absolute pointer-events-auto -translate-y-1"
+                      className="absolute pointer-events-auto"
                       style={{ left: `${leftPercent}%`, top: `${topPercent}%` }}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -703,10 +703,11 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
                             placeholder="Введіть відповідь..."
                             onChange={(e) => updateTextAnnotation(ann.id, e.target.value)}
                             onKeyDown={(e) => e.stopPropagation()}
-                            className="w-full bg-transparent font-bold outline-none resize-y text-gray-900 leading-snug"
+                            className="w-full bg-transparent font-bold outline-none resize-y text-gray-900 m-0 p-0"
                             style={{
                               color: ann.color,
                               fontSize: `${ann.fontSize}px`,
+                              lineHeight: '1.3',
                             }}
                             rows={Math.max(1, ann.text.split('\n').length)}
                           />
@@ -735,10 +736,11 @@ export default function PdfHomeworkCanvas({ pdfUrl, homeworkId, onSave }: PdfHom
                           }}
                         >
                           <p
-                            className="font-bold whitespace-pre-wrap leading-snug px-1 py-0.5 rounded border border-transparent group-hover:border-purple-300/50 group-hover:bg-purple-50/20"
+                            className="font-bold whitespace-pre-wrap m-0 p-0 rounded border border-transparent group-hover:border-purple-300/50 group-hover:bg-purple-50/20"
                             style={{
                               color: ann.color,
                               fontSize: `${ann.fontSize}px`,
+                              lineHeight: '1.3',
                             }}
                           >
                             {ann.text || <span className="italic text-gray-400 text-xs">(порожньо)</span>}

@@ -61,7 +61,7 @@ export function useCanvasState({ imageUrl, homeworkId }: UseCanvasStateOptions) 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
-      ctx.drawImage(img, 0, 0);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     };
   }, []);
 
@@ -95,7 +95,7 @@ export function useCanvasState({ imageUrl, homeworkId }: UseCanvasStateOptions) 
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(savedImg, 0, 0);
+          ctx.drawImage(savedImg, 0, 0, canvas.width, canvas.height);
           undoStack.current = [saved];
           redoStack.current = [];
         };
